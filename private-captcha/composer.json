@@ -21,8 +21,8 @@
     "scripts": {
         "lint": "find . -name '*.php' -not -path './vendor/*' -exec php -l {} \\;",
         "analyze": "phpstan analyse --level=8",
-        "wpcs": "phpcs --standard=WordPress --extensions=php --ignore=vendor/ .",
-        "wpcs:fix": "phpcbf --standard=WordPress --extensions=php --ignore=vendor/ ."
+        "wpcs": "phpcs -s --standard=phpcs.xml --extensions=php --ignore=vendor/ .",
+        "wpcs:fix": "phpcbf --standard=phpcs.xml --extensions=php --ignore=vendor/ ."
     },
     "config": {
         "allow-plugins": {

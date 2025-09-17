@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ruleset name="Custom WordPress Ruleset">
+    <rule ref="WordPress">
+        <!-- Exclude the class filename rule -->
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
+    </rule>
+</ruleset>

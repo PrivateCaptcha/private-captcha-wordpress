@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin interface functionality for Private Captcha WordPress plugin.
+ *
+ * @package PrivateCaptchaWP
+ */
 
 declare(strict_types=1);
 
@@ -11,12 +16,18 @@ use PrivateCaptcha\Exceptions\PrivateCaptchaException;
  */
 class Admin {
 
+	/**
+	 * Constructor to initialize admin hooks.
+	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_notices', array( $this, 'show_configuration_notice' ) );
 	}
 
+	/**
+	 * Add admin menu page.
+	 */
 	public function add_admin_menu(): void {
 		add_options_page(
 			__( 'Private Captcha Settings', 'private-captcha' ),
@@ -27,6 +38,9 @@ class Admin {
 		);
 	}
 
+	/**
+	 * Initialize admin settings.
+	 */
 	public function admin_init(): void {
 		register_setting(
 			'private_captcha_settings_group',
@@ -183,6 +197,9 @@ class Admin {
 		);
 	}
 
+	/**
+	 * Render settings page.
+	 */
 	public function settings_page(): void {
 		?>
 		<div class="wrap">
@@ -191,7 +208,7 @@ class Admin {
 				<?php
 				printf(
 					wp_kses(
-						// translators: %1$s is the documentation URL, %2$s is the support URL
+						// translators: %1$s is the documentation URL, %2$s is the support URL.
 						__(
 							'Need help? Check out our <a href="%1$s" target="_blank">documentation</a> or <a href="%2$s" target="_blank">contact support</a>.',
 							'private-captcha'
@@ -210,12 +227,11 @@ class Admin {
 			</p>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'private_captcha_settings_group' ); ?>
-				
+
 				<?php $this->render_settings_sections( array( 'private_captcha_account', 'private_captcha_forms' ) ); ?>
 				<?php submit_button(); ?>
-				
+
 				<hr style="margin: 2rem 0; border: none; border-top: 1px solid #ddd;">
-				
 				<?php $this->render_settings_sections( array( 'private_captcha_widget', 'private_captcha_advanced' ) ); ?>
 				<?php submit_button(); ?>
 			</form>
@@ -223,23 +239,35 @@ class Admin {
 		<?php
 	}
 
+	/**
+	 * Render required section callback.
+	 */
 	public function required_section_callback(): void {
 		echo '<p>' . sprintf(
-			// translators: %s is a link to create an account
+			// translators: %s is a link to create an account.
 			esc_html__( "Don't have an account yet? %s to get started.", 'private-captcha' ),
 			'<a href="https://portal.privatecaptcha.com/signup" target="_blank">' . esc_html__( 'Create one here', 'private-captcha' ) . '</a>'
 		) .
 		'</p>';
 	}
 
+	/**
+	 * Render widget section callback.
+	 */
 	public function widget_section_callback(): void {
 		echo '<p>' . esc_html__( 'Customize the appearance and behavior of the captcha widget.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render forms section callback.
+	 */
 	public function forms_section_callback(): void {
 		echo '<p>' . esc_html__( 'Choose which forms should include Private Captcha protection.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render advanced section callback.
+	 */
 	public function advanced_section_callback(): void {
 		echo '<p>' . esc_html__( 'Advanced configuration options. Not recommended to change by default.', 'private-captcha' ) . '</p>';
 		echo '<style>
@@ -248,43 +276,58 @@ class Admin {
 		</style>';
 	}
 
+	/**
+	 * Render API key field.
+	 */
 	public function api_key_callback(): void {
 		$value = Settings::get_api_key();
 		echo '<input type="password" id="api_key" name="private_captcha_settings[api_key]" value="' . esc_attr( $value ) . '" size="50" required />';
 		echo '<p class="description">' .
 			sprintf(
-				// translators: %s is a link to account settings
+				// translators: %s is a link to account settings.
 				esc_html__( 'Your Private Captcha API key, created in the %s.', 'private-captcha' ),
 				'<a href="https://portal.privatecaptcha.com/settings?tab=apikeys" target="_blank">' . esc_html__( 'account settings', 'private-captcha' ) . '</a>'
 			) .
 		'</p>';
 	}
 
+	/**
+	 * Render sitekey field.
+	 */
 	public function sitekey_callback(): void {
 		$value = Settings::get_sitekey();
 		echo '<input type="text" id="sitekey" name="private_captcha_settings[sitekey]" value="' . esc_attr( $value ) . '" size="32" placeholder="aaaaaaaabbbbccccddddeeeeeeeeeeee" required />';
 		echo '<p class="description">' . esc_html__( 'Your Private Captcha property site key.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render EU isolation field.
+	 */
 	public function eu_isolation_callback(): void {
 		$value = Settings::is_eu_isolation_enabled();
 		echo '<input type="checkbox" id="eu_isolation" name="private_captcha_settings[eu_isolation]" value="1"' . checked( $value, true, false ) . ' />';
 		echo '<label for="eu_isolation">' . esc_html__( 'Use EU-only endpoints 🇪🇺', 'private-captcha' ) . '</label>';
 		echo '<p class="description">' .
 			sprintf(
-				// translators: %s is a link to EU-only endpoints documentation
+				// translators: %s is a link to EU-only endpoints documentation.
 				esc_html__( 'Enable to use %s for GDPR compliance. Ignored if custom domain is set.', 'private-captcha' ),
 				'<a href="https://docs.privatecaptcha.com/docs/reference/eu-isolation/" target="_blank">' . esc_html__( 'EU-only endpoints', 'private-captcha' ) . '</a>'
 			) .
 		'</p>';
 	}
 
+	/**
+	 * Render custom domain field.
+	 */
 	public function custom_domain_callback(): void {
 		$value = Settings::get_custom_domain();
 		echo '<input type="text" id="custom_domain" name="private_captcha_settings[custom_domain]" value="' . esc_attr( $value ) . '" size="50" placeholder="privatecaptcha.com" />';
 		echo '<p class="description">' . esc_html__( 'Custom root domain for Private Captcha API endpoints. Leave empty to use privatecaptcha.com.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render theme field.
+	 */
 	public function theme_callback(): void {
 		$value   = Settings::get_theme();
 		$options = array(
@@ -300,6 +343,9 @@ class Admin {
 	}
 
 
+	/**
+	 * Render language field.
+	 */
 	public function language_callback(): void {
 		$value   = Settings::get_language();
 		$options = array(
@@ -324,6 +370,9 @@ class Admin {
 		echo '<p class="description">' . esc_html__( 'Language for the captcha widget interface.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render start mode field.
+	 */
 	public function start_mode_callback(): void {
 		$value   = Settings::get_start_mode();
 		$options = array(
@@ -339,6 +388,9 @@ class Admin {
 		echo '<p class="description">' . esc_html__( 'When to start the captcha challenge. "Auto" starts when user starts filling in the form.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render debug mode field.
+	 */
 	public function debug_mode_callback(): void {
 		$value = Settings::is_debug_enabled();
 		echo '<input type="checkbox" id="debug_mode" name="private_captcha_settings[debug_mode]" value="1"' . checked( $value, true, false ) . ' />';
@@ -346,18 +398,24 @@ class Admin {
 		echo '<p class="description">' . esc_html__( 'Captcha widget prints verbose logs to browser console to help with debugging.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render custom styles field.
+	 */
 	public function custom_styles_callback(): void {
 		$value = Settings::get_custom_styles();
 		echo '<textarea id="custom_styles" name="private_captcha_settings[custom_styles]" style="font-family: monospace;" cols="60" rows="3" placeholder="--border-radius: 0.25rem;">' . esc_textarea( $value ) . '</textarea>';
 		echo '<p class="description">' .
 			sprintf(
-				// translators: %s is a link to custom CSS styles documentation
+				// translators: %s is a link to custom CSS styles documentation.
 				esc_html__( '%s for the captcha widget. Leave empty to use default styles.', 'private-captcha' ),
 				'<a href="https://docs.privatecaptcha.com/docs/reference/widget-options/#data-styles" target="_blank">' . esc_html__( 'Custom CSS styles', 'private-captcha' ) . '</a>'
 			) .
 		'</p>';
 	}
 
+	/**
+	 * Render enable login field.
+	 */
 	public function enable_login_callback(): void {
 		$value = Settings::is_login_enabled();
 		echo '<input type="checkbox" id="enable_login" name="private_captcha_settings[enable_login]" value="1"' . checked( $value, true, false ) . ' />';
@@ -365,18 +423,27 @@ class Admin {
 		echo '<p class="description">' . esc_html__( 'Login can be locked out if Site Key, API key or Custom Domain become invalid. WP-CLI commands available for recovery.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render enable registration field.
+	 */
 	public function enable_registration_callback(): void {
 		$value = Settings::is_registration_enabled();
 		echo '<input type="checkbox" id="enable_registration" name="private_captcha_settings[enable_registration]" value="1"' . checked( $value, true, false ) . ' />';
 		echo '<label for="enable_registration">' . esc_html__( 'Add captcha to registration form', 'private-captcha' ) . '</label>';
 	}
 
+	/**
+	 * Render enable reset password field.
+	 */
 	public function enable_reset_password_callback(): void {
 		$value = Settings::is_reset_password_enabled();
 		echo '<input type="checkbox" id="enable_reset_password" name="private_captcha_settings[enable_reset_password]" value="1"' . checked( $value, true, false ) . ' />';
 		echo '<label for="enable_reset_password">' . esc_html__( 'Add captcha to reset password form', 'private-captcha' ) . '</label>';
 	}
 
+	/**
+	 * Render enable comments logged in field.
+	 */
 	public function enable_comments_logged_in_callback(): void {
 		$value = Settings::is_comments_logged_in_enabled();
 		echo '<input type="checkbox" id="enable_comments_logged_in" name="private_captcha_settings[enable_comments_logged_in]" value="1"' . checked( $value, true, false ) . ' />';
@@ -384,6 +451,9 @@ class Admin {
 		echo '<p class="description">' . esc_html__( 'Protect comment forms from spam for users who are logged into WordPress.', 'private-captcha' ) . '</p>';
 	}
 
+	/**
+	 * Render enable comments guest field.
+	 */
 	public function enable_comments_guest_callback(): void {
 		$value = Settings::is_comments_guest_enabled();
 		echo '<input type="checkbox" id="enable_comments_guest" name="private_captcha_settings[enable_comments_guest]" value="1"' . checked( $value, true, false ) . ' />';
@@ -391,6 +461,9 @@ class Admin {
 		echo '<p class="description">' . wp_kses( __( 'Protect comment forms from spam for visitors who are <strong>not</strong> logged into WordPress.', 'private-captcha' ), array( 'strong' => array() ) ) . '</p>';
 	}
 
+	/**
+	 * Render reset settings field.
+	 */
 	public function reset_settings_callback(): void {
 		echo '<input type="submit" name="private_captcha_reset" value="' . esc_attr__( 'Reset All Settings', 'private-captcha' ) . '" class="button button-secondary private-captcha-reset-button" formnovalidate onclick="return confirm(\'' . esc_js( __( 'Are you sure you want to reset all Private Captcha settings? This action cannot be undone.', 'private-captcha' ) ) . '\');" />';
 		echo '<p class="description" style="color: #d63638;">' . wp_kses( __( '<strong>Warning:</strong> This will reset your Private Captcha configuration to default values.', 'private-captcha' ), array( 'strong' => array() ) ) . '</p>';
@@ -410,16 +483,18 @@ class Admin {
 	}
 
 	/**
-	 * @param array<string, mixed> $input
-	 * @return array<string, mixed>
+	 * Validate and sanitize settings input.
+	 *
+	 * @param array<string, mixed> $input The input data to validate.
+	 * @return array<string, mixed> The validated and sanitized settings.
 	 */
 	public function validate_settings( array $input ): array {
 		if ( isset( $_POST['private_captcha_reset'] ) ) {
-			// Verify nonce for reset action
+			// Verify nonce for reset action.
 			if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'private_captcha_settings_group-options' ) ) {
 				wp_die( esc_html__( 'Security check failed.', 'private-captcha' ) );
 			}
-			
+
 			delete_option( 'private_captcha_settings' );
 
 			return Settings::get_default_settings();
@@ -438,7 +513,7 @@ class Admin {
 			$custom_domain = substr( $custom_domain, 7 );
 		}
 
-		// Remove well-known Private Captcha prefixes (assumed possible user error?)
+		// Remove well-known Private Captcha prefixes (assumed possible user error?).
 		if ( str_starts_with( $custom_domain, 'api.' ) ) {
 			$custom_domain = substr( $custom_domain, 4 );
 		} elseif ( str_starts_with( $custom_domain, 'cdn.' ) ) {
@@ -450,7 +525,7 @@ class Admin {
 		$custom_domain              = rtrim( ltrim( $custom_domain ), '/' );
 		$sanitized['custom_domain'] = $custom_domain;
 
-		$sanitized['eu_isolation'] = isset( $input['eu_isolation'] ) && $input['eu_isolation'] === '1';
+		$sanitized['eu_isolation'] = isset( $input['eu_isolation'] ) && '1' === $input['eu_isolation'];
 
 		$valid_themes       = array( 'light', 'dark' );
 		$sanitized['theme'] = in_array( $input['theme'], $valid_themes, true ) ? $input['theme'] : 'light';
@@ -464,20 +539,20 @@ class Admin {
 		$custom_styles = sanitize_textarea_field( $input['custom_styles'] );
 		if ( ! empty( $custom_styles ) ) {
 			$custom_styles = str_replace( array( "\r", "\n", "\t" ), ' ', $custom_styles );
-			// Collapse multiple consecutive spaces into single spaces
-			while ( strpos( $custom_styles, '  ' ) !== false ) {
+			// Collapse multiple consecutive spaces into single spaces.
+			while ( false !== strpos( $custom_styles, '  ' ) ) {
 				$custom_styles = str_replace( '  ', ' ', $custom_styles );
 			}
 			$custom_styles = trim( $custom_styles );
 		}
 		$sanitized['custom_styles'] = $custom_styles;
 
-		$sanitized['debug_mode']                = isset( $input['debug_mode'] ) && $input['debug_mode'] === '1';
-		$sanitized['enable_login']              = isset( $input['enable_login'] ) && $input['enable_login'] === '1';
-		$sanitized['enable_registration']       = isset( $input['enable_registration'] ) && $input['enable_registration'] === '1';
-		$sanitized['enable_reset_password']     = isset( $input['enable_reset_password'] ) && $input['enable_reset_password'] === '1';
-		$sanitized['enable_comments_logged_in'] = isset( $input['enable_comments_logged_in'] ) && $input['enable_comments_logged_in'] === '1';
-		$sanitized['enable_comments_guest']     = isset( $input['enable_comments_guest'] ) && $input['enable_comments_guest'] === '1';
+		$sanitized['debug_mode']                = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
+		$sanitized['enable_login']              = isset( $input['enable_login'] ) && '1' === $input['enable_login'];
+		$sanitized['enable_registration']       = isset( $input['enable_registration'] ) && '1' === $input['enable_registration'];
+		$sanitized['enable_reset_password']     = isset( $input['enable_reset_password'] ) && '1' === $input['enable_reset_password'];
+		$sanitized['enable_comments_logged_in'] = isset( $input['enable_comments_logged_in'] ) && '1' === $input['enable_comments_logged_in'];
+		$sanitized['enable_comments_guest']     = isset( $input['enable_comments_guest'] ) && '1' === $input['enable_comments_guest'];
 
 		if ( empty( $sanitized['api_key'] ) ) {
 			add_settings_error(
@@ -497,13 +572,13 @@ class Admin {
 			);
 		}
 
-		// Warning for stub/test sitekey
-		if ( $sanitized['sitekey'] === 'aaaaaaaabbbbccccddddeeeeeeeeeeee' ) {
+		// Warning for stub/test sitekey.
+		if ( 'aaaaaaaabbbbccccddddeeeeeeeeeeee' === $sanitized['sitekey'] ) {
 			add_settings_error(
 				'private_captcha_settings',
 				'stub_sitekey_warning',
 				sprintf(
-					// translators: %s is a link to the Private Captcha portal
+					// translators: %s is a link to the Private Captcha portal.
 					__( 'Demo site key is active. For live sites, please use a real site key from %s.', 'private-captcha' ),
 					'<a href="https://portal.privatecaptcha.com" target="_blank">Private Captcha portal</a>'
 				),
@@ -518,7 +593,7 @@ class Admin {
 			$sanitized['enable_comments_guest'];
 		$settings_valid       = false;
 
-		// Test settings if form integrations are enabled
+		// Test settings if form integrations are enabled.
 		if ( $any_form_integration && ! empty( $sanitized['api_key'] ) && ! empty( $sanitized['sitekey'] ) ) {
 			try {
 				$client         = new Client( $sanitized['api_key'], $sanitized['custom_domain'], $sanitized['eu_isolation'] );
@@ -537,7 +612,7 @@ class Admin {
 			}
 		}
 
-		// Disable form integrations to prevent lockout
+		// Disable form integrations to prevent lockout.
 		if ( ! $settings_valid ) {
 			$sanitized['enable_login']              = false;
 			$sanitized['enable_registration']       = false;
@@ -550,11 +625,11 @@ class Admin {
 	}
 
 	/**
-	 * Show admin notice when plugin is not configured
+	 * Show admin notice when plugin is not configured.
 	 */
 	public function show_configuration_notice(): void {
 		$screen = get_current_screen();
-		if ( $screen && $screen->base === 'settings_page_private-captcha' ) {
+		if ( $screen && 'settings_page_private-captcha' === $screen->base ) {
 			return;
 		}
 
@@ -572,7 +647,7 @@ class Admin {
 		echo '<p>';
 		printf(
 			wp_kses(
-				// translators: %s is the URL to the settings page
+				// translators: %s is the URL to the settings page.
 				__( '<strong>Private Captcha</strong> is installed but <strong>not configured</strong>. Please <a href="%s">configure your API Key and Site Key</a> to start protecting your forms.', 'private-captcha' ),
 				array(
 					'strong' => array(),
