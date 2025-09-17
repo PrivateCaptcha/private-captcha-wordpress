@@ -46,6 +46,10 @@ jobs:
       run: make analyze
       working-directory: private-captcha
 
+    - name: Check WordPress coding standards
+      run: make wpcs
+      working-directory: private-captcha
+
     - name: Install latest version of dist-archive-command
       run: wp package install wp-cli/dist-archive-command:@stable
 
