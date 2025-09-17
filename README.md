@@ -1,6 +1,6 @@
 # Private Captcha WordPress Plugin
 
-A WordPress plugin that integrates Private Captcha with WordPress forms for enhanced security.
+![CI](https://github.com/PrivateCaptcha/private-captcha-wordpress/actions/workflows/ci.yaml/badge.svg)
 
 ## Features
 
