@@ -17,7 +17,7 @@ on:
       - main
 
 jobs:
-  test-and-build:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,7 +32,6 @@ jobs:
         php-version: ${{ matrix.php-version }}
         extensions: mbstring, xml, ctype, json, tokenizer
         coverage: none
-        tools: wp-cli
 
     - name: Install dependencies
       run: make install-dev
@@ -50,19 +49,35 @@ jobs:
       run: make wpcs
       working-directory: private-captcha
 
+  package:
+    runs-on: ubuntu-latest
+    needs: lint
+    if: success()
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        coverage: none
+        tools: wp-cli
+
+    - name: Install dependencies
+      run: make install
+      working-directory: private-captcha
+
+    - name: Run plugin check
+      uses: wordpress/plugin-check-action@v1
+      with:
+        build-dir: './private-captcha'
+
     - name: Install latest version of dist-archive-command
       run: wp package install wp-cli/dist-archive-command:@stable
 
     - name: Build plugin
       run: |
         wp dist-archive ./private-captcha ./private-captcha.zip
-        mkdir tmp-build
-        unzip private-captcha.zip -d tmp-build
-
-    - name: Run plugin check
-      uses: wordpress/plugin-check-action@v1
-      with:
-        build-dir: './tmp-build/private-captcha'
 
     - uses: actions/upload-artifact@v4
       with:
