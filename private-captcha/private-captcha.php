@@ -1,7 +1,6 @@
 <?php
 /**
  * Plugin Name: Private Captcha
- * Plugin URI: https://privatecaptcha.com
  * Description: Private Captcha protects your WordPress website from spam and abuse with a privacy-first, independent CAPTCHA solution made in EU.
  * Version: 1.0.0
  * Author: Intmaker OÜ
