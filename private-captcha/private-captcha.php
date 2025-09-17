@@ -30,8 +30,6 @@ define( 'PRIVATE_CAPTCHA_PLUGIN_FILE', __FILE__ );
 // Load Composer autoloader.
 require_once PRIVATE_CAPTCHA_PLUGIN_DIR . 'vendor/autoload.php';
 
-require_once PRIVATE_CAPTCHA_PLUGIN_DIR . 'includes/settings.php';
-
 /**
  * Main plugin class.
  */

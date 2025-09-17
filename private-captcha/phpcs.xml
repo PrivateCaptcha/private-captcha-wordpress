@@ -3,6 +3,7 @@
     <rule ref="WordPress">
         <!-- Exclude the class filename rule -->
         <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
         <exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
     </rule>
 </ruleset>
