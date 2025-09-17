@@ -1,4 +1,4 @@
-=== Private Captcha for WordPress ===
+=== Private Captcha ===
 Contributors: privatecaptcha
 Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
@@ -8,7 +8,7 @@ Stable tag: 1.0.0
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
-Integrates Private Captcha with WordPress forms for enhanced security and spam protection.
+Private Captcha protects your WordPress website from spam and abuse with a privacy-first, independent CAPTCHA solution made in EU.
 
 == Description ==
 
