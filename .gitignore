@@ -1,48 +1,54 @@
-# Wordpress - ignore core, configuration, examples, uploads and logs.
-# https://github.com/github/gitignore/blob/main/WordPress.gitignore
 
-# Core
-#
-# Note: if you want to stage/commit WP core files
-# you can delete this whole section/until Configuration.
-/wp-admin/
-/wp-content/index.php
-/wp-content/languages
-/wp-content/plugins/index.php
-/wp-content/themes/index.php
-/wp-includes/
-/index.php
-/license.txt
-/readme.html
-/wp-*.php
-/xmlrpc.php
+# Composer
+/private-captcha/vendor/
+/private-captcha/composer.lock
 
-# Configuration
-wp-config.php
+# PHP CS Fixer
+/private-captcha/.php-cs-fixer.cache
 
-# Example themes
-/wp-content/themes/twenty*/
+# PHPUnit
+/private-captcha/.phpunit.result.cache
+/private-captcha/coverage/
 
-# Example plugin
-/wp-content/plugins/hello.php
+# PHPStan
+/private-captcha/.phpstan.cache
 
-# Uploads
-/wp-content/uploads/
+# Distribution builds
+/private-captcha/dist/
 
-# Log files
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker volumes (if using Docker for development)
+wordpress_data/
+db_data/
+
+# Development logs
 *.log
 
-# htaccess
-/.htaccess
+# Aider
+.aider*
 
-# All plugins
-#
-# Note: If you wish to whitelist plugins,
-# uncomment the next line
-#/wp-content/plugins
+.aicodeprep-gui
+fullcode.txt
 
-# All themes
-#
-# Note: If you wish to whitelist themes,
-# uncomment the next line
-#/wp-content/themes
+# WordPress development environment files (if testing full WP install)
+wp-config.php
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/cache/
+
+.env

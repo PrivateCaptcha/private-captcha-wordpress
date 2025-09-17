@@ -1,0 +1,12 @@
+parameters:
+    level: 8
+    paths:
+        - .
+    ignoreErrors:
+        - '#Function wp_debug_log not found#'
+    excludePaths:
+        - vendor/
+
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+

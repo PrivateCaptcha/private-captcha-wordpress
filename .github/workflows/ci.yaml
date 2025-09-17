@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - '**'
+    paths-ignore:
+    - 'docs/**'
+    - '**.md'
+    - '**/.*.yml'
+    - '.vscode/**'
+    tags-ignore:
+    - '*'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.4']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up PHP ${{ matrix.php-version }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, ctype, json, tokenizer
+        coverage: none
+        tools: wp-cli
+
+    - name: Install dependencies
+      run: make install-dev
+      working-directory: private-captcha
+
+    - name: Lint code
+      run: make lint
+      working-directory: private-captcha
+
+    - name: Analyze code
+      run: make analyze
+      working-directory: private-captcha
+
+    - name: Install latest version of dist-archive-command
+      run: wp package install wp-cli/dist-archive-command:@stable
+
+    - name: Build plugin
+      run: |
+        wp dist-archive ./private-captcha ./private-captcha.zip
+        mkdir tmp-build
+        unzip private-captcha.zip -d tmp-build
+
+    - name: Run plugin check
+      uses: wordpress/plugin-check-action@v1
+      with:
+        build-dir: './tmp-build/private-captcha'
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: private-captcha
+        path: private-captcha.zip
+        retention-days: 7
