@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: mariadb:10.11
+    image: mariadb:12.0
     environment:
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpress
