@@ -23,6 +23,60 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_notices', array( $this, 'show_configuration_notice' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+	}
+
+	/**
+	 * Enqueue admin scripts and styles.
+	 *
+	 * @param string $hook_suffix The current admin page.
+	 */
+	public function enqueue_admin_scripts( string $hook_suffix ): void {
+		// The hook_suffix for our page is settings_page_private-captcha.
+		if ( 'settings_page_private-captcha' !== $hook_suffix ) {
+			return;
+		}
+
+		$css = '
+            #private_captcha_advanced { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+            .required { color: #d63638; }
+            .private-captcha-reset-button {
+                background-color: #d63638 !important;
+                border-color: #d63638 !important;
+                color: #fff !important;
+            }
+            .private-captcha-reset-button:hover,
+            .private-captcha-reset-button:focus {
+                background-color: #b32d2e !important;
+                border-color: #b32d2e !important;
+                color: #fff !important;
+            }
+		';
+		wp_register_style( 'private-captcha-admin-inline', false, array(), PRIVATE_CAPTCHA_VERSION );
+		wp_enqueue_style( 'private-captcha-admin-inline' );
+		wp_add_inline_style( 'private-captcha-admin-inline', trim( $css ) );
+
+		$js = '
+		(function() {
+            function setupAdminPrivateCaptcha() {
+                var resetButton = document.querySelector(".private-captcha-reset-button");
+                if (resetButton) {
+                    resetButton.addEventListener("click", function(event) {
+                        if (!confirm("' . esc_js( __( 'Are you sure you want to reset all Private Captcha settings? This action cannot be undone.', 'private-captcha' ) ) . '")) {
+                            event.preventDefault();
+                        }
+                    });
+                 }
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", setupAdminPrivateCaptcha);
+            } else {
+                setupAdminPrivateCaptcha();
+            }
+		})();
+		';
+		wp_add_inline_script( 'common', trim( $js ) );
 	}
 
 	/**
@@ -270,10 +324,6 @@ class Admin {
 	 */
 	public function advanced_section_callback(): void {
 		echo '<p>' . esc_html__( 'Advanced configuration options. Not recommended to change by default.', 'private-captcha' ) . '</p>';
-		echo '<style>
-			#private_captcha_advanced { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
-			.required { color: #d63638; }
-		</style>';
 	}
 
 	/**
@@ -465,21 +515,8 @@ class Admin {
 	 * Render reset settings field.
 	 */
 	public function reset_settings_callback(): void {
-		echo '<input type="submit" name="private_captcha_reset" value="' . esc_attr__( 'Reset All Settings', 'private-captcha' ) . '" class="button button-secondary private-captcha-reset-button" formnovalidate onclick="return confirm(\'' . esc_js( __( 'Are you sure you want to reset all Private Captcha settings? This action cannot be undone.', 'private-captcha' ) ) . '\');" />';
+		echo '<input type="submit" name="private_captcha_reset" value="' . esc_attr__( 'Reset All Settings', 'private-captcha' ) . '" class="button button-secondary private-captcha-reset-button" formnovalidate />';
 		echo '<p class="description" style="color: #d63638;">' . wp_kses( __( '<strong>Warning:</strong> This will reset your Private Captcha configuration to default values.', 'private-captcha' ), array( 'strong' => array() ) ) . '</p>';
-		echo '<style>
-			.private-captcha-reset-button {
-				background-color: #d63638 !important;
-				border-color: #d63638 !important;
-				color: #fff !important;
-			}
-			.private-captcha-reset-button:hover,
-			.private-captcha-reset-button:focus {
-				background-color: #b32d2e !important;
-				border-color: #b32d2e !important;
-				color: #fff !important;
-			}
-		</style>';
 	}
 
 	/**

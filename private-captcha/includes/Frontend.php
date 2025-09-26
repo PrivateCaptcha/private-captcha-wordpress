@@ -96,6 +96,49 @@ class Frontend {
 		);
 
 		add_filter( 'script_loader_tag', array( $this, 'add_defer_to_captcha_script' ), 10, 3 );
+
+		$custom_css = '
+            .private-captcha {
+                margin: 1rem 0;
+            }
+            input[type="submit"]:disabled,
+            button[type="submit"]:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+        ';
+		wp_register_style( 'private-captcha-inline-style', false, array(), PRIVATE_CAPTCHA_VERSION );
+		wp_enqueue_style( 'private-captcha-inline-style' );
+		wp_add_inline_style( 'private-captcha-inline-style', trim( $custom_css ) );
+
+		$custom_js = '
+        (function() {
+            function setFormButtonEnabled(captchaElement, enabled) {
+                const form = captchaElement.closest("form");
+                if (!form) return;
+                const submitButton = form.querySelector("input[type=\"submit\"], button[type=\"submit\"]");
+                if (submitButton) {
+                    submitButton.disabled = !enabled;
+                }
+            }
+
+            function setupPagePrivateCaptcha() {
+                document.querySelectorAll(".private-captcha").forEach((e) => setFormButtonEnabled(e, false));
+
+                document.querySelectorAll(".private-captcha").forEach(function(currentWidget) {
+                    currentWidget.addEventListener("privatecaptcha:init", (event) => setFormButtonEnabled(event.detail.element, false));
+                    currentWidget.addEventListener("privatecaptcha:finish", (event) => setFormButtonEnabled(event.detail.element, true));
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", setupPagePrivateCaptcha);
+            } else {
+                setupPagePrivateCaptcha();
+            }
+        })();
+        ';
+		wp_add_inline_script( 'private-captcha-widget', trim( $custom_js ) );
 	}
 
 	/**
@@ -203,60 +246,22 @@ class Frontend {
 			$attributes[] = 'data-styles="' . esc_attr( $effective_styles ) . '"';
 		}
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<div ' . implode( ' ', $attributes ) . '></div>';
-
-		// Add custom CSS for better integration.
 		$allowed_html = array(
-			'style' => array(),
-		);
-		echo wp_kses(
-			'<style>
-            .private-captcha {
-                margin: 1rem 0;
-            }
-            input[type="submit"]:disabled,
-            button[type="submit"]:disabled {
-                opacity: 0.7;
-                cursor: not-allowed;
-            }
-        </style>',
-			$allowed_html
+			'div' => array(
+				'class'                => array(),
+				'data-sitekey'         => array(),
+				'data-theme'           => array(),
+				'data-display-mode'    => array(),
+				'data-start-mode'      => array(),
+				'data-lang'            => array(),
+				'data-debug'           => array(),
+				'data-puzzle-endpoint' => array(),
+				'data-eu'              => array(),
+				'data-styles'          => array(),
+			),
 		);
 
-		$allowed_html = array(
-			'script' => array(),
-		);
-		echo wp_kses(
-			'<script>
-        (function() {
-            function setFormButtonEnabled(captchaElement, enabled) {
-                const form = captchaElement.closest("form");
-                if (!form) return;
-                const submitButton = form.querySelector("input[type=\"submit\"], button[type=\"submit\"]");
-                if (submitButton) {
-                    submitButton.disabled = !enabled;
-                }
-            }
-
-            function setupPagePrivateCaptcha() {
-                document.querySelectorAll(".private-captcha").forEach((e) => setFormButtonEnabled(e, false));
-
-                document.querySelectorAll(".private-captcha").forEach(function(currentWidget) {
-                    currentWidget.addEventListener("privatecaptcha:init", (event) => setFormButtonEnabled(event.detail.element, false));
-                    currentWidget.addEventListener("privatecaptcha:finish", (event) => setFormButtonEnabled(event.detail.element, true));
-                });
-            }
-
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", setupPagePrivateCaptcha);
-            } else {
-                setupPagePrivateCaptcha();
-            }
-        })();
-        </script>',
-			$allowed_html
-		);
+		echo wp_kses( '<div ' . implode( ' ', $attributes ) . '></div>', $allowed_html );
 	}
 
 	/**

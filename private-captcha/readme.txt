@@ -36,6 +36,14 @@ Private Captcha WordPress Plugin integrates Private Captcha with your WordPress 
 5. Enable desired form integrations
 6. Customize widget appearance as needed
 
+== External services ==
+
+This plugin uses [Private Captcha](https://privatecaptcha.com) API to request and verify captcha challenges and their solutions, when protection is enabled on user-configured forms.
+
+When solving of the captcha widget challenge begins, a new challenge is requested from Private Captcha API. When submitting the relevant form (e.g. Comment Form or Login Form), challenge solution is sent to Private Captcha API.
+
+During requesting challenges or verifying solutions, no Personal Data (within meaning of Art. 4 (1) GDPR) is neither collected, nor sent. Check all relevant information in the Private Captcha's [Privacy Policy](https://privatecaptcha.com/legal/privacy/).
+
 == Frequently Asked Questions ==
 
 = Do I need a Private Captcha account? =
