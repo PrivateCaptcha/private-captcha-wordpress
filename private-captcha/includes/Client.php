@@ -18,7 +18,7 @@ use PrivateCaptcha\Exceptions\PrivateCaptchaException;
  *
  * @param mixed $data logging data.
  */
-function write_log( $data ) {
+function write_log( $data ): void {
 	// add error_log function here for debugging.
 }
 
