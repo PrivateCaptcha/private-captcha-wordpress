@@ -37,7 +37,6 @@ class Frontend {
 				);
 				$this->init_hooks();
 			} catch ( \PrivateCaptcha\Exceptions\PrivateCaptchaException $e ) {
-				wp_debug_log( 'Private Captcha Frontend initialization failed: ' . $e->getMessage() );
 				return;
 			}
 		}
@@ -222,6 +221,7 @@ class Frontend {
 
 		$attributes = array(
 			'class="private-captcha"',
+			'data-solution-field="' . esc_attr( Client::FORM_FIELD ) . '"',
 			'data-sitekey="' . esc_attr( $sitekey ) . '"',
 			'data-theme="' . esc_attr( $theme ) . '"',
 			'data-display-mode="widget"',
@@ -250,6 +250,7 @@ class Frontend {
 			'div' => array(
 				'class'                => array(),
 				'data-sitekey'         => array(),
+				'data-solution-field'  => array(),
 				'data-theme'           => array(),
 				'data-display-mode'    => array(),
 				'data-start-mode'      => array(),
@@ -288,7 +289,9 @@ class Frontend {
 			);
 		}
 
-		if ( ! $this->client->verify_request() ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
+		$solution = sanitize_text_field( wp_unslash( $_POST[ Client::FORM_FIELD ] ?? '' ) );
+		if ( ! $this->client->verify_solution( $solution ) ) {
 			return new WP_Error(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
@@ -322,7 +325,9 @@ class Frontend {
 			return $errors;
 		}
 
-		if ( ! $this->client->verify_request() ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
+		$solution = sanitize_text_field( wp_unslash( $_POST[ Client::FORM_FIELD ] ?? '' ) );
+		if ( ! $this->client->verify_solution( $solution ) ) {
 			$errors->add(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
@@ -346,7 +351,9 @@ class Frontend {
 			return;
 		}
 
-		if ( ! $this->client->verify_request() ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
+		$solution = sanitize_text_field( wp_unslash( $_POST[ Client::FORM_FIELD ] ?? '' ) );
+		if ( ! $this->client->verify_solution( $solution ) ) {
 			$errors->add(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
@@ -385,7 +392,9 @@ class Frontend {
 			);
 		}
 
-		if ( ! $this->client->verify_request() ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
+		$solution = sanitize_text_field( wp_unslash( $_POST[ Client::FORM_FIELD ] ?? '' ) );
+		if ( ! $this->client->verify_solution( $solution ) ) {
 			wp_die(
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ),
 				esc_html__( 'Comment Submission Error', 'private-captcha' ),

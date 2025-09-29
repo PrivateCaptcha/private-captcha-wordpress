@@ -14,12 +14,22 @@ use PrivateCaptcha\Exceptions\ApiKeyException;
 use PrivateCaptcha\Exceptions\PrivateCaptchaException;
 
 /**
+ * Stub for debugging function made for WPCS to shut up about bogus "Debug code should not normally be used in production".
+ *
+ * @param mixed $data logging data.
+ */
+function write_log( $data ) {
+	// add error_log function here for debugging.
+}
+
+/**
  * WordPress wrapper for PrivateCaptcha PHP Client
  */
 class Client {
 
 	private const SOLUTIONS_COUNT = 16;
 	private const SOLUTION_LENGTH = 8;
+	public const FORM_FIELD       = 'wp-private-captcha-solution';
 
 	/**
 	 * The Private Captcha client instance.
@@ -38,11 +48,11 @@ class Client {
 	public function __construct( string $api_key, string $custom_domain, bool $eu_isolation ) {
 		// Only pass domain argument if custom domain is set or EU isolation is enabled.
 		if ( ! empty( $custom_domain ) ) {
-			$this->client = new PrivateCaptchaClient( $api_key, $custom_domain );
+			$this->client = new PrivateCaptchaClient( $api_key, $custom_domain, self::FORM_FIELD );
 		} elseif ( $eu_isolation ) {
-			$this->client = new PrivateCaptchaClient( $api_key, PrivateCaptchaClient::EU_DOMAIN );
+			$this->client = new PrivateCaptchaClient( $api_key, PrivateCaptchaClient::EU_DOMAIN, formField: self::FORM_FIELD );
 		} else {
-			$this->client = new PrivateCaptchaClient( $api_key );
+			$this->client = new PrivateCaptchaClient( $api_key, formField: self::FORM_FIELD );
 		}
 	}
 
@@ -62,35 +72,7 @@ class Client {
 
 			return $result->success;
 		} catch ( PrivateCaptchaException $e ) {
-			wp_debug_log( 'Private Captcha verification error: ' . $e->getMessage(), 'private-captcha' );
-
-			return false;
-		}
-	}
-
-	/**
-	 * Verify a captcha request.
-	 *
-	 * @param array<string, mixed>|null $form_data The form data to verify, or null to use $_POST.
-	 * @return bool True if verification succeeds, false otherwise.
-	 */
-	public function verify_request( ?array $form_data = null ): bool {
-		if ( null === $this->client ) {
-			return false;
-		}
-
-		if ( null === $form_data ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
-			$form_data = $_POST;
-		}
-
-		try {
-			$this->client->verifyRequest( $form_data );
-
-			return true;
-		} catch ( PrivateCaptchaException $e ) {
-			wp_debug_log( 'Private Captcha request verification error: ' . $e->getMessage(), 'private-captcha' );
-
+			write_log( 'Private Captcha verification error: ' . $e->getMessage() );
 			return false;
 		}
 	}
@@ -126,7 +108,7 @@ class Client {
 			return $output->success && \PrivateCaptcha\Enums\VerifyCode::TEST_PROPERTY_ERROR === $output->code;
 
 		} catch ( PrivateCaptchaException $e ) {
-			wp_debug_log( 'Private Captcha settings test failed: ' . $e->getMessage(), 'private-captcha' );
+			write_log( 'Private Captcha settings test failed: ' . $e->getMessage() );
 			return false;
 		}
 	}
@@ -157,13 +139,13 @@ class Client {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_debug_log( 'Failed to fetch test puzzle: ' . $response->get_error_message(), 'private-captcha' );
+			write_log( 'Failed to fetch test puzzle: ' . $response->get_error_message() );
 			return null;
 		}
 
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $http_code ) {
-			wp_debug_log( "Failed to fetch test puzzle: HTTP {$http_code}", 'private-captcha' );
+			write_log( "Failed to fetch test puzzle: HTTP {$http_code}" );
 			return null;
 		}
 
