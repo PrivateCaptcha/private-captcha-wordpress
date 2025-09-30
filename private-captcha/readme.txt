@@ -1,10 +1,10 @@
 === Private Captcha ===
-Contributors: privatecaptcha
+Contributors: ribtoks
 Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -57,6 +57,9 @@ Use WP-CLI commands to recover access:
 * `wp private-captcha disable-login`
 
 == Changelog ==
+
+= 1.0.3 =
+* Updated contributors list
 
 = 1.0.2 =
 * Fix cosmetic review comments
