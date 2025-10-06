@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Private Captcha
  * Description: Private Captcha protects your WordPress website from spam and abuse with a privacy-first, independent CAPTCHA solution made in EU.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Intmaker OÜ
  * Author URI: https://privatecaptcha.com
  * License: MIT
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'PRIVATE_CAPTCHA_VERSION', '1.0.3' );
+define( 'PRIVATE_CAPTCHA_VERSION', '1.0.4' );
 define( 'PRIVATE_CAPTCHA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PRIVATE_CAPTCHA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'PRIVATE_CAPTCHA_PLUGIN_FILE', __FILE__ );
