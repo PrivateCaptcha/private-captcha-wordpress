@@ -1,0 +1,8 @@
+docker/
+.github/
+**/*.md
+private-captcha/composer.lock
+private-captcha/composer.json
+private-captcha/Makefile
+private-captcha/phpstan.neon
+private-captcha/phpcs.xml
