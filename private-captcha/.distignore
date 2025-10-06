@@ -1,0 +1,12 @@
+vendor/*/.github/
+vendor/*/tests/
+.git/                                                                                                                                                      
+.github/
+*.md
+composer.lock
+composer.json
+.gitignore
+.DS_Store
+*.sql
+*.tar.gz
+*.zip
