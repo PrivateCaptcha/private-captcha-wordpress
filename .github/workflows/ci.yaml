@@ -72,7 +72,7 @@ jobs:
       with:
         build-dir: './private-captcha'
         exclude-files: |
-          ./private-captcha/.distignore
+          .distignore
 
     - name: Install latest version of dist-archive-command
       run: wp package install wp-cli/dist-archive-command:@stable
