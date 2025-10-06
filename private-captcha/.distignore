@@ -1,0 +1,6 @@
+*.md
+composer.lock
+composer.json
+Makefile
+phpstan.neon
+phpcs.xml
