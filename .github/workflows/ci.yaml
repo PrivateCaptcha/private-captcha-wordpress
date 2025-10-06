@@ -71,6 +71,8 @@ jobs:
       uses: wordpress/plugin-check-action@v1
       with:
         build-dir: './private-captcha'
+        exclude-files: |
+          ./private-captcha/.distignore
 
     - name: Install latest version of dist-archive-command
       run: wp package install wp-cli/dist-archive-command:@stable
