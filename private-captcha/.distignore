@@ -6,6 +6,7 @@ vendor/*/tests/
 composer.lock
 composer.json
 .gitignore
+.distignore
 .DS_Store
 *.sql
 *.tar.gz
