@@ -1,8 +1,8 @@
 docker/ export-ignore
 .github/ export-ignore
-*.md export-ignore
-composer.lock export-ignore
-composer.json export-ignore
-Makefile export-ignore
-phpstan.neon export-ignore
-phpcs.xml export-ignore
+**/*.md export-ignore
+private-captcha/composer.lock export-ignore
+private-captcha/composer.json export-ignore
+private-captcha/Makefile export-ignore
+private-captcha/phpstan.neon export-ignore
+private-captcha/phpcs.xml export-ignore
