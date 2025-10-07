@@ -82,13 +82,14 @@ class Client {
 	 * NOTE: Theoretically we actually CAN "succeed" this even if settings are
 	 * invalid due to "eventual" verification nature of /verify endpoint.
 	 *
-	 * @param string $sitekey The site key to test.
 	 * @return bool True if settings are valid, false otherwise.
 	 */
-	public function test_current_settings( string $sitekey ): bool {
+	public function test_current_settings(): bool {
 		if ( null === $this->client ) {
 			return false;
 		}
+
+		$sitekey = 'aaaaaaaabbbbccccddddeeeeeeeeeeee';
 
 		try {
 			// Fetch test puzzle.

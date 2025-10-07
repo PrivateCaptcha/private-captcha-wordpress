@@ -634,7 +634,7 @@ class Admin {
 		if ( $any_form_integration && ! empty( $sanitized['api_key'] ) && ! empty( $sanitized['sitekey'] ) ) {
 			try {
 				$client         = new Client( $sanitized['api_key'], $sanitized['custom_domain'], $sanitized['eu_isolation'] );
-				$settings_valid = $client->test_current_settings( $sanitized['sitekey'] );
+				$settings_valid = $client->test_current_settings();
 			} catch ( PrivateCaptchaException $e ) {
 				wp_debug_log( 'Private Captcha settings test error: ' . $e->getMessage() );
 			}
