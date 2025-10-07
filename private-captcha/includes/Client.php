@@ -20,6 +20,7 @@ use PrivateCaptcha\Exceptions\PrivateCaptchaException;
  */
 function write_log( $data ): void {
 	// add error_log function here for debugging.
+    error_log($data);
 }
 
 /**
