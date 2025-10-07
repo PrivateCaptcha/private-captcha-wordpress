@@ -12,7 +12,6 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DEBUG: 1
     volumes:
-      - ../private-captcha:/var/www/html/wp-content/plugins/private-captcha
       - ./wp-config-additions.php:/var/www/html/wp-content/mu-plugins/auto-config.php
       - wordpress_data:/var/www/html
     depends_on:

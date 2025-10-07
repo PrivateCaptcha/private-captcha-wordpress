@@ -10,6 +10,9 @@ dist: clean-dist
 	@echo "Distribution package created: dist/private-captcha-wordpress.zip"
 
 run-docker:
+	@docker compose -f docker/docker-compose.yml -f docker/docker-compose.privatecaptcha.yml up --build
+
+run-docker-empty:
 	@docker compose -f docker/docker-compose.yml up --build
 
 clean-docker:
