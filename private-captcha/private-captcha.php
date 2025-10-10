@@ -42,6 +42,20 @@ class PrivateCaptchaWordPress {
 	private static ?PrivateCaptchaWordPress $instance = null;
 
 	/**
+	 * The Private Captcha client instance.
+	 *
+	 * @var PrivateCaptchaWP\Client
+	 */
+	private PrivateCaptchaWP\Client $client;
+
+	/**
+	 * The Integrations instance.
+	 *
+	 * @var PrivateCaptchaWP\Client
+	 */
+	private PrivateCaptchaWP\Integrations $integrations;
+
+	/**
 	 * Get singleton instance.
 	 *
 	 * @return PrivateCaptchaWordPress
@@ -70,17 +84,35 @@ class PrivateCaptchaWordPress {
 		// Add plugin action links.
 		add_filter( 'plugin_action_links_' . plugin_basename( PRIVATE_CAPTCHA_PLUGIN_FILE ), array( $this, 'plugin_action_links' ) );
 
+		// Initialize the client.
+		$this->init_client();
+
+		// Initialize integrations manager.
+		$this->integrations = new PrivateCaptchaWP\Integrations( $this->client );
+
 		// Initialize admin interface.
 		if ( is_admin() ) {
-			new PrivateCaptchaWP\Admin();
+			new PrivateCaptchaWP\Admin( $this->client, $this->integrations );
 		}
-
-		// Initialize frontend functionality.
-		new PrivateCaptchaWP\Frontend();
 
 		// Initialize WP-CLI commands.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			new PrivateCaptchaWP\CLI();
+		}
+	}
+
+	/**
+	 * Initialize the Private Captcha client.
+	 */
+	private function init_client(): void {
+		$this->client = new PrivateCaptchaWP\Client();
+
+		if ( PrivateCaptchaWP\Settings::is_configured() ) {
+			$this->client->update(
+				PrivateCaptchaWP\Settings::get_api_key(),
+				PrivateCaptchaWP\Settings::get_custom_domain(),
+				PrivateCaptchaWP\Settings::is_eu_isolation_enabled()
+			);
 		}
 	}
 

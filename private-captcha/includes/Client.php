@@ -40,20 +40,50 @@ class Client {
 
 	/**
 	 * Constructor to initialize the Private Captcha client.
+	 */
+	public function __construct() {
+		$this->client = null;
+	}
+
+	/**
+	 * Initialize or reinitialize the internal Private Captcha client.
 	 *
 	 * @param string $api_key      The API key for authentication.
 	 * @param string $custom_domain The custom domain to use.
 	 * @param bool   $eu_isolation  Whether to use EU isolation.
 	 */
-	public function __construct( string $api_key, string $custom_domain, bool $eu_isolation ) {
-		// Only pass domain argument if custom domain is set or EU isolation is enabled.
-		if ( ! empty( $custom_domain ) ) {
-			$this->client = new PrivateCaptchaClient( $api_key, $custom_domain, self::FORM_FIELD );
-		} elseif ( $eu_isolation ) {
-			$this->client = new PrivateCaptchaClient( $api_key, PrivateCaptchaClient::EU_DOMAIN, formField: self::FORM_FIELD );
-		} else {
-			$this->client = new PrivateCaptchaClient( $api_key, formField: self::FORM_FIELD );
+	public function update( string $api_key, string $custom_domain, bool $eu_isolation ): void {
+		try {
+			// Only pass domain argument if custom domain is set or EU isolation is enabled.
+			if ( ! empty( $custom_domain ) ) {
+				$this->client = new PrivateCaptchaClient( $api_key, $custom_domain, self::FORM_FIELD );
+			} elseif ( $eu_isolation ) {
+				$this->client = new PrivateCaptchaClient( $api_key, PrivateCaptchaClient::EU_DOMAIN, formField: self::FORM_FIELD );
+			} else {
+				$this->client = new PrivateCaptchaClient( $api_key, formField: self::FORM_FIELD );
+			}
+			write_log( 'Private Captcha client has been constructed' );
+		} catch ( \PrivateCaptcha\Exceptions\PrivateCaptchaException $e ) {
+			$this->client = null;
+			return;
 		}
+	}
+
+	/**
+	 * Reset the client so we cannot perform any actions
+	 */
+	public function reset(): void {
+		$this->client = null;
+		write_log( 'Private Captcha client has been reset' );
+	}
+
+	/**
+	 * Check if the client is functional
+	 *
+	 * @return bool True if client is functional, false otherwise.
+	 */
+	public function is_available(): bool {
+		return $this->client != null;
 	}
 
 	/**

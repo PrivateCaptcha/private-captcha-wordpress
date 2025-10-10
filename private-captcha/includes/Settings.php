@@ -195,6 +195,15 @@ class Settings {
 	}
 
 	/**
+	 * Check if WPForms captcha is enabled.
+	 *
+	 * @return bool True if WPForms captcha is enabled.
+	 */
+	public static function is_wpforms_enabled(): bool {
+		return (bool) self::get_option( 'enable_wpforms', false );
+	}
+
+	/**
 	 * Check if the plugin is properly configured.
 	 *
 	 * @return bool True if API key and site key are both set.
@@ -227,6 +236,7 @@ class Settings {
 			'enable_reset_password'     => false,
 			'enable_comments_logged_in' => false,
 			'enable_comments_guest'     => false,
+			'enable_wpforms'            => false,
 		);
 	}
 }

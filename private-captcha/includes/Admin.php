@@ -17,9 +17,27 @@ use PrivateCaptcha\Exceptions\PrivateCaptchaException;
 class Admin {
 
 	/**
-	 * Constructor to initialize admin hooks.
+	 * Reference to the Private Captcha client instance.
+	 *
+	 * @var Client
 	 */
-	public function __construct() {
+	private Client $client;
+
+	/**
+	 * Reference to the Integrations instance.
+	 *
+	 * @var Integrations
+	 */
+	private Integrations $integrations;
+	/**
+	 * Constructor to initialize admin hooks.
+	 *
+	 * @param Client $client Private Captcha client instance.
+	 */
+	public function __construct( Client $client, Integrations $integrations ) {
+		$this->client       = $client;
+		$this->integrations = $integrations;
+
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_notices', array( $this, 'show_configuration_notice' ) );
@@ -172,6 +190,14 @@ class Admin {
 			'private_captcha_forms'
 		);
 
+		add_settings_field(
+			'enable_wpforms',
+			__( 'WPForms plugin', 'private-captcha' ),
+			array( $this, 'enable_wpforms_callback' ),
+			'private-captcha',
+			'private_captcha_forms'
+		);
+
 		add_settings_section(
 			'private_captcha_widget',
 			__( 'Widget', 'private-captcha' ),
@@ -274,7 +300,7 @@ class Admin {
 							),
 						)
 					),
-					'https://docs.privatecaptcha.com',
+					'https://docs.privatecaptcha.com/docs/integrations/wordpress/',
 					'https://portal.privatecaptcha.com/support'
 				);
 				?>
@@ -512,6 +538,24 @@ class Admin {
 	}
 
 	/**
+	 * Render enable WPForms field.
+	 */
+	public function enable_wpforms_callback(): void {
+		$value = Settings::is_wpforms_enabled();
+		echo '<input type="checkbox" id="enable_wpforms" name="private_captcha_settings[enable_wpforms]" value="1"' . checked( $value, true, false ) . ' />';
+		echo '<label for="enable_wpforms">' . esc_html__( 'Add captcha to forms created with WPForms plugin', 'private-captcha' ) . '</label>';
+		echo '<p class="description">' . wp_kses(
+			__( 'Protect WPForms submissions from spam. Requires <a href="https://wordpress.org/plugins/wpforms-lite/" target="_blank">WPForms Lite</a> (or Pro) plugin.', 'private-captcha' ),
+			array(
+				'a' => array(
+					'href'   => true,
+					'target' => true,
+				),
+			)
+		) . '</p>';
+	}
+
+	/**
 	 * Render reset settings field.
 	 */
 	public function reset_settings_callback(): void {
@@ -533,6 +577,8 @@ class Admin {
 			}
 
 			delete_option( 'private_captcha_settings' );
+
+			$this->client->reset();
 
 			return Settings::get_default_settings();
 		}
@@ -590,6 +636,7 @@ class Admin {
 		$sanitized['enable_reset_password']     = isset( $input['enable_reset_password'] ) && '1' === $input['enable_reset_password'];
 		$sanitized['enable_comments_logged_in'] = isset( $input['enable_comments_logged_in'] ) && '1' === $input['enable_comments_logged_in'];
 		$sanitized['enable_comments_guest']     = isset( $input['enable_comments_guest'] ) && '1' === $input['enable_comments_guest'];
+		$sanitized['enable_wpforms']            = isset( $input['enable_wpforms'] ) && '1' === $input['enable_wpforms'];
 
 		if ( empty( $sanitized['api_key'] ) ) {
 			add_settings_error(
@@ -627,13 +674,15 @@ class Admin {
 			$sanitized['enable_registration'] ||
 			$sanitized['enable_reset_password'] ||
 			$sanitized['enable_comments_logged_in'] ||
-			$sanitized['enable_comments_guest'];
+			$sanitized['enable_comments_guest'] ||
+			$sanitized['enable_wpforms'];
 		$settings_valid       = false;
 
 		// Test settings if form integrations are enabled.
 		if ( $any_form_integration && ! empty( $sanitized['api_key'] ) && ! empty( $sanitized['sitekey'] ) ) {
 			try {
-				$client         = new Client( $sanitized['api_key'], $sanitized['custom_domain'], $sanitized['eu_isolation'] );
+				$client = new Client();
+				$client->update( $sanitized['api_key'], $sanitized['custom_domain'], $sanitized['eu_isolation'] );
 				$settings_valid = $client->test_current_settings();
 			} catch ( PrivateCaptchaException $e ) {
 				wp_debug_log( 'Private Captcha settings test error: ' . $e->getMessage() );
@@ -656,9 +705,30 @@ class Admin {
 			$sanitized['enable_reset_password']     = false;
 			$sanitized['enable_comments_logged_in'] = false;
 			$sanitized['enable_comments_guest']     = false;
+			$sanitized['enable_wpforms']            = false;
 		}
 
+		// Recreate the client AFTER settings are saved to the database.
+		add_action( 'update_option_private_captcha_settings', array( $this, 'recreate_client_after_settings_update' ) );
+
 		return $sanitized;
+	}
+
+	/**
+	 * Recreate the client after settings have been updated.
+	 * This is called by the update_option_private_captcha_settings hook.
+	 */
+	public function recreate_client_after_settings_update(): void {
+		if ( Settings::is_configured() ) {
+			$this->client->update(
+				Settings::get_api_key(),
+				Settings::get_custom_domain(),
+				Settings::is_eu_isolation_enabled()
+			);
+			$this->integrations->init();
+		} else {
+			$this->client->reset();
+		}
 	}
 
 	/**

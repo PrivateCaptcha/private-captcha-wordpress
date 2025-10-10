@@ -4,18 +4,19 @@
 
 ## Features
 
-- **Form Protection**: Login, registration, password reset, and comment forms
+- **Form Protection**: Standard forms (login, registration, password reset, comments) and select custom plugins
 - **Flexible Configuration**: Theme, language, start mode, and custom styling options
 - **EU Compliance**: Support for EU-only endpoints and custom domains
 - **WP-CLI Commands**: Emergency management tools for API key updates and login bypass
 
 ## Installation
 
+> Check detailed step-by-step setup instructions [here](https://docs.privatecaptcha.com/docs/integrations/wordpress/).
+
 1. Install and activate the plugin
 2. Go to **Settings → Private Captcha**
 3. Add your **API Key** and **Site Key** from [Private Captcha Portal](https://portal.privatecaptcha.com)
 4. Enable desired form integrations
-5. Customize widget appearance as needed
 
 ## Supported Forms
 
@@ -23,6 +24,8 @@
 - WordPress Registration Form
 - WordPress Password Reset Form
 - WordPress Comment Forms (logged-in and guest users)
+- WPForms
+- _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
 
