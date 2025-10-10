@@ -83,7 +83,7 @@ class Client {
 	 * @return bool True if client is functional, false otherwise.
 	 */
 	public function is_available(): bool {
-		return $this->client != null;
+		return null !== $this->client;
 	}
 
 	/**

@@ -32,7 +32,8 @@ class Admin {
 	/**
 	 * Constructor to initialize admin hooks.
 	 *
-	 * @param Client $client Private Captcha client instance.
+	 * @param Client       $client Private Captcha client instance.
+	 * @param Integrations $integrations Form integrations manager.
 	 */
 	public function __construct( Client $client, Integrations $integrations ) {
 		$this->client       = $client;

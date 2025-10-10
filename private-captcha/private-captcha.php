@@ -51,7 +51,7 @@ class PrivateCaptchaWordPress {
 	/**
 	 * The Integrations instance.
 	 *
-	 * @var PrivateCaptchaWP\Client
+	 * @var PrivateCaptchaWP\Integrations
 	 */
 	private PrivateCaptchaWP\Integrations $integrations;
 

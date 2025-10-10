@@ -54,15 +54,19 @@ abstract class AbstractIntegration implements IntegrationInterface {
 
 	/**
 	 * Enqueue Private Captcha widget script.
+	 *
+	 * @param string $handle WordPress script handle.
 	 */
 	public function enqueue_scripts( string $handle = 'private-captcha-widget' ): void {
 		Assets::enqueue( $handle );
 	}
 
 	/**
-	 * Debugging helper
+	 * Debugging helper.
+	 *
+	 * @param mixed $data Anything you want to log.
 	 */
 	protected function write_log( $data ): void {
-		// add error_log call here for debugging
+		// add error_log call here for debugging.
 	}
 }
