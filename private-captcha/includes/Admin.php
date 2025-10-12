@@ -487,7 +487,7 @@ class Admin {
 		$is_available = $integration->is_available();
 
 		$disabled_attr = $is_available ? '' : ' disabled';
-		$checked_attr  = $is_available && $value ? checked( $value, true, false ) : '';
+		$checked_attr  = $value ? checked( $value, true, false ) : '';
 
 		echo '<input type="checkbox" id="' . esc_attr( $field_name ) . '" name="private_captcha_settings[' . esc_attr( $field_name ) . ']" value="1"' . esc_html( $checked_attr ) . esc_html( $disabled_attr ) . ' />';
 		echo '<label for="' . esc_attr( $field_name ) . '">' . esc_html( $field->get_checkbox_text() ) . '</label>';
