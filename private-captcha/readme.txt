@@ -26,6 +26,10 @@ Private Captcha WordPress Plugin integrates Private Captcha with your WordPress 
 * WordPress Registration Form  
 * WordPress Password Reset Form
 * WordPress Comment Forms (logged-in and guest users)
+* WPForms
+
+More forms (including popular plugins) are currently in progress of being added.
+
 
 == Installation ==
 
@@ -57,6 +61,9 @@ Use WP-CLI commands to recover access:
 * `wp private-captcha disable-login`
 
 == Changelog ==
+
+= 1.0.6 =
+* Add WPForms support
 
 = 1.0.5 =
 * Fix settings test
