@@ -66,7 +66,7 @@ class CLI {
 		unset( $assoc_args );
 
 		// Disable login form captcha verification.
-		Settings::update_option( 'enable_login', false );
+		Settings::update_option( 'wordpress_core_enable_login', false );
 		// @phpstan-ignore-next-line
 		WP_CLI::success( 'Login form captcha disabled. You can now login without captcha verification.' );
 		// @phpstan-ignore-next-line

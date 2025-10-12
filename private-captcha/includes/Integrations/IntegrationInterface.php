@@ -32,4 +32,18 @@ interface IntegrationInterface {
 	 * @return bool True if the integration is enabled.
 	 */
 	public function is_enabled(): bool;
+
+	/**
+	 * Get all settings fields for this integration.
+	 *
+	 * @return array<\PrivateCaptchaWP\SettingsField> Array of SettingsField instances.
+	 */
+	public function get_settings_fields(): array;
+
+	/**
+	 * Check if any of the integration's settings are enabled.
+	 *
+	 * @return bool True if any setting is enabled.
+	 */
+	public function has_enabled_settings(): bool;
 }

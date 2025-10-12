@@ -150,60 +150,6 @@ class Settings {
 	}
 
 	/**
-	 * Check if login form captcha is enabled.
-	 *
-	 * @return bool True if login captcha is enabled.
-	 */
-	public static function is_login_enabled(): bool {
-		return (bool) self::get_option( 'enable_login', false );
-	}
-
-	/**
-	 * Check if registration form captcha is enabled.
-	 *
-	 * @return bool True if registration captcha is enabled.
-	 */
-	public static function is_registration_enabled(): bool {
-		return (bool) self::get_option( 'enable_registration', false );
-	}
-
-	/**
-	 * Check if reset password form captcha is enabled.
-	 *
-	 * @return bool True if reset password captcha is enabled.
-	 */
-	public static function is_reset_password_enabled(): bool {
-		return (bool) self::get_option( 'enable_reset_password', false );
-	}
-
-	/**
-	 * Check if comments form captcha is enabled for logged-in users.
-	 *
-	 * @return bool True if comments captcha for logged-in users is enabled.
-	 */
-	public static function is_comments_logged_in_enabled(): bool {
-		return (bool) self::get_option( 'enable_comments_logged_in', false );
-	}
-
-	/**
-	 * Check if comments form captcha is enabled for guests.
-	 *
-	 * @return bool True if comments captcha for guests is enabled.
-	 */
-	public static function is_comments_guest_enabled(): bool {
-		return (bool) self::get_option( 'enable_comments_guest', false );
-	}
-
-	/**
-	 * Check if WPForms captcha is enabled.
-	 *
-	 * @return bool True if WPForms captcha is enabled.
-	 */
-	public static function is_wpforms_enabled(): bool {
-		return (bool) self::get_option( 'enable_wpforms', false );
-	}
-
-	/**
 	 * Check if the plugin is properly configured.
 	 *
 	 * @return bool True if API key and site key are both set.
@@ -221,22 +167,18 @@ class Settings {
 	 * @return array<string, mixed>
 	 */
 	public static function get_default_settings(): array {
-		return array(
-			'api_key'                   => '',
-			'sitekey'                   => '',
-			'theme'                     => 'light',
-			'language'                  => 'en',
-			'start_mode'                => 'auto',
-			'debug_mode'                => false,
-			'eu_isolation'              => false,
-			'custom_domain'             => '',
-			'custom_styles'             => '',
-			'enable_login'              => false,
-			'enable_registration'       => false,
-			'enable_reset_password'     => false,
-			'enable_comments_logged_in' => false,
-			'enable_comments_guest'     => false,
-			'enable_wpforms'            => false,
+		$defaults = array(
+			'api_key'       => '',
+			'sitekey'       => '',
+			'theme'         => 'light',
+			'language'      => 'en',
+			'start_mode'    => 'auto',
+			'debug_mode'    => false,
+			'eu_isolation'  => false,
+			'custom_domain' => '',
+			'custom_styles' => '',
 		);
+
+		return $defaults;
 	}
 }

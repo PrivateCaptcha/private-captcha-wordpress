@@ -18,14 +18,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 		
 		// Auto-configure plugin settings from environment variables
 		$settings = array(
-			'api_key'             => $_ENV['PC_API_KEY'] ?? '',
-			'sitekey'             => $_ENV['PC_SITEKEY'] ?? '',
-			'theme'               => $_ENV['PC_THEME'] ?? 'light',
-			'debug_mode'          => filter_var($_ENV['PC_DEBUG'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
-			'domain'              => $_ENV['PC_DOMAIN'] ?? 'global',
-			'custom_styles'       => '',
-			'enable_login'        => true,
-			'enable_registration' => true,
+			'api_key'       => $_ENV['PC_API_KEY'] ?? '',
+			'sitekey'       => $_ENV['PC_SITEKEY'] ?? '',
+			'theme'         => $_ENV['PC_THEME'] ?? 'light',
+			'debug_mode'    => filter_var($_ENV['PC_DEBUG'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
+			'domain'        => $_ENV['PC_DOMAIN'] ?? 'global',
+			'custom_styles' => '',
 		);
 		
 		update_option('private_captcha_settings', $settings);

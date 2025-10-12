@@ -18,8 +18,9 @@ class Widget {
 	 * Render the Private Captcha widget HTML.
 	 *
 	 * @param string $default_styles Default CSS styles for the widget.
+	 * @param string $additional_class Additional CSS class to add to the widget.
 	 */
-	public static function render( string $default_styles = '' ): void {
+	public static function render( string $default_styles = '', string $additional_class = '' ): void {
 		if ( ! Settings::is_configured() ) {
 			return;
 		}
@@ -35,8 +36,13 @@ class Widget {
 
 		$effective_styles = ! empty( $custom_styles ) ? $custom_styles : $default_styles;
 
+		$class_value = 'private-captcha';
+		if ( ! empty( $additional_class ) ) {
+			$class_value .= ' ' . esc_attr( $additional_class );
+		}
+
 		$attributes = array(
-			'class="private-captcha"',
+			'class="' . esc_attr( $class_value ) . '"',
 			'data-solution-field="' . esc_attr( Client::FORM_FIELD ) . '"',
 			'data-sitekey="' . esc_attr( $sitekey ) . '"',
 			'data-theme="' . esc_attr( $theme ) . '"',

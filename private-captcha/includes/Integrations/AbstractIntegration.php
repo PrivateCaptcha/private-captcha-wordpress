@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace PrivateCaptchaWP\Integrations;
 
-use PrivateCaptchaWP\Client;
 use PrivateCaptchaWP\Assets;
+use PrivateCaptchaWP\Settings;
 
 /**
  * Abstract base class for form integrations
@@ -20,17 +20,42 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	/**
 	 * The Private Captcha client instance.
 	 *
-	 * @var Client
+	 * @var \PrivateCaptchaWP\Client
 	 */
-	protected Client $client;
+	protected \PrivateCaptchaWP\Client $client;
 
 	/**
 	 * Constructor to initialize the integration.
 	 *
-	 * @param Client $client The Private Captcha client instance.
+	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
 	 */
-	public function __construct( Client $client ) {
+	public function __construct( \PrivateCaptchaWP\Client $client ) {
 		$this->client = $client;
+	}
+
+	/**
+	 * Check if any of the integration's settings are enabled.
+	 *
+	 * @return bool True if any setting is enabled.
+	 */
+	public function has_enabled_settings(): bool {
+		$fields = $this->get_settings_fields();
+		foreach ( $fields as $field ) {
+			if ( $field->is_enabled() ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if the integration is enabled in settings.
+	 * Default implementation checks if any settings field is enabled.
+	 *
+	 * @return bool True if the integration is enabled.
+	 */
+	public function is_enabled(): bool {
+		return $this->has_enabled_settings();
 	}
 
 	/**
@@ -44,7 +69,7 @@ abstract class AbstractIntegration implements IntegrationInterface {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
-		$solution = sanitize_text_field( wp_unslash( $_POST[ Client::FORM_FIELD ] ?? '' ) );
+		$solution = sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ?? '' ) );
 		$result   = $this->client->verify_solution( $solution );
 
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );

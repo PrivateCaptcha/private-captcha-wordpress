@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace PrivateCaptchaWP;
 
 use PrivateCaptcha\Exceptions\PrivateCaptchaException;
+use PrivateCaptchaWP\Integrations\IntegrationInterface;
 
 /**
  * Admin interface class
@@ -151,53 +152,23 @@ class Admin {
 			'private-captcha'
 		);
 
-		add_settings_field(
-			'enable_login',
-			__( 'WordPress Login Form', 'private-captcha' ),
-			array( $this, 'enable_login_callback' ),
-			'private-captcha',
-			'private_captcha_forms'
-		);
-
-		add_settings_field(
-			'enable_registration',
-			__( 'WordPress Registration Form', 'private-captcha' ),
-			array( $this, 'enable_registration_callback' ),
-			'private-captcha',
-			'private_captcha_forms'
-		);
-
-		add_settings_field(
-			'enable_reset_password',
-			__( 'WordPress Reset Password Form', 'private-captcha' ),
-			array( $this, 'enable_reset_password_callback' ),
-			'private-captcha',
-			'private_captcha_forms'
-		);
-
-		add_settings_field(
-			'enable_comments_logged_in',
-			__( 'WordPress Comments Form (Logged-in Users)', 'private-captcha' ),
-			array( $this, 'enable_comments_logged_in_callback' ),
-			'private-captcha',
-			'private_captcha_forms'
-		);
-
-		add_settings_field(
-			'enable_comments_guest',
-			__( 'WordPress Comments Form (Guests)', 'private-captcha' ),
-			array( $this, 'enable_comments_guest_callback' ),
-			'private-captcha',
-			'private_captcha_forms'
-		);
-
-		add_settings_field(
-			'enable_wpforms',
-			__( 'WPForms plugin', 'private-captcha' ),
-			array( $this, 'enable_wpforms_callback' ),
-			'private-captcha',
-			'private_captcha_forms'
-		);
+		// Add dynamic integration fields for all integrations.
+		foreach ( $this->integrations->get_all_integrations() as $integration ) {
+			$fields = $integration->get_settings_fields();
+			foreach ( $fields as $field ) {
+				add_settings_field(
+					$field->get_setting_name(),
+					$field->get_label(),
+					array( $this, 'integration_field_callback' ),
+					'private-captcha',
+					'private_captcha_forms',
+					array(
+						'integration' => $integration,
+						'field'       => $field,
+					)
+				);
+			}
+		}
 
 		add_settings_section(
 			'private_captcha_widget',
@@ -491,69 +462,43 @@ class Admin {
 	}
 
 	/**
-	 * Render enable login field.
+	 * Render integration field callback.
+	 *
+	 * @param array<string, mixed> $args Field arguments containing the integration instance and field.
 	 */
-	public function enable_login_callback(): void {
-		$value = Settings::is_login_enabled();
-		echo '<input type="checkbox" id="enable_login" name="private_captcha_settings[enable_login]" value="1"' . checked( $value, true, false ) . ' />';
-		echo '<label for="enable_login">' . esc_html__( 'Add captcha to login form', 'private-captcha' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Login can be locked out if Site Key, API key or Custom Domain become invalid. WP-CLI commands available for recovery.', 'private-captcha' ) . '</p>';
-	}
+	public function integration_field_callback( array $args ): void {
+		if ( ! isset( $args['integration'] ) || ! $args['integration'] instanceof IntegrationInterface ) {
+			return;
+		}
 
-	/**
-	 * Render enable registration field.
-	 */
-	public function enable_registration_callback(): void {
-		$value = Settings::is_registration_enabled();
-		echo '<input type="checkbox" id="enable_registration" name="private_captcha_settings[enable_registration]" value="1"' . checked( $value, true, false ) . ' />';
-		echo '<label for="enable_registration">' . esc_html__( 'Add captcha to registration form', 'private-captcha' ) . '</label>';
-	}
+		if ( ! isset( $args['field'] ) ) {
+			return;
+		}
 
-	/**
-	 * Render enable reset password field.
-	 */
-	public function enable_reset_password_callback(): void {
-		$value = Settings::is_reset_password_enabled();
-		echo '<input type="checkbox" id="enable_reset_password" name="private_captcha_settings[enable_reset_password]" value="1"' . checked( $value, true, false ) . ' />';
-		echo '<label for="enable_reset_password">' . esc_html__( 'Add captcha to reset password form', 'private-captcha' ) . '</label>';
-	}
+		$integration = $args['integration'];
+		$field       = $args['field'];
 
-	/**
-	 * Render enable comments logged in field.
-	 */
-	public function enable_comments_logged_in_callback(): void {
-		$value = Settings::is_comments_logged_in_enabled();
-		echo '<input type="checkbox" id="enable_comments_logged_in" name="private_captcha_settings[enable_comments_logged_in]" value="1"' . checked( $value, true, false ) . ' />';
-		echo '<label for="enable_comments_logged_in">' . esc_html__( 'Add captcha to comments form for logged-in users', 'private-captcha' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Protect comment forms from spam for users who are logged into WordPress.', 'private-captcha' ) . '</p>';
-	}
+		if ( ! $field instanceof \PrivateCaptchaWP\SettingsField ) {
+			return;
+		}
 
-	/**
-	 * Render enable comments guest field.
-	 */
-	public function enable_comments_guest_callback(): void {
-		$value = Settings::is_comments_guest_enabled();
-		echo '<input type="checkbox" id="enable_comments_guest" name="private_captcha_settings[enable_comments_guest]" value="1"' . checked( $value, true, false ) . ' />';
-		echo '<label for="enable_comments_guest">' . esc_html__( 'Add captcha to comments form for guests', 'private-captcha' ) . '</label>';
-		echo '<p class="description">' . wp_kses( __( 'Protect comment forms from spam for visitors who are <strong>not</strong> logged into WordPress.', 'private-captcha' ), array( 'strong' => array() ) ) . '</p>';
-	}
+		$field_name   = $field->get_setting_name();
+		$value        = $field->is_enabled();
+		$is_available = $integration->is_available();
 
-	/**
-	 * Render enable WPForms field.
-	 */
-	public function enable_wpforms_callback(): void {
-		$value = Settings::is_wpforms_enabled();
-		echo '<input type="checkbox" id="enable_wpforms" name="private_captcha_settings[enable_wpforms]" value="1"' . checked( $value, true, false ) . ' />';
-		echo '<label for="enable_wpforms">' . esc_html__( 'Add captcha to forms created with WPForms plugin', 'private-captcha' ) . '</label>';
-		echo '<p class="description">' . wp_kses(
-			__( 'Protect WPForms submissions from spam. Requires <a href="https://wordpress.org/plugins/wpforms-lite/" target="_blank">WPForms Lite</a> (or Pro) plugin.', 'private-captcha' ),
-			array(
-				'a' => array(
-					'href'   => true,
-					'target' => true,
-				),
-			)
-		) . '</p>';
+		$disabled_attr = $is_available ? '' : ' disabled';
+		$checked_attr  = $is_available && $value ? checked( $value, true, false ) : '';
+
+		echo '<input type="checkbox" id="' . esc_attr( $field_name ) . '" name="private_captcha_settings[' . esc_attr( $field_name ) . ']" value="1"' . esc_html( $checked_attr ) . esc_html( $disabled_attr ) . ' />';
+		echo '<label for="' . esc_attr( $field_name ) . '">' . esc_html( $field->get_checkbox_text() ) . '</label>';
+
+		if ( ! $is_available ) {
+			if ( $field->has_unavailable_warning() ) {
+				echo '<p class="description"><span style="color: #d63638;">Warning:</span> ' . wp_kses_post( $field->get_unavailable_warning() ) . '</p>';
+			}
+		} elseif ( $field->has_description() ) {
+				echo '<p class="description">' . wp_kses_post( $field->get_description() ) . '</p>';
+		}
 	}
 
 	/**
@@ -586,10 +531,10 @@ class Admin {
 
 		$sanitized = array();
 
-		$sanitized['api_key'] = sanitize_text_field( $input['api_key'] );
-		$sanitized['sitekey'] = sanitize_text_field( $input['sitekey'] );
+		$sanitized['api_key'] = sanitize_text_field( $input['api_key'] ?? '' );
+		$sanitized['sitekey'] = sanitize_text_field( $input['sitekey'] ?? '' );
 
-		$custom_domain = sanitize_text_field( $input['custom_domain'] );
+		$custom_domain = sanitize_text_field( $input['custom_domain'] ?? '' );
 
 		if ( str_starts_with( $custom_domain, 'https://' ) ) {
 			$custom_domain = substr( $custom_domain, 8 );
@@ -612,15 +557,15 @@ class Admin {
 		$sanitized['eu_isolation'] = isset( $input['eu_isolation'] ) && '1' === $input['eu_isolation'];
 
 		$valid_themes       = array( 'light', 'dark' );
-		$sanitized['theme'] = in_array( $input['theme'], $valid_themes, true ) ? $input['theme'] : 'light';
+		$sanitized['theme'] = in_array( $input['theme'] ?? '', $valid_themes, true ) ? $input['theme'] : 'light';
 
 		$valid_languages       = array( 'en', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'no', 'pl', 'fi', 'et' );
-		$sanitized['language'] = in_array( $input['language'], $valid_languages, true ) ? $input['language'] : 'en';
+		$sanitized['language'] = in_array( $input['language'] ?? '', $valid_languages, true ) ? $input['language'] : 'en';
 
 		$valid_start_modes       = array( 'auto', 'click' );
-		$sanitized['start_mode'] = in_array( $input['start_mode'], $valid_start_modes, true ) ? $input['start_mode'] : 'auto';
+		$sanitized['start_mode'] = in_array( $input['start_mode'] ?? '', $valid_start_modes, true ) ? $input['start_mode'] : 'auto';
 
-		$custom_styles = sanitize_textarea_field( $input['custom_styles'] );
+		$custom_styles = sanitize_textarea_field( $input['custom_styles'] ?? '' );
 		if ( ! empty( $custom_styles ) ) {
 			$custom_styles = str_replace( array( "\r", "\n", "\t" ), ' ', $custom_styles );
 			// Collapse multiple consecutive spaces into single spaces.
@@ -631,13 +576,19 @@ class Admin {
 		}
 		$sanitized['custom_styles'] = $custom_styles;
 
-		$sanitized['debug_mode']                = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
-		$sanitized['enable_login']              = isset( $input['enable_login'] ) && '1' === $input['enable_login'];
-		$sanitized['enable_registration']       = isset( $input['enable_registration'] ) && '1' === $input['enable_registration'];
-		$sanitized['enable_reset_password']     = isset( $input['enable_reset_password'] ) && '1' === $input['enable_reset_password'];
-		$sanitized['enable_comments_logged_in'] = isset( $input['enable_comments_logged_in'] ) && '1' === $input['enable_comments_logged_in'];
-		$sanitized['enable_comments_guest']     = isset( $input['enable_comments_guest'] ) && '1' === $input['enable_comments_guest'];
-		$sanitized['enable_wpforms']            = isset( $input['enable_wpforms'] ) && '1' === $input['enable_wpforms'];
+		$sanitized['debug_mode'] = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
+
+		$any_form_integration = false;
+		foreach ( $this->integrations->get_all_integrations() as $integration ) {
+			$fields = $integration->get_settings_fields();
+			foreach ( $fields as $field ) {
+				$field_name               = $field->get_setting_name();
+				$sanitized[ $field_name ] = isset( $input[ $field_name ] ) && '1' === $input[ $field_name ];
+				if ( ! $any_form_integration && $sanitized[ $field_name ] ) {
+					$any_form_integration = true;
+				}
+			}
+		}
 
 		if ( empty( $sanitized['api_key'] ) ) {
 			add_settings_error(
@@ -671,19 +622,16 @@ class Admin {
 			);
 		}
 
-		$any_form_integration = $sanitized['enable_login'] ||
-			$sanitized['enable_registration'] ||
-			$sanitized['enable_reset_password'] ||
-			$sanitized['enable_comments_logged_in'] ||
-			$sanitized['enable_comments_guest'] ||
-			$sanitized['enable_wpforms'];
-		$settings_valid       = false;
+		$settings_valid = false;
 
-		// Test settings if form integrations are enabled.
+		// Test settings if form integrations are enabled. NOTE: we check for sitekey, but we don't use it for test.
 		if ( $any_form_integration && ! empty( $sanitized['api_key'] ) && ! empty( $sanitized['sitekey'] ) ) {
 			try {
-				$client = new Client();
-				$client->update( $sanitized['api_key'], $sanitized['custom_domain'], $sanitized['eu_isolation'] );
+				$client        = new Client();
+				$api_key       = (string) $sanitized['api_key'];
+				$custom_domain = (string) $sanitized['custom_domain'];
+				$eu_isolation  = (bool) $sanitized['eu_isolation'];
+				$client->update( $api_key, $custom_domain, $eu_isolation );
 				$settings_valid = $client->test_current_settings();
 			} catch ( PrivateCaptchaException $e ) {
 				wp_debug_log( 'Private Captcha settings test error: ' . $e->getMessage() );
@@ -701,12 +649,12 @@ class Admin {
 
 		// Disable form integrations to prevent lockout.
 		if ( ! $settings_valid ) {
-			$sanitized['enable_login']              = false;
-			$sanitized['enable_registration']       = false;
-			$sanitized['enable_reset_password']     = false;
-			$sanitized['enable_comments_logged_in'] = false;
-			$sanitized['enable_comments_guest']     = false;
-			$sanitized['enable_wpforms']            = false;
+			foreach ( $this->integrations->get_all_integrations() as $integration ) {
+				$fields = $integration->get_settings_fields();
+				foreach ( $fields as $field ) {
+					$sanitized[ $field->get_setting_name() ] = false;
+				}
+			}
 		}
 
 		// Recreate the client AFTER settings are saved to the database.

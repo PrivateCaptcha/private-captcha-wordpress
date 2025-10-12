@@ -48,4 +48,13 @@ class Integrations {
 			}
 		}
 	}
+
+	/**
+	 * Get all integrations.
+	 *
+	 * @return IntegrationInterface[] Array of integration instances.
+	 */
+	public function get_all_integrations(): array {
+		return $this->integrations;
+	}
 }

@@ -11,12 +11,48 @@ namespace PrivateCaptchaWP\Integrations;
 
 use PrivateCaptchaWP\Assets;
 use PrivateCaptchaWP\Settings;
+use PrivateCaptchaWP\SettingsField;
 use PrivateCaptchaWP\Widget;
 
 /**
  * WPForms integration class
  */
 class WPForms extends AbstractIntegration {
+
+	/**
+	 * WPForms settings field.
+	 *
+	 * @var SettingsField
+	 */
+	private SettingsField $wpforms_field;
+
+	/**
+	 * Constructor to initialize the integration.
+	 *
+	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
+	 */
+	public function __construct( \PrivateCaptchaWP\Client $client ) {
+		parent::__construct( $client );
+
+		$this->wpforms_field = new SettingsField(
+			'wpforms_enable_wpforms',
+			'WPForms plugin',
+			'Protect WPForms submissions from spam. Requires <a href="https://wordpress.org/plugins/wpforms-lite/" target="_blank">WPForms Lite</a> (or Pro) plugin.',
+			'Add captcha to forms created with WPForms plugin',
+			'<a href="https://wordpress.org/plugins/wpforms-lite/" target="_blank">WPForms plugin</a> is not installed or activated.'
+		);
+	}
+
+	/**
+	 * Get all settings fields for this integration.
+	 *
+	 * @return array<\PrivateCaptchaWP\SettingsField> Array of SettingsField instances.
+	 */
+	public function get_settings_fields(): array {
+		return array(
+			$this->wpforms_field,
+		);
+	}
 
 	/**
 	 * Check if WPForms plugin is active.
@@ -33,7 +69,7 @@ class WPForms extends AbstractIntegration {
 	 * @return bool True if WPForms integration is enabled.
 	 */
 	public function is_enabled(): bool {
-		return Settings::is_wpforms_enabled();
+		return $this->wpforms_field->is_enabled();
 	}
 
 	/**
@@ -56,7 +92,7 @@ class WPForms extends AbstractIntegration {
 	 * @param array<string, mixed> $form_data Form data and settings.
 	 */
 	public function add_captcha_widget( array $form_data ): void {
-		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;' );
+		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;', 'wpforms-field' );
 	}
 
 	/**

@@ -49,7 +49,7 @@ class Assets {
 	private static function enqueue_styles(): void {
 		$custom_css = '
             .private-captcha {
-                margin: 1rem 0 !important;
+                margin: 1rem 0;
             }
             input[type="submit"]:disabled,
             button[type="submit"]:disabled {
