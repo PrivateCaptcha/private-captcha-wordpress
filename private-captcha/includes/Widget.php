@@ -17,16 +17,17 @@ class Widget {
 	/**
 	 * Render the Private Captcha widget HTML.
 	 *
-	 * @param string $default_styles Default CSS styles for the widget.
-	 * @param string $additional_class Additional CSS class to add to the widget.
+	 * @param string      $default_styles Default CSS styles for the widget.
+	 * @param string      $additional_class Additional CSS class to add to the widget.
+	 * @param string|null $theme_override Optional theme override (light or dark).
 	 */
-	public static function render( string $default_styles = '', string $additional_class = '' ): void {
+	public static function render( string $default_styles = '', string $additional_class = '', ?string $theme_override = null ): void {
 		if ( ! Settings::is_configured() ) {
 			return;
 		}
 
 		$sitekey       = Settings::get_sitekey();
-		$theme         = Settings::get_theme();
+		$theme         = null !== $theme_override ? $theme_override : Settings::get_theme();
 		$language      = Settings::get_language();
 		$start_mode    = Settings::get_start_mode();
 		$debug_mode    = Settings::is_debug_enabled();

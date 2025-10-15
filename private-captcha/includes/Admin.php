@@ -483,21 +483,38 @@ class Admin {
 		}
 
 		$field_name   = $field->get_setting_name();
-		$value        = $field->is_enabled();
+		$is_enabled   = $field->is_enabled();
 		$is_available = $integration->is_available();
 
 		$disabled_attr = $is_available ? '' : ' disabled';
-		$checked_attr  = $value ? checked( $value, true, false ) : '';
+		$checked_attr  = $is_enabled ? checked( $is_enabled, true, false ) : '';
 
 		echo '<input type="checkbox" id="' . esc_attr( $field_name ) . '" name="private_captcha_settings[' . esc_attr( $field_name ) . ']" value="1"' . esc_html( $checked_attr ) . esc_html( $disabled_attr ) . ' />';
 		echo '<label for="' . esc_attr( $field_name ) . '">' . esc_html( $field->get_checkbox_text() ) . '</label>';
 
-		if ( ! $is_available ) {
-			if ( $field->has_unavailable_warning() ) {
-				echo '<p class="description"><span style="color: #d63638;">Warning:</span> ' . wp_kses_post( $field->get_unavailable_warning() ) . '</p>';
-			}
+		// Get plugin URL and name from integration.
+		$plugin_url  = $integration->get_plugin_url();
+		$plugin_name = $integration->get_plugin_name();
+
+		if ( $is_enabled && ! $is_available ) {
+			// Show warning only if setting is enabled but plugin is not available.
+			$warning_text = sprintf(
+				// translators: %s is the plugin name with link.
+				esc_html__( '%s is not installed or activated.', 'private-captcha' ),
+				'<a href="' . esc_url( $plugin_url ) . '" target="_blank">' . esc_html( $plugin_name ) . '</a>'
+			);
+			echo '<p class="description"><span style="color: #d63638;">' . esc_html__( 'Warning:', 'private-captcha' ) . '</span> ' . wp_kses_post( $warning_text ) . '</p>';
+		} elseif ( ! $is_available && ! empty( $plugin_url ) && ! empty( $plugin_name ) ) {
+				// Plugin not available - show "Requires plugin_name" with link.
+				$description = sprintf(
+					// translators: %s is the plugin name with link.
+					esc_html__( 'Requires %s plugin.', 'private-captcha' ),
+					'<a href="' . esc_url( $plugin_url ) . '" target="_blank">' . esc_html( $plugin_name ) . '</a>'
+				);
+				echo '<p class="description">' . wp_kses_post( $description ) . '</p>';
 		} elseif ( $field->has_description() ) {
-				echo '<p class="description">' . wp_kses_post( $field->get_description() ) . '</p>';
+			// Plugin available or no plugin URL - show standard description.
+			echo '<p class="description">' . wp_kses_post( $field->get_description() ) . '</p>';
 		}
 	}
 
@@ -578,12 +595,23 @@ class Admin {
 
 		$sanitized['debug_mode'] = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
 
+		// Get old settings to preserve values for disabled (unavailable) integrations.
+		$old_settings = Settings::get_all_settings();
+
 		$any_form_integration = false;
 		foreach ( $this->integrations->get_all_integrations() as $integration ) {
 			$fields = $integration->get_settings_fields();
 			foreach ( $fields as $field ) {
-				$field_name               = $field->get_setting_name();
-				$sanitized[ $field_name ] = isset( $input[ $field_name ] ) && '1' === $input[ $field_name ];
+				$field_name = $field->get_setting_name();
+
+				// If integration is not available, preserve the old value (don't change it).
+				if ( ! $integration->is_available() ) {
+					$sanitized[ $field_name ] = $old_settings[ $field_name ] ?? false;
+				} else {
+					// Integration is available, so process the checkbox normally.
+					$sanitized[ $field_name ] = isset( $input[ $field_name ] ) && '1' === $input[ $field_name ];
+				}
+
 				if ( ! $any_form_integration && $sanitized[ $field_name ] ) {
 					$any_form_integration = true;
 				}
@@ -641,7 +669,7 @@ class Admin {
 				add_settings_error(
 					'private_captcha_settings',
 					'settings_test_failed',
-					__( 'Private Captcha settings test failed. Please verify your API Key, Site Key, and domain settings. Form integrations have been disabled to prevent lockout.', 'private-captcha' ),
+					__( 'Private Captcha settings test failed.  Please verify your API Key, Site Key, and domain settings. Form integrations have been disabled to prevent lockout.', 'private-captcha' ),
 					'error'
 				);
 			}

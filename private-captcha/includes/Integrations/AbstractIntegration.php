@@ -25,6 +25,20 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	protected \PrivateCaptchaWP\Client $client;
 
 	/**
+	 * The plugin URL for this integration.
+	 *
+	 * @var string
+	 */
+	protected string $plugin_url = '';
+
+	/**
+	 * The plugin name for this integration.
+	 *
+	 * @var string
+	 */
+	protected string $plugin_name = '';
+
+	/**
 	 * Constructor to initialize the integration.
 	 *
 	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
@@ -56,6 +70,24 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	 */
 	public function is_enabled(): bool {
 		return $this->has_enabled_settings();
+	}
+
+	/**
+	 * Get the plugin URL for this integration.
+	 *
+	 * @return string The plugin URL or empty string if not applicable.
+	 */
+	public function get_plugin_url(): string {
+		return $this->plugin_url;
+	}
+
+	/**
+	 * Get the plugin name for this integration.
+	 *
+	 * @return string The plugin name or empty string if not applicable.
+	 */
+	public function get_plugin_name(): string {
+		return $this->plugin_name;
 	}
 
 	/**

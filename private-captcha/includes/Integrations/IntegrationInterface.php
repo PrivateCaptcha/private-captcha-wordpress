@@ -46,4 +46,18 @@ interface IntegrationInterface {
 	 * @return bool True if any setting is enabled.
 	 */
 	public function has_enabled_settings(): bool;
+
+	/**
+	 * Get the plugin URL for this integration.
+	 *
+	 * @return string The plugin URL or empty string if not applicable.
+	 */
+	public function get_plugin_url(): string;
+
+	/**
+	 * Get the plugin name for this integration.
+	 *
+	 * @return string The plugin name or empty string if not applicable.
+	 */
+	public function get_plugin_name(): string;
 }

@@ -12,6 +12,7 @@ namespace PrivateCaptchaWP;
 use PrivateCaptchaWP\Integrations\IntegrationInterface;
 use PrivateCaptchaWP\Integrations\WordPressCore;
 use PrivateCaptchaWP\Integrations\WPForms;
+use PrivateCaptchaWP\Integrations\ContactForm7;
 
 /**
  * Integration manager class
@@ -33,6 +34,7 @@ class Integrations {
 		$this->integrations = array(
 			new WordPressCore( $client ),
 			new WPForms( $client ),
+			new ContactForm7( $client ),
 		);
 
 		$this->init();

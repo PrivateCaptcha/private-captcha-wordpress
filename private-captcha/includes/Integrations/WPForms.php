@@ -34,12 +34,14 @@ class WPForms extends AbstractIntegration {
 	public function __construct( \PrivateCaptchaWP\Client $client ) {
 		parent::__construct( $client );
 
+		$this->plugin_url  = 'https://wordpress.org/plugins/wpforms-lite/';
+		$this->plugin_name = 'WPForms Lite';
+
 		$this->wpforms_field = new SettingsField(
 			'wpforms_enable_wpforms',
 			'WPForms plugin',
-			'Protect WPForms submissions from spam. Requires <a href="https://wordpress.org/plugins/wpforms-lite/" target="_blank">WPForms Lite</a> (or Pro) plugin.',
-			'Add captcha to forms created with WPForms plugin',
-			'<a href="https://wordpress.org/plugins/wpforms-lite/" target="_blank">WPForms plugin</a> is not installed or activated.'
+			'Protect WPForms submissions from spam.',
+			'Add captcha to forms created with WPForms plugin'
 		);
 	}
 

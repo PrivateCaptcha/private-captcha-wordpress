@@ -64,6 +64,9 @@ class WordPressCore extends AbstractIntegration {
 	public function __construct( \PrivateCaptchaWP\Client $client ) {
 		parent::__construct( $client );
 
+		$this->plugin_url  = '';
+		$this->plugin_name = '';
+
 		$this->login_field = new SettingsField(
 			'wordpress_core_enable_login',
 			'WordPress Login Form',

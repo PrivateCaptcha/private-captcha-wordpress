@@ -36,13 +36,6 @@ class SettingsField {
 	private string $checkbox_text;
 
 	/**
-	 * The unavailable warning text (untranslated).
-	 *
-	 * @var string
-	 */
-	private string $unavailable_warning;
-
-	/**
 	 * The setting name/key.
 	 *
 	 * @var string
@@ -56,20 +49,17 @@ class SettingsField {
 	 * @param string $label The field label text.
 	 * @param string $description The field description text.
 	 * @param string $checkbox_text The checkbox text.
-	 * @param string $unavailable_warning The unavailable warning text.
 	 */
 	public function __construct(
 		string $setting_name,
 		string $label,
 		string $description = '',
-		string $checkbox_text = '',
-		string $unavailable_warning = ''
+		string $checkbox_text = ''
 	) {
-		$this->setting_name        = $setting_name;
-		$this->label               = $label;
-		$this->description         = $description;
-		$this->checkbox_text       = $checkbox_text;
-		$this->unavailable_warning = $unavailable_warning;
+		$this->setting_name  = $setting_name;
+		$this->label         = $label;
+		$this->description   = $description;
+		$this->checkbox_text = $checkbox_text;
 	}
 
 	/**
@@ -118,42 +108,12 @@ class SettingsField {
 	}
 
 	/**
-	 * Get the translated unavailable warning with allowed HTML tags.
-	 *
-	 * @return string The translated and sanitized unavailable warning.
-	 */
-	public function get_unavailable_warning(): string {
-		if ( empty( $this->unavailable_warning ) ) {
-			return '';
-		}
-
-		return wp_kses(
-			$this->unavailable_warning,
-			array(
-				'a' => array(
-					'href'   => true,
-					'target' => true,
-				),
-			)
-		);
-	}
-
-	/**
 	 * Check if the field has a description.
 	 *
 	 * @return bool True if description is not empty.
 	 */
 	public function has_description(): bool {
 		return ! empty( $this->description );
-	}
-
-	/**
-	 * Check if the field has an unavailable warning.
-	 *
-	 * @return bool True if unavailable warning is not empty.
-	 */
-	public function has_unavailable_warning(): bool {
-		return ! empty( $this->unavailable_warning );
 	}
 
 	/**
