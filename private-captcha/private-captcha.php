@@ -72,9 +72,10 @@ class PrivateCaptchaWordPress {
 	 * Private constructor to prevent direct instantiation.
 	 */
 	private function __construct() {
-		add_action( 'init', array( $this, 'init' ) );
 		register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
+
+		$this->init();
 	}
 
 	/**

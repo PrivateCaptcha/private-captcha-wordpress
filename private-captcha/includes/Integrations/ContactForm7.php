@@ -78,6 +78,8 @@ class ContactForm7 extends AbstractIntegration {
 	 * Initialize Contact Form 7 integration hooks.
 	 */
 	public function init(): void {
+		$this->write_log( 'Initializing Contact Form 7 integration' );
+
 		// Enqueue scripts.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts_cf7' ), 20, 0 );
 
@@ -113,7 +115,7 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function add_hidden_fields( array $fields ): array {
 		if ( ! $this->is_enabled() ) {
-			$this->write_log( 'Skipping adding hidden fields as Contact Form 7 integration is not enabled.' );
+			$this->write_log( 'Skipping adding hidden fields as Contact Form 7 integration is not enabled' );
 			return $fields;
 		}
 
@@ -129,8 +131,12 @@ class ContactForm7 extends AbstractIntegration {
 	 * Register form-tag types for Private Captcha.
 	 */
 	public function add_form_tag_privatecaptcha(): void {
+		$this->write_log( 'About to register [privatecaptcha] tag' );
+
 		if ( ! $this->is_enabled() ) {
+			$this->write_log( 'Skipping form tag registration as Contact Form 7 integration is not enabled' );
 			if ( function_exists( 'wpcf7_add_form_tag' ) ) {
+				$this->write_log( 'Registering [privatecaptcha] tag as empty string' );
 				wpcf7_add_form_tag(
 					'privatecaptcha',
 					'__return_empty_string',
@@ -143,6 +149,7 @@ class ContactForm7 extends AbstractIntegration {
 		}
 
 		if ( function_exists( 'wpcf7_add_form_tag' ) ) {
+			$this->write_log( 'Registering real [privatecaptcha] tag' );
 			wpcf7_add_form_tag(
 				'privatecaptcha',
 				array( $this, 'form_tag_handler' ),
@@ -163,7 +170,7 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function form_tag_handler( $tag ): string {
 		if ( ! $this->is_enabled() ) {
-			$this->write_log( 'Skipping form tag handler as Contact Form 7 integration is not enabled.' );
+			$this->write_log( 'Skipping form tag handler as Contact Form 7 integration is not enabled' );
 			return '';
 		}
 
@@ -192,7 +199,7 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function prepend_widget( string $content ): string {
 		if ( ! $this->is_enabled() ) {
-			$this->write_log( 'Skipping prepending widget as Contact Form 7 integration is not enabled.' );
+			$this->write_log( 'Skipping prepending widget as Contact Form 7 integration is not enabled' );
 			return $content;
 		}
 
@@ -248,17 +255,17 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function verify_response_cf7( bool $spam, $submission ): bool {
 		if ( $spam ) {
-			$this->write_log( 'Skipping captcha verification as submission is already spam.' );
+			$this->write_log( 'Skipping captcha verification as submission is already spam' );
 			return $spam;
 		}
 
 		if ( ! $this->is_enabled() ) {
-			$this->write_log( 'Skipping captcha verification as Contact Form 7 integration is not enabled.' );
+			$this->write_log( 'Skipping captcha verification as Contact Form 7 integration is not enabled' );
 			return $spam;
 		}
 
 		if ( ! $this->client->is_available() ) {
-			$this->write_log( 'Skipping captcha verification in Contact Form 7 as PC client is not available.' );
+			$this->write_log( 'Skipping captcha verification in Contact Form 7 as PC client is not available' );
 			return $spam;
 		}
 

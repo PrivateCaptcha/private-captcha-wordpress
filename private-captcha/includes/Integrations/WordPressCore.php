@@ -144,6 +144,8 @@ class WordPressCore extends AbstractIntegration {
 	 * Initialize WordPress Core integration hooks.
 	 */
 	public function init(): void {
+		$this->write_log( 'Initializing WordPressCore integration.' );
+
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
 		if ( $this->login_field->is_enabled() ) {

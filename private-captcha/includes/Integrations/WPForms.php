@@ -78,6 +78,8 @@ class WPForms extends AbstractIntegration {
 	 * Initialize WPForms integration hooks.
 	 */
 	public function init(): void {
+		$this->write_log( 'Initializing WPForms integration' );
+
 		// Add captcha widget before submit button.
 		add_action( 'wpforms_display_submit_before', array( $this, 'add_captcha_widget' ), 10, 1 );
 
@@ -106,7 +108,7 @@ class WPForms extends AbstractIntegration {
 	 */
 	public function verify_captcha_wpforms( array $fields, array $entry, array $form_data ): void {
 		if ( ! $this->is_enabled() ) {
-			$this->write_log( 'Skipping captcha verification as WPForms integration is not enabled.' );
+			$this->write_log( 'Skipping captcha verification as WPForms integration is not enabled' );
 			return;
 		}
 
@@ -130,7 +132,7 @@ class WPForms extends AbstractIntegration {
 	private function add_form_error( array $form_data, string $message ): void {
 		$form_id = absint( $form_data['id'] ?? 0 );
 		if ( ! $form_id ) {
-			$this->write_log( 'Form ID is missing from form_data.' );
+			$this->write_log( 'Form ID is missing from form_data' );
 			return;
 		}
 

@@ -25,6 +25,7 @@
 - WordPress Password Reset Form
 - WordPress Comment Forms (logged-in and guest users)
 - WPForms
+- Contact Form 7 (use `[privatcaptcha]` tag)
 - _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
