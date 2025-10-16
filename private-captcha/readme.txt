@@ -27,6 +27,7 @@ Private Captcha WordPress Plugin integrates Private Captcha with your WordPress 
 * WordPress Password Reset Form
 * WordPress Comment Forms (logged-in and guest users)
 * WPForms
+* Contact Form 7
 
 More forms (including popular plugins) are currently in progress of being added.
 
