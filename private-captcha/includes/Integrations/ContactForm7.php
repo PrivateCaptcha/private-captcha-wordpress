@@ -113,6 +113,7 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function add_hidden_fields( array $fields ): array {
 		if ( ! $this->is_enabled() ) {
+			$this->write_log( 'Skipping adding hidden fields as Contact Form 7 integration is not enabled.' );
 			return $fields;
 		}
 
@@ -162,6 +163,7 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function form_tag_handler( $tag ): string {
 		if ( ! $this->is_enabled() ) {
+			$this->write_log( 'Skipping form tag handler as Contact Form 7 integration is not enabled.' );
 			return '';
 		}
 
@@ -171,6 +173,7 @@ class ContactForm7 extends AbstractIntegration {
 			$theme_option = $tag->get_option( 'theme', '(light|dark)', true );
 			if ( ! empty( $theme_option ) ) {
 				$theme_override = $theme_option;
+				$this->write_log( 'Using tag theme override:' . $theme_option );
 			}
 		}
 
@@ -189,16 +192,19 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function prepend_widget( string $content ): string {
 		if ( ! $this->is_enabled() ) {
+			$this->write_log( 'Skipping prepending widget as Contact Form 7 integration is not enabled.' );
 			return $content;
 		}
 
 		if ( ! function_exists( 'wpcf7_get_current_contact_form' ) ) {
+			$this->write_log( 'wpcf7_get_current_contact_form function not found' );
 			return $content;
 		}
 
 		$contact_form = wpcf7_get_current_contact_form();
 
 		if ( ! $contact_form ) {
+			$this->write_log( 'Contact Form 7 form is not valid' );
 			return $content;
 		}
 
@@ -214,6 +220,7 @@ class ContactForm7 extends AbstractIntegration {
 		);
 
 		if ( empty( $tags ) ) {
+			$this->write_log( 'Contact Form 7 form does not have [privatecaptcha] tag' );
 			ob_start();
 			Widget::render( '--border-radius: 0.25rem;', 'wpcf7-form-control' );
 			$widget  = ob_get_clean();
@@ -233,14 +240,17 @@ class ContactForm7 extends AbstractIntegration {
 	 */
 	public function verify_response_cf7( bool $spam, $submission ): bool {
 		if ( $spam ) {
+			$this->write_log( 'Skipping captcha verification as submission is already spam.' );
 			return $spam;
 		}
 
 		if ( ! $this->is_enabled() ) {
+			$this->write_log( 'Skipping captcha verification as Contact Form 7 integration is not enabled.' );
 			return $spam;
 		}
 
 		if ( ! $this->client->is_available() ) {
+			$this->write_log( 'Skipping captcha verification in Contact Form 7 as PC client is not available.' );
 			return $spam;
 		}
 
