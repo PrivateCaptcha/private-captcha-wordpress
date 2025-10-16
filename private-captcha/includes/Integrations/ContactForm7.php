@@ -219,14 +219,22 @@ class ContactForm7 extends AbstractIntegration {
 			)
 		);
 
-		if ( empty( $tags ) ) {
-			$this->write_log( 'Contact Form 7 form does not have [privatecaptcha] tag' );
-			ob_start();
-			Widget::render( '--border-radius: 0.25rem;', 'wpcf7-form-control' );
-			$widget  = ob_get_clean();
-			$widget  = false !== $widget ? $widget : '';
-			$content = $widget . "\n\n" . $content;
+		if ( ! empty( $tags ) ) {
+			return $content;
 		}
+
+		// Check if form content already contains a div with class="private-captcha".
+		if ( preg_match( '/<div[^>]+class=["\'][^"\']*private-captcha[^"\']*["\'][^>]*>/i', $content ) ) {
+			$this->write_log( 'Contact Form 7 form already contains a div with class="private-captcha"' );
+			return $content;
+		}
+
+		$this->write_log( 'Contact Form 7 form does not have [privatecaptcha] tag' );
+		ob_start();
+		Widget::render( '--border-radius: 0.25rem;', 'wpcf7-form-control' );
+		$widget  = ob_get_clean();
+		$widget  = false !== $widget ? $widget : '';
+		$content = $widget . "\n\n" . $content;
 
 		return $content;
 	}
