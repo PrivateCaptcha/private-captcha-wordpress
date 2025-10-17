@@ -106,7 +106,11 @@ class ContactForm7 extends AbstractIntegration {
 
 		$cf7_custom_js = '
         const events = ["wpcf7mailsent", "wpcf7invalid", "wpcf7spam", "wpcf7mailfailed", "wpcf7submit", "wpcf7reset"];
-        document.querySelectorAll(".wpcf7").forEach(function(wpcf7Element) {
+        const wpcf7Elements = document.querySelectorAll(".wpcf7");
+        let anyAdded = false;
+
+        wpcf7Elements.forEach(function(wpcf7Element) {
+            anyAdded = true;
             events.forEach(function(eventName) {
                 wpcf7Element.addEventListener(eventName, function(event) {
                     resetCaptchaWidget(event.target);
@@ -117,7 +121,15 @@ class ContactForm7 extends AbstractIntegration {
                 const submit = event.target.querySelector(".wpcf7-submit");
                 if (submit) submit.disabled = true;
             });
-        });';
+        });
+
+        if (!anyAdded) {
+            events.forEach(function(eventName) {
+                document.addEventListener(eventName, function(event) {
+                    resetCaptchaWidget(event.target);
+                });
+            });
+        }';
 
 		$this->enqueue_scripts( 'wpcf7-privatecaptcha', $cf7_custom_js );
 	}
