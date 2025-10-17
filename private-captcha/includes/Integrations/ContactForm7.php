@@ -27,6 +27,11 @@ class ContactForm7 extends AbstractIntegration {
 	private SettingsField $cf7_field;
 
 	/**
+	 * Data name for the captcha field.
+	 */
+	private const CF7_FIELD_NAME = 'cf7-private-captcha';
+
+	/**
 	 * Constructor to initialize the integration.
 	 *
 	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
@@ -90,7 +95,12 @@ class ContactForm7 extends AbstractIntegration {
 		add_action( 'wpcf7_init', array( $this, 'add_form_tag_privatecaptcha' ), 10, 0 );
 
 		// Auto-inject widget if not present in form.
-		add_filter( 'wpcf7_form_elements', array( $this, 'prepend_widget' ), 10, 1 );
+		add_filter( 'wpcf7_form_elements', array( $this, 'add_widget' ), 10, 1 );
+
+		// NOTE: we don't use wpcf7_validate_{type} for our types because users
+		// not always add [privatecaptcha] element (sadly) and when we just plug the widget into the form
+		// there's no tag type indeed.
+		add_filter( 'wpcf7_validate', array( $this, 'validate_captcha' ), 20, 2 );
 
 		// Verify captcha solution during form processing.
 		add_filter( 'wpcf7_spam', array( $this, 'verify_response_cf7' ), 9, 2 );
@@ -131,7 +141,18 @@ class ContactForm7 extends AbstractIntegration {
             });
         }';
 
-		$this->enqueue_scripts( 'wpcf7-privatecaptcha', $cf7_custom_js );
+		$cf7_custom_css = '
+            div[data-name="cf7-private-captcha"] .private-captcha {
+                margin-bottom: 0;
+            }
+
+            div[data-name="cf7-private-captcha"] ~ input[type="submit"],
+            div[data-name="cf7-private-captcha"] ~ button[type="submit"] {
+                margin-top: 1rem;
+            }
+        ';
+
+		$this->enqueue_scripts( 'wpcf7-privatecaptcha', $cf7_custom_js, $cf7_custom_css );
 	}
 
 	/**
@@ -165,7 +186,7 @@ class ContactForm7 extends AbstractIntegration {
 			if ( function_exists( 'wpcf7_add_form_tag' ) ) {
 				$this->write_log( 'Registering [privatecaptcha] tag as empty string' );
 				wpcf7_add_form_tag(
-					'privatecaptcha',
+					array( 'privatecaptcha', 'privatecaptcha*' ),
 					'__return_empty_string',
 					array(
 						'display-block' => true,
@@ -178,7 +199,7 @@ class ContactForm7 extends AbstractIntegration {
 		if ( function_exists( 'wpcf7_add_form_tag' ) ) {
 			$this->write_log( 'Registering real [privatecaptcha] tag' );
 			wpcf7_add_form_tag(
-				'privatecaptcha',
+				array( 'privatecaptcha', 'privatecaptcha*' ),
 				array( $this, 'form_tag_handler' ),
 				array(
 					'display-block' => true,
@@ -187,6 +208,31 @@ class ContactForm7 extends AbstractIntegration {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Get error message for the captcha field if validation failed.
+	 *
+	 * @return string Error message or empty string.
+	 */
+	private function get_error_message(): string {
+		if ( ! function_exists( 'WPCF7_Submission' ) || ! class_exists( 'WPCF7_Submission' ) ) {
+			return '';
+		}
+
+		$submission = \WPCF7_Submission::get_instance();
+
+		if ( ! $submission ) {
+			return '';
+		}
+
+		if ( ! is_object( $submission ) || ! method_exists( $submission, 'get_invalid_field' ) ) {
+			return '';
+		}
+
+		$invalid_field = $submission->get_invalid_field( self::CF7_FIELD_NAME );
+
+		return $invalid_field['reason'] ?? '';
 	}
 
 	/**
@@ -213,8 +259,14 @@ class ContactForm7 extends AbstractIntegration {
 
 		ob_start();
 		Widget::render( '--border-radius: 0.25rem;', 'wpcf7-form-control', $theme_override );
-		$output = ob_get_clean();
-		return false !== $output ? $output : '';
+		$widget = ob_get_clean();
+		$widget = false !== $widget ? $widget : '';
+
+		$error_message = $this->get_error_message();
+		$not_valid_tip = $error_message ? '<span class="wpcf7-not-valid-tip" aria-hidden="true">' . esc_html( $error_message ) . '</span>' : '';
+
+		return '<div class="wpcf7-form-control-wrap" data-name="' . self::CF7_FIELD_NAME . '">' . $widget . '</div>' .
+				$not_valid_tip;
 	}
 
 	/**
@@ -224,7 +276,7 @@ class ContactForm7 extends AbstractIntegration {
 	 * @param string $content The form content.
 	 * @return string Modified form content.
 	 */
-	public function prepend_widget( string $content ): string {
+	public function add_widget( string $content ): string {
 		if ( ! $this->is_enabled() ) {
 			$this->write_log( 'Skipping prepending widget as Contact Form 7 integration is not enabled' );
 			return $content;
@@ -266,11 +318,75 @@ class ContactForm7 extends AbstractIntegration {
 		$this->write_log( 'Contact Form 7 form does not have [privatecaptcha] tag' );
 		ob_start();
 		Widget::render( '--border-radius: 0.25rem;', 'wpcf7-form-control' );
-		$widget  = ob_get_clean();
-		$widget  = false !== $widget ? $widget : '';
-		$content = $widget . "\n\n" . $content;
+		$widget = ob_get_clean();
+		$widget = false !== $widget ? $widget : '';
 
-		return $content;
+		$error_message = $this->get_error_message();
+		$not_valid_tip = $error_message ? '<span class="wpcf7-not-valid-tip" aria-hidden="true">' . esc_html( $error_message ) . '</span>' : '';
+
+		$widget_with_wrapper = '<div class="wpcf7-form-control-wrap" data-name="' . self::CF7_FIELD_NAME . '">' .
+				$widget . '</div>' . $not_valid_tip;
+
+		$submit_button = '/(<(input|button) .*?type="submit")/';
+
+		$result = preg_replace(
+			$submit_button,
+			$widget_with_wrapper . '$1',
+			$content
+		);
+
+		return null !== $result ? $result : $content;
+	}
+
+	/**
+	 * Get the captcha solution from POST data.
+	 *
+	 * @return string The captcha solution or empty string if not found.
+	 */
+	private function get_captcha_solution(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Contact Form 7 handles nonce verification
+		$solution = isset( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] )
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Contact Form 7 handles nonce verification
+			? sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) )
+			: '';
+
+		return $solution;
+	}
+
+	/**
+	 * Validate Private Captcha solution field.
+	 *
+	 * @param mixed        $result Validation result object.
+	 * @param array<mixed> $tags Form tag object.
+	 * @return mixed Modified validation result.
+	 */
+	public function validate_captcha( $result, $tags ) {
+		if ( ! $this->is_enabled() ) {
+			$this->write_log( 'Skipping captcha validation as Contact Form 7 integration is not enabled' );
+			return $result;
+		}
+		$solution = $this->get_captcha_solution();
+
+		if ( empty( $solution ) ) {
+			$this->write_log( 'Private Captcha solution is empty' );
+
+			$target_tag = array(
+				'type' => 'privatecaptcha',
+				'name' => self::CF7_FIELD_NAME,
+			);
+
+			if ( is_object( $result ) && method_exists( $result, 'invalidate' ) ) {
+				$result->invalidate(
+					$target_tag,
+					__( 'Please complete Private Captcha.', 'private-captcha' )
+				);
+				$this->write_log( 'Called invalidate on result object' );
+			}
+		} else {
+			$this->write_log( 'Private Captcha solution is present' );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -296,20 +412,16 @@ class ContactForm7 extends AbstractIntegration {
 			return $spam;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Contact Form 7 handles nonce verification
-		$token = isset( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] )
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Contact Form 7 handles nonce verification
-			? sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) )
-			: '';
+		$solution = $this->get_captcha_solution();
 
-		if ( $this->client->verify_solution( $token ) ) {
+		if ( $this->client->verify_solution( $solution ) ) {
 			// Human.
 			$spam = false;
 		} else {
 			// Bot.
 			$spam = true;
 
-			if ( '' === $token ) {
+			if ( '' === $solution ) {
 				if ( is_object( $submission ) && method_exists( $submission, 'add_spam_log' ) ) {
 					$submission->add_spam_log(
 						array(

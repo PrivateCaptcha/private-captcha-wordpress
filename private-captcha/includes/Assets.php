@@ -19,8 +19,9 @@ class Assets {
 	 *
 	 * @param string $handle Script handle to use.
 	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
+	 * @param string $custom_css Optional custom CSS code to add to inline styles.
 	 */
-	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '' ): void {
+	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '', string $custom_css = '' ): void {
 		$script_domain = Settings::get_custom_domain();
 		if ( empty( $script_domain ) ) {
 			$script_domain = 'privatecaptcha.com';
@@ -40,15 +41,17 @@ class Assets {
 
 		add_filter( 'script_loader_tag', array( __CLASS__, 'add_defer_attribute' ), 10, 3 );
 
-		self::enqueue_styles();
+		self::enqueue_styles( $custom_css );
 		self::enqueue_inline_script( $handle, $custom_js );
 	}
 
 	/**
 	 * Enqueue inline styles.
+	 *
+	 * @param string $custom_css Optional custom CSS code to add to inline styles.
 	 */
-	private static function enqueue_styles(): void {
-		$custom_css = '
+	private static function enqueue_styles( string $custom_css = '' ): void {
+		$base_css = '
             .private-captcha {
                 margin: 1rem 0;
             }
@@ -58,9 +61,17 @@ class Assets {
                 cursor: not-allowed;
             }
         ';
+
+		$custom_css_block = '';
+		if ( ! empty( $custom_css ) ) {
+			$custom_css_block = "\n" . trim( $custom_css );
+		}
+
+		$full_css = $base_css . $custom_css_block;
+
 		wp_register_style( 'private-captcha-inline-style', false, array(), PRIVATE_CAPTCHA_VERSION );
 		wp_enqueue_style( 'private-captcha-inline-style' );
-		wp_add_inline_style( 'private-captcha-inline-style', trim( $custom_css ) );
+		wp_add_inline_style( 'private-captcha-inline-style', trim( $full_css ) );
 	}
 
 	/**
