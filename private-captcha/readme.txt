@@ -4,7 +4,7 @@ Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -62,6 +62,10 @@ Use WP-CLI commands to recover access:
 * `wp private-captcha disable-login`
 
 == Changelog ==
+
+= 1.0.9 =
+* Fix Conditional Fields plugin's influence on Contact Form 7 integration
+* Reset captcha widget on internal 3rdparty form plugins events
 
 = 1.0.8 =
 * Add missing file
