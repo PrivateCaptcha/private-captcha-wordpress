@@ -44,6 +44,7 @@ class Widget {
 
 		$attributes = array(
 			'class="' . esc_attr( $class_value ) . '"',
+			'data-store-variable="_privateCaptcha"',
 			'data-solution-field="' . esc_attr( Client::FORM_FIELD ) . '"',
 			'data-sitekey="' . esc_attr( $sitekey ) . '"',
 			'data-theme="' . esc_attr( $theme ) . '"',
@@ -72,6 +73,7 @@ class Widget {
 		$allowed_html = array(
 			'div' => array(
 				'class'                => array(),
+				'data-store-variable'  => array(),
 				'data-sitekey'         => array(),
 				'data-solution-field'  => array(),
 				'data-theme'           => array(),

@@ -113,9 +113,10 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	 * Enqueue Private Captcha widget script.
 	 *
 	 * @param string $handle WordPress script handle.
+	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
 	 */
-	public function enqueue_scripts( string $handle = 'private-captcha-widget' ): void {
-		Assets::enqueue( $handle );
+	public function enqueue_scripts( string $handle = 'private-captcha-widget', string $custom_js = '' ): void {
+		Assets::enqueue( $handle, $custom_js );
 	}
 
 	/**

@@ -104,7 +104,22 @@ class ContactForm7 extends AbstractIntegration {
 			return;
 		}
 
-		Assets::enqueue( 'wpcf7-privatecaptcha' );
+		$cf7_custom_js = '
+        const events = ["wpcf7mailsent", "wpcf7invalid", "wpcf7spam", "wpcf7mailfailed", "wpcf7submit", "wpcf7reset"];
+        document.querySelectorAll(".wpcf7").forEach(function(wpcf7Element) {
+            events.forEach(function(eventName) {
+                wpcf7Element.addEventListener(eventName, function(event) {
+                    resetCaptchaWidget(event.target);
+                });
+            });
+
+            wpcf7Element.addEventListener("wpcf7init", function(event) {
+                const submit = event.target.querySelector(".wpcf7-submit");
+                if (submit) submit.disabled = true;
+            });
+        });';
+
+		$this->enqueue_scripts( 'wpcf7-privatecaptcha', $cf7_custom_js );
 	}
 
 	/**

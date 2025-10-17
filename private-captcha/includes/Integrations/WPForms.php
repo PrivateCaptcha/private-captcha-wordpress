@@ -145,4 +145,24 @@ class WPForms extends AbstractIntegration {
 			$this->write_log( 'wpforms() function is missing.' );
 		}
 	}
+
+	/**
+	 * Enqueue Private Captcha widget script with WPForms-specific handlers.
+	 *
+	 * @param string $handle WordPress script handle.
+	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
+	 */
+	public function enqueue_scripts( string $handle = 'private-captcha-widget', string $custom_js = '' ): void {
+		$wpforms_custom_js = '
+                document.querySelectorAll("form.wpforms-form").forEach(function(form) {
+                    form.addEventListener("wpformsAjaxSubmitSuccess", function(event) {
+                        resetCaptchaWidget(event.target);
+                    });
+                    form.addEventListener("wpformsAjaxSubmitFailed", function(event) {
+                        resetCaptchaWidget(event.target);
+                    });
+                });';
+
+		parent::enqueue_scripts( $handle, $wpforms_custom_js );
+	}
 }

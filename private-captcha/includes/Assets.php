@@ -18,8 +18,9 @@ class Assets {
 	 * Enqueue Private Captcha widget script and styles.
 	 *
 	 * @param string $handle Script handle to use.
+	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
 	 */
-	public static function enqueue( string $handle = 'private-captcha-widget' ): void {
+	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '' ): void {
 		$script_domain = Settings::get_custom_domain();
 		if ( empty( $script_domain ) ) {
 			$script_domain = 'privatecaptcha.com';
@@ -40,7 +41,7 @@ class Assets {
 		add_filter( 'script_loader_tag', array( __CLASS__, 'add_defer_attribute' ), 10, 3 );
 
 		self::enqueue_styles();
-		self::enqueue_inline_script( $handle );
+		self::enqueue_inline_script( $handle, $custom_js );
 	}
 
 	/**
@@ -66,9 +67,15 @@ class Assets {
 	 * Enqueue inline JavaScript for form button management.
 	 *
 	 * @param string $handle Script handle to attach inline script to.
+	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
 	 */
-	private static function enqueue_inline_script( string $handle ): void {
-		$custom_js = '
+	private static function enqueue_inline_script( string $handle, string $custom_js = '' ): void {
+		$custom_js_block = '';
+		if ( ! empty( $custom_js ) ) {
+			$custom_js_block = "\n                " . trim( $custom_js ) . "\n";
+		}
+
+		$custom_js_full = '
         (function() {
             function setFormButtonEnabled(captchaElement, enabled) {
                 const form = captchaElement.closest("form");
@@ -79,13 +86,31 @@ class Assets {
                 }
             }
 
+            function resetCaptchaWidget(parent) {
+                let anyReset = false;
+
+                if (parent) {
+                    const elements = parent.querySelectorAll(".private-captcha");
+                    elements.forEach(function(element) {
+                        if (element && element.hasOwnProperty("_privateCaptcha") && element._privateCaptcha) {
+                            element._privateCaptcha.reset();
+                            anyReset = true;
+                        }
+                    });
+                }
+
+                if (!anyReset && window.hasOwnProperty("privateCaptcha") && window.privateCaptcha) {
+                    window.privateCaptcha.autoWidget.reset();
+                }
+            }
+
             function setupPrivateCaptcha() {
                 document.querySelectorAll(".private-captcha").forEach((e) => setFormButtonEnabled(e, false));
 
                 document.querySelectorAll(".private-captcha").forEach(function(currentWidget) {
                     currentWidget.addEventListener("privatecaptcha:init", (event) => setFormButtonEnabled(event.detail.element, false));
                     currentWidget.addEventListener("privatecaptcha:finish", (event) => setFormButtonEnabled(event.detail.element, true));
-                });
+                });' . $custom_js_block . '
             }
 
             if (document.readyState === "loading") {
@@ -95,7 +120,7 @@ class Assets {
             }
         })();
         ';
-		wp_add_inline_script( $handle, trim( $custom_js ) );
+		wp_add_inline_script( $handle, trim( $custom_js_full ) );
 	}
 
 	/**
