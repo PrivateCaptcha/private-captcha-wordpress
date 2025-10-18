@@ -367,6 +367,7 @@ class ContactForm7 extends AbstractIntegration {
 		}
 		$solution = $this->get_captcha_solution();
 
+		// NOTE: we only check if solution is present here, we actually verify it in spam callback.
 		if ( empty( $solution ) ) {
 			$this->write_log( 'Private Captcha solution is empty' );
 
