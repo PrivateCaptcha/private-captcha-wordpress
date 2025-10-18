@@ -146,7 +146,7 @@ class WordPressCore extends AbstractIntegration {
 	public function init(): void {
 		$this->write_log( 'Initializing WordPressCore integration.' );
 
-		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_scripts' ) );
 
 		if ( $this->login_field->is_enabled() ) {
 			add_action( 'login_form', array( $this, 'add_login_captcha' ) );
@@ -164,13 +164,27 @@ class WordPressCore extends AbstractIntegration {
 		}
 
 		if ( $this->comments_logged_in_field->is_enabled() || $this->comments_guest_field->is_enabled() ) {
-			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_comment_scripts' ) );
 			add_filter( 'preprocess_comment', array( $this, 'verify_comment_captcha' ) );
 		}
 
 		if ( $this->comments_logged_in_field->is_enabled() || $this->comments_guest_field->is_enabled() ) {
 			add_filter( 'comment_form_submit_field', array( $this, 'modify_comment_submit_field' ), 10, 2 );
 		}
+	}
+
+	/**
+	 * Enqueue scripts for login, registration, and password reset forms.
+	 */
+	public function enqueue_login_scripts(): void {
+		Assets::enqueue();
+	}
+
+	/**
+	 * Enqueue scripts for comment forms.
+	 */
+	public function enqueue_comment_scripts(): void {
+		Assets::enqueue();
 	}
 
 	/**

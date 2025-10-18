@@ -86,7 +86,7 @@ class ContactForm7 extends AbstractIntegration {
 		$this->write_log( 'Initializing Contact Form 7 integration' );
 
 		// Enqueue scripts.
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts_cf7' ), 20, 0 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20, 0 );
 
 		// Add hidden field for captcha response.
 		add_filter( 'wpcf7_form_hidden_fields', array( $this, 'add_hidden_fields' ), 100, 1 );
@@ -109,7 +109,7 @@ class ContactForm7 extends AbstractIntegration {
 	/**
 	 * Enqueue frontend scripts for Private Captcha.
 	 */
-	public function enqueue_scripts_cf7(): void {
+	public function enqueue_scripts(): void {
 		if ( ! $this->is_enabled() ) {
 			return;
 		}
@@ -152,7 +152,7 @@ class ContactForm7 extends AbstractIntegration {
             }
         ';
 
-		$this->enqueue_scripts( 'wpcf7-privatecaptcha', $cf7_custom_js, $cf7_custom_css );
+		Assets::enqueue( 'wpcf7-privatecaptcha', $cf7_custom_js, $cf7_custom_css );
 	}
 
 	/**

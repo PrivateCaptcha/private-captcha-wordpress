@@ -148,12 +148,8 @@ class WPForms extends AbstractIntegration {
 
 	/**
 	 * Enqueue Private Captcha widget script with WPForms-specific handlers.
-	 *
-	 * @param string $handle WordPress script handle.
-	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
-	 * @param string $custom_css Optional custom CSS code to add to inline styles.
 	 */
-	public function enqueue_scripts( string $handle = 'private-captcha-widget', string $custom_js = '', string $custom_css = '' ): void {
+	public function enqueue_scripts(): void {
 		$wpforms_custom_js = '
                 document.querySelectorAll("form.wpforms-form").forEach(function(form) {
                     form.addEventListener("wpformsAjaxSubmitSuccess", function(event) {
@@ -164,6 +160,6 @@ class WPForms extends AbstractIntegration {
                     });
                 });';
 
-		parent::enqueue_scripts( $handle, $wpforms_custom_js );
+		Assets::enqueue( 'private-captcha-widget', $wpforms_custom_js );
 	}
 }
