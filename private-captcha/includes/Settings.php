@@ -137,7 +137,7 @@ class Settings {
 	 * @return string The language code.
 	 */
 	public static function get_language(): string {
-		return (string) self::get_option( 'language', 'en' );
+		return (string) self::get_option( 'language', 'auto' );
 	}
 
 	/**
@@ -171,7 +171,7 @@ class Settings {
 			'api_key'       => '',
 			'sitekey'       => '',
 			'theme'         => 'light',
-			'language'      => 'en',
+			'language'      => 'auto',
 			'start_mode'    => 'auto',
 			'debug_mode'    => false,
 			'eu_isolation'  => false,

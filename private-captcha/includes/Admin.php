@@ -397,17 +397,18 @@ class Admin {
 	public function language_callback(): void {
 		$value   = Settings::get_language();
 		$options = array(
-			'en' => esc_html__( 'English', 'private-captcha' ),
-			'de' => esc_html__( 'Deutsch', 'private-captcha' ),
-			'es' => esc_html__( 'Español', 'private-captcha' ),
-			'fr' => esc_html__( 'Français', 'private-captcha' ),
-			'it' => esc_html__( 'Italiano', 'private-captcha' ),
-			'nl' => esc_html__( 'Nederlands', 'private-captcha' ),
-			'sv' => esc_html__( 'Svenska', 'private-captcha' ),
-			'no' => esc_html__( 'Norsk', 'private-captcha' ),
-			'pl' => esc_html__( 'Polski', 'private-captcha' ),
-			'fi' => esc_html__( 'Suomi', 'private-captcha' ),
-			'et' => esc_html__( 'Eesti', 'private-captcha' ),
+			'auto' => esc_html__( 'Auto', 'private-captcha' ),
+			'en'   => esc_html__( 'English', 'private-captcha' ),
+			'de'   => esc_html__( 'Deutsch', 'private-captcha' ),
+			'es'   => esc_html__( 'Español', 'private-captcha' ),
+			'fr'   => esc_html__( 'Français', 'private-captcha' ),
+			'it'   => esc_html__( 'Italiano', 'private-captcha' ),
+			'nl'   => esc_html__( 'Nederlands', 'private-captcha' ),
+			'sv'   => esc_html__( 'Svenska', 'private-captcha' ),
+			'no'   => esc_html__( 'Norsk', 'private-captcha' ),
+			'pl'   => esc_html__( 'Polski', 'private-captcha' ),
+			'fi'   => esc_html__( 'Suomi', 'private-captcha' ),
+			'et'   => esc_html__( 'Eesti', 'private-captcha' ),
 		);
 
 		echo '<select id="language" name="private_captcha_settings[language]">';
@@ -576,8 +577,8 @@ class Admin {
 		$valid_themes       = array( 'light', 'dark' );
 		$sanitized['theme'] = in_array( $input['theme'] ?? '', $valid_themes, true ) ? $input['theme'] : 'light';
 
-		$valid_languages       = array( 'en', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'no', 'pl', 'fi', 'et' );
-		$sanitized['language'] = in_array( $input['language'] ?? '', $valid_languages, true ) ? $input['language'] : 'en';
+		$valid_languages       = array( 'auto', 'en', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'no', 'pl', 'fi', 'et' );
+		$sanitized['language'] = in_array( $input['language'] ?? '', $valid_languages, true ) ? $input['language'] : 'auto';
 
 		$valid_start_modes       = array( 'auto', 'click' );
 		$sanitized['start_mode'] = in_array( $input['start_mode'] ?? '', $valid_start_modes, true ) ? $input['start_mode'] : 'auto';
