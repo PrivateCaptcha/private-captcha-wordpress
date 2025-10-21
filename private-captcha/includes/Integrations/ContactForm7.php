@@ -123,7 +123,7 @@ class ContactForm7 extends AbstractIntegration {
             anyAdded = true;
             events.forEach(function(eventName) {
                 wpcf7Element.addEventListener(eventName, function(event) {
-                    resetCaptchaWidget(event.target);
+                    pcResetCaptchaWidgetWP(event.target);
                 });
             });
 
@@ -136,7 +136,7 @@ class ContactForm7 extends AbstractIntegration {
         if (!anyAdded) {
             events.forEach(function(eventName) {
                 document.addEventListener(eventName, function(event) {
-                    resetCaptchaWidget(event.target);
+                    pcResetCaptchaWidgetWP(event.target);
                 });
             });
         }';

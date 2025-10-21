@@ -18,7 +18,7 @@ class Assets {
 	 * Enqueue Private Captcha widget script and styles.
 	 *
 	 * @param string $handle Script handle to use.
-	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
+	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptchaWP function.
 	 * @param string $custom_css Optional custom CSS code to add to inline styles.
 	 */
 	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '', string $custom_css = '' ): void {
@@ -78,7 +78,7 @@ class Assets {
 	 * Enqueue inline JavaScript for form button management.
 	 *
 	 * @param string $handle Script handle to attach inline script to.
-	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptcha function.
+	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptchaWP function.
 	 */
 	private static function enqueue_inline_script( string $handle, string $custom_js = '' ): void {
 		$custom_js_block = '';
@@ -88,7 +88,7 @@ class Assets {
 
 		$custom_js_full = '
         (function() {
-            function setFormButtonEnabled(captchaElement, enabled) {
+            function pcSetFormButtonEnabledWP(captchaElement, enabled) {
                 const form = captchaElement.closest("form");
                 if (!form) return;
                 const submitButton = form.querySelector("input[type=\"submit\"], button[type=\"submit\"]");
@@ -97,7 +97,7 @@ class Assets {
                 }
             }
 
-            function resetCaptchaWidget(parent) {
+            function pcResetCaptchaWidgetWP(parent) {
                 let anyReset = false;
 
                 if (parent) {
@@ -115,19 +115,19 @@ class Assets {
                 }
             }
 
-            function setupPrivateCaptcha() {
-                document.querySelectorAll(".private-captcha").forEach((e) => setFormButtonEnabled(e, false));
+            function setupPrivateCaptchaWP() {
+                document.querySelectorAll(".private-captcha").forEach((e) => pcSetFormButtonEnabledWP(e, false));
 
                 document.querySelectorAll(".private-captcha").forEach(function(currentWidget) {
-                    currentWidget.addEventListener("privatecaptcha:init", (event) => setFormButtonEnabled(event.detail.element, false));
-                    currentWidget.addEventListener("privatecaptcha:finish", (event) => setFormButtonEnabled(event.detail.element, true));
+                    currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(event.detail.element, false));
+                    currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(event.detail.element, true));
                 });' . $custom_js_block . '
             }
 
             if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", setupPrivateCaptcha);
+                document.addEventListener("DOMContentLoaded", setupPrivateCaptchaWP);
             } else {
-                setupPrivateCaptcha();
+                setupPrivateCaptchaWP();
             }
         })();
         ';

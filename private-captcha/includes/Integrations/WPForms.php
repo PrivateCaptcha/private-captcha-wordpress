@@ -153,10 +153,10 @@ class WPForms extends AbstractIntegration {
 		$wpforms_custom_js = '
                 document.querySelectorAll("form.wpforms-form").forEach(function(form) {
                     form.addEventListener("wpformsAjaxSubmitSuccess", function(event) {
-                        resetCaptchaWidget(event.target);
+                        pcResetCaptchaWidgetWP(event.target);
                     });
                     form.addEventListener("wpformsAjaxSubmitFailed", function(event) {
-                        resetCaptchaWidget(event.target);
+                        pcResetCaptchaWidgetWP(event.target);
                     });
                 });';
 
