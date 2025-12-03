@@ -4,7 +4,7 @@ Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.0.11
+Stable tag: 1.0.12
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -62,6 +62,9 @@ Use WP-CLI commands to recover access:
 * `wp private-captcha disable-login`
 
 == Changelog ==
+
+= 1.0.12 =
+* Improve Private Captcha API use for improved verification security
 
 = 1.0.11 =
 * Add 'auto' language support for widget
