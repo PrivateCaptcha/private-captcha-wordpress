@@ -103,7 +103,7 @@ abstract class AbstractIntegration implements IntegrationInterface {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
 		$solution = sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ?? '' ) );
 		$sitekey  = Settings::get_sitekey();
-		$result   = $this->client->verify_solution( $solution, sitekey: $sitekey );
+		$result   = $this->client->verify_solution( $solution, $sitekey );
 
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );
 

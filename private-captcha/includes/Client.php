@@ -99,7 +99,7 @@ class Client {
 		}
 
 		try {
-			$result = $this->client->verify( $solution, $sitekey );
+			$result = $this->client->verify( $solution, sitekey: $sitekey );
 
 			return $result->isOK();
 		} catch ( PrivateCaptchaException $e ) {
