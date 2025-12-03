@@ -90,17 +90,18 @@ class Client {
 	 * Verify a captcha solution.
 	 *
 	 * @param string $solution The solution to verify.
+	 * @param string|null $sitekey An optional sitekey to verify solution against.
 	 * @return bool True if verification succeeds, false otherwise.
 	 */
-	public function verify_solution( string $solution ): bool {
+	public function verify_solution( string $solution, ?string $sitekey = null ): bool {
 		if ( null === $this->client ) {
 			return false;
 		}
 
 		try {
-			$result = $this->client->verify( $solution );
+			$result = $this->client->verify( $solution, $sitekey );
 
-			return $result->success;
+			return $result->isOK();
 		} catch ( PrivateCaptchaException $e ) {
 			write_log( 'Private Captcha verification error: ' . $e->getMessage() );
 			return false;
