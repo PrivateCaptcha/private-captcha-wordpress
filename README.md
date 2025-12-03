@@ -11,7 +11,7 @@
 
 ## Installation
 
-> Check detailed step-by-step setup instructions [here](https://docs.privatecaptcha.com/docs/integrations/wordpress/).
+> <mark>Check detailed step-by-step setup instructions [here](https://docs.privatecaptcha.com/docs/integrations/wordpress/).</mark>
 
 1. Install and activate the plugin
 2. Go to **Settings → Private Captcha**
