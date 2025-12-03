@@ -2,7 +2,7 @@
 Contributors: ribtoks
 Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 8.2
 Stable tag: 1.0.11
 License: MIT
