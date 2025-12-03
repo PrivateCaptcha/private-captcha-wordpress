@@ -89,7 +89,7 @@ class Client {
 	/**
 	 * Verify a captcha solution.
 	 *
-	 * @param string $solution The solution to verify.
+	 * @param string $solution     The solution to verify.
 	 * @param string|null $sitekey An optional sitekey to verify solution against.
 	 * @return bool True if verification succeeds, false otherwise.
 	 */
