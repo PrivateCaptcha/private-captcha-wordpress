@@ -89,8 +89,8 @@ class Client {
 	/**
 	 * Verify a captcha solution.
 	 *
-	 * @param string $solution     The solution to verify.
-	 * @param string|null $sitekey An optional sitekey to verify solution against.
+	 * @param string      $solution Solution to verify.
+	 * @param string|null $sitekey  An optional sitekey to verify solution against.
 	 * @return bool True if verification succeeds, false otherwise.
 	 */
 	public function verify_solution( string $solution, ?string $sitekey = null ): bool {
