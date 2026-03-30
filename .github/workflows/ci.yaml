@@ -62,9 +62,7 @@ jobs:
       with:
         coverage: none
         tools: wp-cli
-
-    - name: Update wp cli to latest version
-      run: wp cli update
+        update: true
 
     - name: Install dependencies
       run: make install
