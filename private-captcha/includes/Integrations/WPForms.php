@@ -1,5 +1,4 @@
 <?php
-
 /**
  * WPForms integration for Private Captcha WordPress plugin.
  *
