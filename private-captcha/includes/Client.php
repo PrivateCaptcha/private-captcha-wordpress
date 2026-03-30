@@ -5,11 +5,13 @@
  * @package PrivateCaptchaWP
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit;
-
 declare(strict_types=1);
 
 namespace PrivateCaptchaWP;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 use PrivateCaptcha\Client as PrivateCaptchaClient;
 use PrivateCaptcha\Exceptions\ApiKeyException;

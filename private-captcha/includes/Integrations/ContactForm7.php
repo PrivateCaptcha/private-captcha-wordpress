@@ -5,11 +5,13 @@
  * @package PrivateCaptchaWP
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit;
-
 declare(strict_types=1);
 
 namespace PrivateCaptchaWP\Integrations;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 use PrivateCaptchaWP\Assets;
 use PrivateCaptchaWP\Settings;
