@@ -62,6 +62,7 @@ jobs:
       with:
         coverage: none
         tools: wp-cli
+      env:
         update: true
 
     - name: Install dependencies
