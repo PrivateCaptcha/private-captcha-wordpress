@@ -1,6 +1,7 @@
 PHP ?= $(shell which php 2>/dev/null || echo php)
 CURL ?= $(shell which curl 2>/dev/null || echo curl)
 WP_CLI_DOWNLOAD_URL ?= https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli-nightly.phar
+PLUGIN_DIR := private-captcha
 WP_CLI_DIR := .tools/wp-cli
 WP_CLI_PHAR := $(WP_CLI_DIR)/wp-cli.phar
 WP_CLI_PACKAGES_DIR := $(abspath $(WP_CLI_DIR)/packages)
@@ -16,20 +17,23 @@ install-wp-dist-archive: install-wp-cli
 	@mkdir -p $(WP_CLI_PACKAGES_DIR)
 	@WP_CLI_PACKAGES_DIR=$(WP_CLI_PACKAGES_DIR) $(PHP) $(WP_CLI_PHAR) package install wp-cli/dist-archive-command:@stable
 
+check-plugin-dir:
+	@test -d $(PLUGIN_DIR) || { echo "Plugin directory not found: $(PLUGIN_DIR)"; exit 1; }
+
 clean-dist:
 	@rm -rf dist/ || echo "Nothing to remove"
 
-dist: clean-dist
+dist: check-plugin-dir clean-dist
 	@echo "Creating distribution package..."
 	@mkdir -p dist/
-	@cp -r private-captcha dist/private-captcha/
+	@cp -r $(PLUGIN_DIR) dist/private-captcha/
 	@cd dist/private-captcha && rm -rf .git .gitignore Makefile composer.json composer.lock vendor/composer/installed.json
 	@cd dist && zip -r private-captcha-wordpress.zip private-captcha/
 	@echo "Distribution package created: dist/private-captcha-wordpress.zip"
 
-dist-archive: install-wp-dist-archive
-	@WP_CLI_PACKAGES_DIR=$(WP_CLI_PACKAGES_DIR) $(PHP) $(WP_CLI_PHAR) dist-archive ./private-captcha ./private-captcha.zip
-	@echo "Distribution package created: private-captcha.zip"
+dist-archive: check-plugin-dir install-wp-dist-archive
+	@WP_CLI_PACKAGES_DIR=$(WP_CLI_PACKAGES_DIR) $(PHP) $(WP_CLI_PHAR) dist-archive ./$(PLUGIN_DIR) ./$(PLUGIN_DIR).zip
+	@echo "Distribution package created: ./$(PLUGIN_DIR).zip"
 
 run-docker:
 	@docker compose -f docker/docker-compose.yml -f docker/docker-compose.privatecaptcha.yml up --build
