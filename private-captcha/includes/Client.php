@@ -135,7 +135,7 @@ class Client {
 			$solutions_str = base64_encode( $empty_solutions_bytes );
 			$payload       = $solutions_str . '.' . $puzzle;
 
-			$output = $this->client->verify( $payload );
+			$output = $this->client->verify( $payload, sitekey: $sitekey );
 
 			return $output->success && \PrivateCaptcha\Enums\VerifyCode::TEST_PROPERTY_ERROR === $output->code;
 
