@@ -14,7 +14,10 @@
 /private-captcha/.phpstan.cache
 
 # Distribution builds
+/dist/
+/private-captcha.zip
 /private-captcha/dist/
+/.tools/
 
 # IDE and editor files
 .vscode/
