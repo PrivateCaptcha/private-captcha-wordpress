@@ -61,7 +61,10 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         coverage: none
-        tools: wp-cli:2.13
+        tools: wp-cli
+
+    - name: Update wp cli to latest version
+      run: wp cli update
 
     - name: Install dependencies
       run: make install
