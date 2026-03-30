@@ -1,13 +1,13 @@
 PHP ?= $(shell which php 2>/dev/null || echo php)
 CURL ?= $(shell which curl 2>/dev/null || echo curl)
-WP_CLI_VERSION ?= 2.13.0
+WP_CLI_DOWNLOAD_URL ?= https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli-nightly.phar
 WP_CLI_DIR := .tools/wp-cli
 WP_CLI_PHAR := $(WP_CLI_DIR)/wp-cli.phar
 WP_CLI_PACKAGES_DIR := $(abspath $(WP_CLI_DIR)/packages)
 
 $(WP_CLI_PHAR):
 	@mkdir -p $(WP_CLI_DIR)
-	@$(CURL) -fsSL -o $(WP_CLI_PHAR) https://github.com/wp-cli/wp-cli/releases/download/v$(WP_CLI_VERSION)/wp-cli-$(WP_CLI_VERSION).phar
+	@$(CURL) -fsSL -o $(WP_CLI_PHAR) $(WP_CLI_DOWNLOAD_URL)
 
 install-wp-cli: $(WP_CLI_PHAR)
 	@echo "WP-CLI installed at $(WP_CLI_PHAR)"
