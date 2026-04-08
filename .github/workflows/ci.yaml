@@ -65,6 +65,10 @@ jobs:
       env:
         update: true
 
+    - name: Set Composer root version from tag
+      if: github.ref_type == 'tag'
+      run: echo "COMPOSER_ROOT_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
     - name: Install dependencies
       run: make install
       working-directory: private-captcha
