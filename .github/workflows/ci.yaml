@@ -67,7 +67,11 @@ jobs:
 
     - name: Set Composer root version from tag
       if: github.ref_type == 'tag'
-      run: echo "COMPOSER_ROOT_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+      run: |
+        # Normalize tag for Composer: convert trailing -N to .N (e.g. v1.0.14-3 → v1.0.14.3)
+        # because Composer rejects bare numbers after a hyphen.
+        VERSION=$(echo "${GITHUB_REF_NAME}" | sed -E 's/-([0-9]+)$/.\1/')
+        echo "COMPOSER_ROOT_VERSION=${VERSION}" >> "$GITHUB_ENV"
 
     - name: Install dependencies
       run: make install
