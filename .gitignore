@@ -52,3 +52,4 @@ wp-content/upgrade/
 wp-content/cache/
 
 .env
+.vagrant/
