@@ -26,6 +26,7 @@
 - WordPress Comment Forms (logged-in and guest users)
 - WPForms
 - Contact Form 7 (use `[privatcaptcha]` tag)
+- Gravity Forms
 - _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
