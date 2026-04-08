@@ -34,12 +34,13 @@ jobs:
             --repo "${{ github.repository }}" \
             --workflow ci.yaml \
             --commit "${{ github.sha }}" \
+            --branch "${{ github.ref_name }}" \
             --status success \
             --json databaseId \
             --jq '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
-            echo "::error::No successful CI workflow run found for commit ${{ github.sha }}"
+            echo "::error::No successful CI workflow run found for tag ${{ github.ref_name }} (commit ${{ github.sha }})"
             exit 1
           fi
 
