@@ -1,4 +1,4 @@
-name: Create WordPress.org SVN Tag
+name: Create SVN tag
 
 on:
   workflow_dispatch:

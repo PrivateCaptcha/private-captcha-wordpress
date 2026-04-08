@@ -1,4 +1,4 @@
-name: Deploy to WordPress.org
+name: Push to SVN trunk
 
 on:
   workflow_dispatch:
