@@ -1,6 +1,7 @@
 name: Deploy to WordPress.org
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
@@ -50,6 +51,11 @@ jobs:
           mv -v "${PLUGIN_DIR}" /tmp/plugin-files
           echo "Plugin files to deploy:"
           find /tmp/plugin-files -type f | head -50
+
+      - name: Install SVN
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion
 
       - name: Checkout SVN repository
         run: |

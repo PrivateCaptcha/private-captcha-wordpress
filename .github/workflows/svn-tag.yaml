@@ -16,6 +16,11 @@ jobs:
       contents: read
 
     steps:
+      - name: Install SVN
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion
+
       - name: Checkout SVN repository
         run: |
           svn checkout "${SVN_URL}/" /tmp/svn-repo \
