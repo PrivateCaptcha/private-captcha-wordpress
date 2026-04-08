@@ -106,7 +106,7 @@ class GravityForms extends AbstractIntegration {
 		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;' );
 		$widget = ob_get_clean();
 		$widget = false !== $widget ? $widget : '';
-		// The most important part: "no-reset" trick due to gforms applying very aggressive CSS reset
+		// The most important part: "no-reset" trick due to gforms applying very aggressive CSS reset.
 		return '<div class="gform_private_captcha_container gform-theme__no-reset--el gform-theme__no-reset--children">' . $widget . '</div>' . $button_input;
 	}
 
