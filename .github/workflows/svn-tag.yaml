@@ -32,7 +32,7 @@ jobs:
         run: |
           VERSION=$(grep -i "^Stable tag:" /tmp/svn-repo/trunk/readme.txt | awk '{print $NF}')
           if [ -z "${VERSION}" ]; then
-            echo "::error::Could not determine version from trunk/readme.txt"
+            echo "::error::Could not determine version from 'Stable tag' field in trunk/readme.txt"
             exit 1
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
