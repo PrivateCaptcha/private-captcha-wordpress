@@ -2,8 +2,9 @@ name: Deploy to WordPress.org
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 env:
   PLUGIN_SLUG: private-captcha
@@ -16,6 +17,7 @@ jobs:
     environment: WordPress release
     permissions:
       contents: read
+      actions: read
 
     steps:
       - name: Determine version
@@ -25,14 +27,44 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Deploying version: ${VERSION}"
 
-      - name: Download release asset
+      - name: Download build artifact
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "${GITHUB_REF_NAME}" \
+          echo "Looking for CI workflow run for commit ${{ github.sha }}..."
+
+          for i in $(seq 1 30); do
+            RUN_ID=$(gh run list \
+              --repo "${{ github.repository }}" \
+              --workflow ci.yaml \
+              --commit "${{ github.sha }}" \
+              --json databaseId \
+              --jq '.[0].databaseId')
+
+            if [ -n "$RUN_ID" ]; then
+              break
+            fi
+
+            echo "CI run not found yet, waiting 10s... (attempt $i/30)"
+            sleep 10
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::No CI workflow run found for commit ${{ github.sha }}"
+            exit 1
+          fi
+
+          echo "Waiting for CI run ${RUN_ID} to complete..."
+          gh run watch "$RUN_ID" \
             --repo "${{ github.repository }}" \
-            --pattern "${PLUGIN_SLUG}.zip" \
+            --exit-status
+
+          echo "Downloading build artifact..."
+          gh run download "$RUN_ID" \
+            --repo "${{ github.repository }}" \
+            --name wp-plugin \
             --dir .
+
           ls -la ./*.zip
 
       - name: Extract plugin files
