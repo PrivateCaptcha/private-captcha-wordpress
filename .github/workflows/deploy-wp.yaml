@@ -4,11 +4,17 @@ on:
   release:
     types: [published]
 
+env:
+  PLUGIN_SLUG: private-captcha
+  SVN_URL: https://plugins.svn.wordpress.org/private-captcha
+
 jobs:
   deploy:
     name: Deploy to WordPress SVN
     runs-on: ubuntu-latest
     environment: WordPress release
+    permissions:
+      contents: read
 
     steps:
       - name: Determine version
@@ -31,7 +37,7 @@ jobs:
       - name: Extract plugin files
         run: |
           mkdir -p /tmp/plugin-release
-          unzip -o private-captcha.zip -d /tmp/plugin-release
+          unzip -o "${PLUGIN_SLUG}.zip" -d /tmp/plugin-release
           echo "Extracted contents:"
           ls -la /tmp/plugin-release/
           # The zip contains a root folder (private-captcha/), move contents up
@@ -43,7 +49,7 @@ jobs:
 
       - name: Checkout SVN repository
         run: |
-          svn checkout https://plugins.svn.wordpress.org/private-captcha/ /tmp/svn-repo \
+          svn checkout "${SVN_URL}/" /tmp/svn-repo \
             --depth immediates
           svn update /tmp/svn-repo/trunk --set-depth infinity
           svn update /tmp/svn-repo/tags --set-depth immediates
@@ -81,7 +87,7 @@ jobs:
         working-directory: /tmp/svn-repo
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          if svn list "https://plugins.svn.wordpress.org/private-captcha/tags/${VERSION}/" > /dev/null 2>&1; then
+          if svn list "${SVN_URL}/tags/${VERSION}/" > /dev/null 2>&1; then
             echo "::warning::Tag ${VERSION} already exists in SVN, skipping tag creation"
           else
             svn cp trunk "tags/${VERSION}"
@@ -96,7 +102,7 @@ jobs:
         env:
           SVN_USERNAME: ${{ vars.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          DRY_RUN: ${{ vars.DRY_RUN }}
+          DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
         run: |
           if [ "${DRY_RUN}" = "false" ]; then
             echo "Committing changes to WordPress.org SVN..."
