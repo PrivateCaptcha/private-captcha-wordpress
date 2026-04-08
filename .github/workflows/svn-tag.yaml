@@ -1,0 +1,76 @@
+name: Create WordPress.org SVN Tag
+
+on:
+  workflow_dispatch:
+
+env:
+  PLUGIN_SLUG: private-captcha
+  SVN_URL: https://plugins.svn.wordpress.org/private-captcha
+
+jobs:
+  tag:
+    name: Create SVN tag from trunk
+    runs-on: ubuntu-latest
+    environment: WordPress release
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout SVN repository
+        run: |
+          svn checkout "${SVN_URL}/" /tmp/svn-repo \
+            --depth immediates
+          svn update /tmp/svn-repo/trunk --set-depth infinity
+          svn update /tmp/svn-repo/tags --set-depth immediates
+          echo "SVN trunk contents:"
+          ls -la /tmp/svn-repo/trunk/ || echo "(empty)"
+          echo "Existing SVN tags:"
+          ls /tmp/svn-repo/tags/ || echo "(no tags)"
+
+      - name: Determine version from trunk
+        id: version
+        run: |
+          VERSION=$(grep -i "^Stable tag:" /tmp/svn-repo/trunk/readme.txt | awk '{print $NF}')
+          if [ -z "${VERSION}" ]; then
+            echo "::error::Could not determine version from trunk/readme.txt"
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Detected version: ${VERSION}"
+
+      - name: Create SVN tag
+        working-directory: /tmp/svn-repo
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if svn list "${SVN_URL}/tags/${VERSION}/" > /dev/null 2>&1; then
+            echo "::warning::Tag ${VERSION} already exists in SVN, skipping tag creation"
+          else
+            svn cp trunk "tags/${VERSION}"
+            echo "Created SVN tag: tags/${VERSION}"
+          fi
+
+          echo "Full SVN status:"
+          svn status
+
+      - name: Commit to SVN
+        working-directory: /tmp/svn-repo
+        env:
+          SVN_USERNAME: ${{ vars.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [ "${DRY_RUN}" = "false" ]; then
+            echo "Committing SVN tag for version ${VERSION}..."
+            svn commit \
+              --username "${SVN_USERNAME}" \
+              --password "${SVN_PASSWORD}" \
+              --no-auth-cache \
+              --non-interactive \
+              -m "Tag ${VERSION}"
+            echo "Successfully created SVN tag for version ${VERSION}"
+          else
+            echo "::notice::DRY RUN mode — skipping SVN commit. Set DRY_RUN=false in the 'WordPress release' environment to enable tagging."
+            echo "The following changes would be committed:"
+            svn status
+          fi
