@@ -59,8 +59,6 @@ jobs:
           svn update /tmp/svn-repo/tags --set-depth immediates
           echo "SVN trunk contents before update:"
           ls -la /tmp/svn-repo/trunk/ || echo "(empty)"
-          echo "SVN tags:"
-          ls /tmp/svn-repo/tags/ || echo "(no tags)"
 
       - name: Sync plugin files to trunk
         run: |
@@ -90,7 +88,7 @@ jobs:
       - name: Commit to SVN
         working-directory: /tmp/svn-repo
         env:
-          SVN_USERNAME: ${{ vars.SVN_USERNAME }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
         run: |

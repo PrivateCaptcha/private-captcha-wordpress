@@ -55,7 +55,7 @@ jobs:
       - name: Commit to SVN
         working-directory: /tmp/svn-repo
         env:
-          SVN_USERNAME: ${{ vars.SVN_USERNAME }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
         run: |
