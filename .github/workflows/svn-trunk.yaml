@@ -2,9 +2,6 @@ name: Deploy to WordPress.org
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
 
 env:
   PLUGIN_SLUG: private-captcha
@@ -19,6 +16,8 @@ jobs:
       contents: read
       actions: read
 
+    if: github.ref_type == 'tag'
+
     steps:
       - name: Determine version
         id: version
@@ -31,35 +30,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Looking for CI workflow run for commit ${{ github.sha }}..."
-
-          for i in $(seq 1 30); do
-            RUN_ID=$(gh run list \
-              --repo "${{ github.repository }}" \
-              --workflow ci.yaml \
-              --commit "${{ github.sha }}" \
-              --json databaseId \
-              --jq '.[0].databaseId')
-
-            if [ -n "$RUN_ID" ]; then
-              break
-            fi
-
-            echo "CI run not found yet, waiting 10s... (attempt $i/30)"
-            sleep 10
-          done
+          RUN_ID=$(gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow ci.yaml \
+            --commit "${{ github.sha }}" \
+            --status success \
+            --json databaseId \
+            --jq '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
-            echo "::error::No CI workflow run found for commit ${{ github.sha }}"
+            echo "::error::No successful CI workflow run found for commit ${{ github.sha }}"
             exit 1
           fi
 
-          echo "Waiting for CI run ${RUN_ID} to complete..."
-          gh run watch "$RUN_ID" \
-            --repo "${{ github.repository }}" \
-            --exit-status
-
-          echo "Downloading build artifact..."
+          echo "Downloading build artifact from CI run ${RUN_ID}..."
           gh run download "$RUN_ID" \
             --repo "${{ github.repository }}" \
             --name wp-plugin \
