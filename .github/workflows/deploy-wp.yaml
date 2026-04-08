@@ -1,0 +1,115 @@
+name: Deploy to WordPress.org
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    name: Deploy to WordPress SVN
+    runs-on: ubuntu-latest
+    environment: WordPress release
+
+    steps:
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Deploying version: ${VERSION}"
+
+      - name: Download release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "*.zip" \
+            --dir .
+          ls -la ./*.zip
+
+      - name: Extract plugin files
+        run: |
+          mkdir -p /tmp/plugin-release
+          unzip -o private-captcha.zip -d /tmp/plugin-release
+          echo "Extracted contents:"
+          ls -la /tmp/plugin-release/
+          # The zip contains a root folder (private-captcha/), move contents up
+          PLUGIN_DIR=$(find /tmp/plugin-release -mindepth 1 -maxdepth 1 -type d | head -1)
+          echo "Plugin directory: ${PLUGIN_DIR}"
+          mv "${PLUGIN_DIR}" /tmp/plugin-files
+          echo "Plugin files to deploy:"
+          find /tmp/plugin-files -type f | head -50
+
+      - name: Checkout SVN repository
+        run: |
+          svn checkout https://plugins.svn.wordpress.org/private-captcha/ /tmp/svn-repo \
+            --depth immediates
+          svn update /tmp/svn-repo/trunk --set-depth infinity
+          svn update /tmp/svn-repo/tags --set-depth immediates
+          echo "SVN trunk contents before update:"
+          ls -la /tmp/svn-repo/trunk/ || echo "(empty)"
+          echo "SVN tags:"
+          ls /tmp/svn-repo/tags/ || echo "(no tags)"
+
+      - name: Sync plugin files to trunk
+        run: |
+          # Remove existing trunk contents (but keep the directory)
+          if [ -d /tmp/svn-repo/trunk ]; then
+            find /tmp/svn-repo/trunk -mindepth 1 -not -name '.svn' -not -path '*/.svn/*' -delete 2>/dev/null || true
+          fi
+
+          # Copy new plugin files to trunk
+          cp -a /tmp/plugin-files/. /tmp/svn-repo/trunk/
+
+          echo "Updated trunk contents:"
+          find /tmp/svn-repo/trunk -type f | head -50
+
+      - name: Prepare SVN changelist
+        working-directory: /tmp/svn-repo
+        run: |
+          # Schedule new files for addition
+          svn add --force trunk/
+
+          # Remove files from SVN that are no longer in the plugin
+          svn status trunk/ | grep '^!' | awk '{print $2}' | xargs -r svn delete
+
+          echo "SVN status for trunk:"
+          svn status trunk/
+
+      - name: Create SVN tag
+        working-directory: /tmp/svn-repo
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if svn list "https://plugins.svn.wordpress.org/private-captcha/tags/${VERSION}/" > /dev/null 2>&1; then
+            echo "::warning::Tag ${VERSION} already exists in SVN, skipping tag creation"
+          else
+            svn cp trunk "tags/${VERSION}"
+            echo "Created SVN tag: tags/${VERSION}"
+          fi
+
+          echo "Full SVN status:"
+          svn status
+
+      - name: Commit to SVN
+        working-directory: /tmp/svn-repo
+        env:
+          SVN_USERNAME: ${{ vars.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          DRY_RUN: ${{ vars.DRY_RUN }}
+        run: |
+          if [ "${DRY_RUN}" = "false" ]; then
+            echo "Committing changes to WordPress.org SVN..."
+            svn commit \
+              --username "${SVN_USERNAME}" \
+              --password "${SVN_PASSWORD}" \
+              --no-auth-cache \
+              --non-interactive \
+              -m "Release ${{ steps.version.outputs.version }}"
+            echo "Successfully deployed version ${{ steps.version.outputs.version }} to WordPress.org"
+          else
+            echo "::notice::DRY RUN mode — skipping SVN commit. Set DRY_RUN=false in the 'WordPress release' environment to enable deployment."
+            echo "The following changes would be committed:"
+            svn status
+            svn diff --summarize
+          fi
