@@ -14,6 +14,7 @@ use PrivateCaptchaWP\Integrations\WordPressCore;
 use PrivateCaptchaWP\Integrations\WPForms;
 use PrivateCaptchaWP\Integrations\ContactForm7;
 use PrivateCaptchaWP\Integrations\GravityForms;
+use PrivateCaptchaWP\Integrations\Elementor;
 
 /**
  * Integration manager class
@@ -37,6 +38,7 @@ class Integrations {
 			new WPForms( $client ),
 			new ContactForm7( $client ),
 			new GravityForms( $client ),
+			new Elementor( $client ),
 		);
 
 		$this->init();
