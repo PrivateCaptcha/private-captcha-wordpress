@@ -4,7 +4,7 @@ Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 

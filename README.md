@@ -27,6 +27,7 @@
 - WPForms
 - Contact Form 7 (use `[privatcaptcha]` tag)
 - Gravity Forms
+- Elementor Pro (add "Private Captcha" field to form)
 - _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
