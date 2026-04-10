@@ -24,6 +24,11 @@ use WP_Error;
 class WooCommerce extends AbstractIntegration {
 
 	/**
+	 * Default widget styles for WooCommerce forms.
+	 */
+	private const WIDGET_STYLES = 'max-width: 100%; --border-radius: 0.25rem;';
+
+	/**
 	 * WooCommerce login form settings field.
 	 *
 	 * @var SettingsField
@@ -159,28 +164,28 @@ class WooCommerce extends AbstractIntegration {
 	 * Add captcha widget to WooCommerce login form.
 	 */
 	public function add_login_captcha(): void {
-		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+		Widget::render( self::WIDGET_STYLES );
 	}
 
 	/**
 	 * Add captcha widget to WooCommerce registration form.
 	 */
 	public function add_registration_captcha(): void {
-		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+		Widget::render( self::WIDGET_STYLES );
 	}
 
 	/**
 	 * Add captcha widget to WooCommerce lost password form.
 	 */
 	public function add_lost_password_captcha(): void {
-		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+		Widget::render( self::WIDGET_STYLES );
 	}
 
 	/**
 	 * Add captcha widget to WooCommerce checkout form.
 	 */
 	public function add_checkout_captcha(): void {
-		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+		Widget::render( self::WIDGET_STYLES );
 	}
 
 	/**
@@ -195,20 +200,7 @@ class WooCommerce extends AbstractIntegration {
 			return $validation_error;
 		}
 
-		if ( ! $this->client->is_available() ) {
-			$validation_error->add(
-				'private_captcha_unavailable',
-				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
-			);
-			return $validation_error;
-		}
-
-		if ( ! $this->verify_captcha() ) {
-			$validation_error->add(
-				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
-			);
-		}
+		$this->add_captcha_errors( $validation_error );
 
 		return $validation_error;
 	}
@@ -225,20 +217,7 @@ class WooCommerce extends AbstractIntegration {
 			return $validation_error;
 		}
 
-		if ( ! $this->client->is_available() ) {
-			$validation_error->add(
-				'private_captcha_unavailable',
-				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
-			);
-			return $validation_error;
-		}
-
-		if ( ! $this->verify_captcha() ) {
-			$validation_error->add(
-				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
-			);
-		}
+		$this->add_captcha_errors( $validation_error );
 
 		return $validation_error;
 	}
@@ -258,20 +237,7 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
-		if ( ! $this->client->is_available() ) {
-			$errors->add(
-				'private_captcha_unavailable',
-				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
-			);
-			return;
-		}
-
-		if ( ! $this->verify_captcha() ) {
-			$errors->add(
-				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
-			);
-		}
+		$this->add_captcha_errors( $errors );
 	}
 
 	/**
@@ -295,6 +261,28 @@ class WooCommerce extends AbstractIntegration {
 					'error'
 				);
 			}
+		}
+	}
+
+	/**
+	 * Verify captcha and add errors to a WP_Error object.
+	 *
+	 * @param WP_Error $errors The errors object to add errors to.
+	 */
+	private function add_captcha_errors( WP_Error $errors ): void {
+		if ( ! $this->client->is_available() ) {
+			$errors->add(
+				'private_captcha_unavailable',
+				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
+			);
+			return;
+		}
+
+		if ( ! $this->verify_captcha() ) {
+			$errors->add(
+				'private_captcha_failed',
+				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+			);
 		}
 	}
 
