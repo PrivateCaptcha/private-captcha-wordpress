@@ -38,14 +38,12 @@ class CLI {
 
 		// Check if API key argument is provided.
 		if ( empty( $args[0] ) ) {
-			// @phpstan-ignore-next-line
 			WP_CLI::error( 'Please provide an API key: wp private-captcha update-api-key "your-api-key"' );
 		}
 
 		// Update the API key setting.
 		$api_key = $args[0];
 		Settings::update_option( 'api_key', $api_key );
-		// @phpstan-ignore-next-line
 		WP_CLI::success( 'API key updated successfully.' );
 	}
 
@@ -67,9 +65,7 @@ class CLI {
 
 		// Disable login form captcha verification.
 		Settings::update_option( 'wordpress_core_enable_login', false );
-		// @phpstan-ignore-next-line
 		WP_CLI::success( 'Login form captcha disabled. You can now login without captcha verification.' );
-		// @phpstan-ignore-next-line
 		WP_CLI::warning( 'Remember to fix your API key and re-enable login captcha in admin settings.' );
 	}
 }
@@ -78,6 +74,5 @@ class CLI {
  * Register WP-CLI commands with WP-CLI.
  */
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	// @phpstan-ignore-next-line
 	WP_CLI::add_command( 'private-captcha', 'PrivateCaptchaWP\CLI' );
 }

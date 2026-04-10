@@ -2,6 +2,10 @@ parameters:
     level: 8
     paths:
         - .
+    bootstrapFiles:
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+        - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
+        - vendor/arts/elementor-stubs/elementor-stubs.php
     ignoreErrors:
         - '#Function wp_debug_log not found#'
     excludePaths:
