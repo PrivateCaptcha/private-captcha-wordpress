@@ -1,0 +1,307 @@
+<?php
+/**
+ * WooCommerce integration for Private Captcha WordPress plugin.
+ *
+ * @package PrivateCaptchaWP
+ */
+
+declare(strict_types=1);
+
+namespace PrivateCaptchaWP\Integrations;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+use PrivateCaptchaWP\Assets;
+use PrivateCaptchaWP\SettingsField;
+use PrivateCaptchaWP\Widget;
+use WP_Error;
+
+/**
+ * WooCommerce integration class
+ */
+class WooCommerce extends AbstractIntegration {
+
+	/**
+	 * WooCommerce login form settings field.
+	 *
+	 * @var SettingsField
+	 */
+	private SettingsField $login_field;
+
+	/**
+	 * WooCommerce registration form settings field.
+	 *
+	 * @var SettingsField
+	 */
+	private SettingsField $registration_field;
+
+	/**
+	 * WooCommerce lost password form settings field.
+	 *
+	 * @var SettingsField
+	 */
+	private SettingsField $lost_password_field;
+
+	/**
+	 * WooCommerce checkout form settings field.
+	 *
+	 * @var SettingsField
+	 */
+	private SettingsField $checkout_field;
+
+	/**
+	 * Constructor to initialize the integration.
+	 *
+	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
+	 */
+	public function __construct( \PrivateCaptchaWP\Client $client ) {
+		parent::__construct( $client );
+
+		$this->plugin_url  = 'https://wordpress.org/plugins/woocommerce/';
+		$this->plugin_name = 'WooCommerce';
+
+		$this->login_field = new SettingsField(
+			'woocommerce_enable_login',
+			'WooCommerce Login Form',
+			'Add captcha to WooCommerce login form on My Account page.',
+			'Add captcha to WooCommerce login form'
+		);
+
+		$this->registration_field = new SettingsField(
+			'woocommerce_enable_registration',
+			'WooCommerce Registration Form',
+			'Add captcha to WooCommerce registration form on My Account page.',
+			'Add captcha to WooCommerce registration form'
+		);
+
+		$this->lost_password_field = new SettingsField(
+			'woocommerce_enable_lost_password',
+			'WooCommerce Lost Password Form',
+			'Add captcha to WooCommerce lost password form.',
+			'Add captcha to WooCommerce lost password form'
+		);
+
+		$this->checkout_field = new SettingsField(
+			'woocommerce_enable_checkout',
+			'WooCommerce Checkout Form',
+			'Add captcha to WooCommerce checkout form.',
+			'Add captcha to WooCommerce checkout form'
+		);
+	}
+
+	/**
+	 * Get all settings fields for this integration.
+	 *
+	 * @return array<\PrivateCaptchaWP\SettingsField> Array of SettingsField instances.
+	 */
+	public function get_settings_fields(): array {
+		return array(
+			$this->login_field,
+			$this->registration_field,
+			$this->lost_password_field,
+			$this->checkout_field,
+		);
+	}
+
+	/**
+	 * Check if WooCommerce plugin is active.
+	 *
+	 * @return bool True if WooCommerce is active.
+	 */
+	public function is_available(): bool {
+		return is_plugin_active( 'woocommerce/woocommerce.php' );
+	}
+
+	/**
+	 * Check if WooCommerce integration is enabled.
+	 *
+	 * @return bool True if any WooCommerce form integration is enabled.
+	 */
+	public function is_enabled(): bool {
+		return $this->login_field->is_enabled() ||
+			$this->registration_field->is_enabled() ||
+			$this->lost_password_field->is_enabled() ||
+			$this->checkout_field->is_enabled();
+	}
+
+	/**
+	 * Initialize WooCommerce integration hooks.
+	 */
+	public function init(): void {
+		$this->write_log( 'Initializing WooCommerce integration.' );
+
+		if ( $this->login_field->is_enabled() ) {
+			add_action( 'woocommerce_login_form', array( $this, 'add_login_captcha' ) );
+			add_filter( 'woocommerce_process_login_errors', array( $this, 'verify_login_captcha' ), 20, 1 );
+		}
+
+		if ( $this->registration_field->is_enabled() ) {
+			add_action( 'woocommerce_register_form', array( $this, 'add_registration_captcha' ) );
+			add_filter( 'woocommerce_process_registration_errors', array( $this, 'verify_registration_captcha' ), 20, 1 );
+		}
+
+		if ( $this->lost_password_field->is_enabled() ) {
+			add_action( 'woocommerce_lostpassword_form', array( $this, 'add_lost_password_captcha' ) );
+			add_action( 'lostpassword_post', array( $this, 'verify_lost_password_captcha' ), 10, 1 );
+		}
+
+		if ( $this->checkout_field->is_enabled() ) {
+			add_action( 'woocommerce_review_order_before_payment', array( $this, 'add_checkout_captcha' ) );
+			add_action( 'woocommerce_checkout_process', array( $this, 'verify_checkout_captcha' ) );
+		}
+
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+	}
+
+	/**
+	 * Add captcha widget to WooCommerce login form.
+	 */
+	public function add_login_captcha(): void {
+		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+	}
+
+	/**
+	 * Add captcha widget to WooCommerce registration form.
+	 */
+	public function add_registration_captcha(): void {
+		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+	}
+
+	/**
+	 * Add captcha widget to WooCommerce lost password form.
+	 */
+	public function add_lost_password_captcha(): void {
+		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+	}
+
+	/**
+	 * Add captcha widget to WooCommerce checkout form.
+	 */
+	public function add_checkout_captcha(): void {
+		Widget::render( 'max-width: 100%; --border-radius: 0.25rem;' );
+	}
+
+	/**
+	 * Verify captcha for WooCommerce login form.
+	 *
+	 * @param WP_Error $validation_error Validation errors object.
+	 * @return WP_Error The validation errors object.
+	 */
+	public function verify_login_captcha( WP_Error $validation_error ): WP_Error {
+		if ( $validation_error->has_errors() ) {
+			$this->write_log( 'Skipping WooCommerce login captcha verification due to existing errors.' );
+			return $validation_error;
+		}
+
+		if ( ! $this->client->is_available() ) {
+			$validation_error->add(
+				'private_captcha_unavailable',
+				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
+			);
+			return $validation_error;
+		}
+
+		if ( ! $this->verify_captcha() ) {
+			$validation_error->add(
+				'private_captcha_failed',
+				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+			);
+		}
+
+		return $validation_error;
+	}
+
+	/**
+	 * Verify captcha for WooCommerce registration form.
+	 *
+	 * @param WP_Error $validation_error Validation errors object.
+	 * @return WP_Error The validation errors object.
+	 */
+	public function verify_registration_captcha( WP_Error $validation_error ): WP_Error {
+		if ( $validation_error->has_errors() ) {
+			$this->write_log( 'Skipping WooCommerce registration captcha verification due to existing errors.' );
+			return $validation_error;
+		}
+
+		if ( ! $this->client->is_available() ) {
+			$validation_error->add(
+				'private_captcha_unavailable',
+				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
+			);
+			return $validation_error;
+		}
+
+		if ( ! $this->verify_captcha() ) {
+			$validation_error->add(
+				'private_captcha_failed',
+				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+			);
+		}
+
+		return $validation_error;
+	}
+
+	/**
+	 * Verify captcha for WooCommerce lost password form.
+	 *
+	 * Hooks into WordPress core lostpassword_post action but only processes
+	 * when the WooCommerce lost password nonce is present, to avoid
+	 * conflicting with the WordPress Core integration.
+	 *
+	 * @param WP_Error $errors The errors object to add errors to.
+	 */
+	public function verify_lost_password_captcha( WP_Error $errors ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce handles nonce verification.
+		if ( ! isset( $_POST['woocommerce-lost-password-nonce'] ) ) {
+			return;
+		}
+
+		if ( ! $this->client->is_available() ) {
+			$errors->add(
+				'private_captcha_unavailable',
+				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
+			);
+			return;
+		}
+
+		if ( ! $this->verify_captcha() ) {
+			$errors->add(
+				'private_captcha_failed',
+				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+			);
+		}
+	}
+
+	/**
+	 * Verify captcha for WooCommerce checkout form.
+	 */
+	public function verify_checkout_captcha(): void {
+		if ( ! $this->client->is_available() ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ),
+					'error'
+				);
+			}
+			return;
+		}
+
+		if ( ! $this->verify_captcha() ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ),
+					'error'
+				);
+			}
+		}
+	}
+
+	/**
+	 * Enqueue Private Captcha scripts for WooCommerce pages.
+	 */
+	public function enqueue_scripts(): void {
+		Assets::enqueue( 'private-captcha-widget' );
+	}
+}
