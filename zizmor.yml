@@ -1,0 +1,6 @@
+rules:
+  template-injection:
+    ignore:
+      - ci.yaml
+      - svn-trunk.yaml
+      - svn-tag.yaml
