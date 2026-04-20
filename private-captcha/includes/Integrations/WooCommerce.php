@@ -247,11 +247,12 @@ class WooCommerce extends AbstractIntegration {
 	 * Verify captcha for WooCommerce login form.
 	 *
 	 * @param WP_Error $validation_error Validation errors object.
-	 * @param string   $username The username.
-	 * @param string   $password The password.
+	 * @param string   $username The username (required by hook signature, unused).
+	 * @param string   $password The password (required by hook signature, unused).
 	 * @return WP_Error The validation errors object.
 	 */
 	public function verify_login_captcha( WP_Error $validation_error, string $username, string $password ): WP_Error {
+		unset( $username, $password );
 		if ( ! $this->client->is_available() ) {
 			$validation_error->add(
 				'private_captcha_unavailable',
@@ -273,11 +274,12 @@ class WooCommerce extends AbstractIntegration {
 	/**
 	 * Verify captcha for WooCommerce registration form.
 	 *
-	 * @param string   $username The username.
-	 * @param string   $email The email address.
+	 * @param string   $username The username (required by hook signature, unused).
+	 * @param string   $email The email address (required by hook signature, unused).
 	 * @param WP_Error $errors The errors object.
 	 */
 	public function verify_register_captcha( string $username, string $email, WP_Error $errors ): void {
+		unset( $username, $email );
 		if ( ! $this->client->is_available() ) {
 			$errors->add(
 				'private_captcha_unavailable',
@@ -406,7 +408,7 @@ class WooCommerce extends AbstractIntegration {
                         if (dispatch && typeof dispatch.setExtensionData === "function") {
                             var element = event.detail.element;
                             var form = element ? element.closest("form") : null;
-                            var solutionField = form ? form.querySelector("input[name=\"" + "wp-private-captcha-solution" + "\"]") : null;
+                            var solutionField = form ? form.querySelector("input[name=\"wp-private-captcha-solution\"]") : null;
                             var solution = solutionField ? solutionField.value : "";
                             dispatch.setExtensionData("private-captcha", { solution: solution });
                         }
