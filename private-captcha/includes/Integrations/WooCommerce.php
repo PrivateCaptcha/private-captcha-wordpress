@@ -191,6 +191,15 @@ class WooCommerce extends AbstractIntegration {
 
 			// Classic checkout: verify captcha during checkout processing.
 			add_action( 'woocommerce_checkout_process', array( $this, 'verify_checkout_captcha' ) );
+
+			// Block checkout: inject widget HTML before the actions block.
+			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 10, 1 );
+
+			// Block checkout: register Store API extension namespace.
+			add_action( 'woocommerce_loaded', array( $this, 'register_store_api_endpoint_data' ), 20 );
+
+			// Block checkout: validate captcha solution from Store API request.
+			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'verify_block_checkout_captcha' ), 10, 2 );
 		}
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -333,11 +342,94 @@ class WooCommerce extends AbstractIntegration {
 	}
 
 	/**
+	 * Inject captcha widget HTML before the block checkout actions block.
+	 * Uses render_block filter for the woocommerce/checkout-actions-block.
+	 *
+	 * @param string $block_content The rendered block content.
+	 * @return string Modified block content with captcha widget prepended.
+	 */
+	public function render_block_checkout_captcha( string $block_content ): string {
+		if ( ! $this->is_checkout_captcha_enabled() ) {
+			return $block_content;
+		}
+
+		ob_start();
+		Widget::render( '--border-radius: 0.25rem;' );
+		$captcha_html = ob_get_clean();
+
+		return $captcha_html . $block_content;
+	}
+
+	/**
+	 * Register Store API endpoint data for the block checkout extension.
+	 * This allows the JS to send captcha solution via setExtensionData().
+	 */
+	public function register_store_api_endpoint_data(): void {
+		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+			return;
+		}
+
+		woocommerce_store_api_register_endpoint_data(
+			array(
+				'endpoint'        => 'checkout',
+				'namespace'       => 'private-captcha',
+				'schema_callback' => function () {
+					return array(
+						'solution' => array(
+							'description'       => __( 'Private Captcha solution.', 'private-captcha' ),
+							'type'              => 'string',
+							'context'           => array( 'view', 'edit' ),
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					);
+				},
+			)
+		);
+	}
+
+	/**
+	 * Verify captcha for block-based WooCommerce checkout.
+	 * Reads the solution from the Store API request extensions data.
+	 *
+	 * @param \WC_Order        $order   The order object.
+	 * @param \WP_REST_Request $request The REST API request.
+	 *
+	 * @throws \Exception If captcha verification fails.
+	 */
+	public function verify_block_checkout_captcha( \WC_Order $order, \WP_REST_Request $request ): void {
+		unset( $order );
+
+		if ( ! $this->is_checkout_captcha_enabled() ) {
+			return;
+		}
+
+		$extensions = $request->get_param( 'extensions' );
+		$solution   = '';
+		if ( is_array( $extensions ) && isset( $extensions['private-captcha']['solution'] ) ) {
+			$solution = sanitize_text_field( $extensions['private-captcha']['solution'] );
+		}
+
+		if ( ! $this->client->is_available() ) {
+			throw new \Exception( esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ) );
+		}
+
+		$sitekey = \PrivateCaptchaWP\Settings::get_sitekey();
+		$result  = $this->client->verify_solution( $solution, $sitekey );
+
+		if ( ! $result ) {
+			throw new \Exception( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ) );
+		}
+	}
+
+	/**
 	 * Enqueue Private Captcha scripts with WooCommerce-specific handlers.
 	 * Classic checkout: reset widget after AJAX fragment replacement (updated_checkout)
 	 * and after checkout errors (checkout_error).
+	 * Block checkout: detect widget via wp.data.subscribe and pass solution via setExtensionData.
 	 */
 	public function enqueue_scripts(): void {
+		$form_field = esc_js( \PrivateCaptchaWP\Client::FORM_FIELD );
+
 		$woo_custom_js = '
                 if (typeof jQuery !== "undefined") {
                     jQuery(document.body).on("updated_checkout", function() {
@@ -350,12 +442,86 @@ class WooCommerce extends AbstractIntegration {
                     });
                 }';
 
+		$block_checkout_js = '
+                (function() {
+                    if (typeof wp === "undefined" || !wp.data) { return; }
+
+                    var pcBlockNamespace = "private-captcha";
+                    var pcBlockFieldName = "' . $form_field . '";
+                    var pcBlockInitialized = false;
+
+                    function pcBlockSetExtensionData(solution) {
+                        var dispatch = wp.data.dispatch("wc/store/checkout");
+                        if (typeof dispatch.setExtensionData === "function") {
+                            dispatch.setExtensionData(pcBlockNamespace, { solution: solution });
+                        } else if (typeof dispatch.__internalSetExtensionData === "function") {
+                            dispatch.__internalSetExtensionData(pcBlockNamespace, { solution: solution });
+                        }
+                    }
+
+                    function pcBlockInitWidget() {
+                        var container = document.querySelector(".wp-block-woocommerce-checkout-actions-block .private-captcha");
+                        if (!container) { return false; }
+                        if (container.dataset.attached === "1") { return true; }
+
+                        var form = container.closest("form");
+                        if (!form) { return false; }
+
+                        if (window.privateCaptcha && typeof window.privateCaptcha.setup === "function") {
+                            window.privateCaptcha.setup();
+                        }
+
+                        pcBlockInitialized = true;
+
+                        container.addEventListener("privatecaptcha:finish", function(event) {
+                            var solutionField = container.querySelector("input[name=\"" + pcBlockFieldName + "\"]");
+                            var solution = solutionField ? solutionField.value : "";
+                            pcBlockSetExtensionData(solution);
+                        });
+
+                        container.addEventListener("privatecaptcha:init", function(event) {
+                            pcBlockSetExtensionData("");
+                        });
+
+                        return true;
+                    }
+
+                    function pcBlockResetWidget() {
+                        var container = document.querySelector(".wp-block-woocommerce-checkout-actions-block .private-captcha");
+                        if (container && container.hasOwnProperty("_privateCaptcha") && container._privateCaptcha) {
+                            container._privateCaptcha.reset();
+                            pcBlockSetExtensionData("");
+                        }
+                    }
+
+                    wp.data.subscribe(function() {
+                        var container = document.querySelector(".wp-block-woocommerce-checkout-actions-block .private-captcha");
+                        if (container && !pcBlockInitialized) {
+                            pcBlockInitWidget();
+                        }
+                    }, "wc/store/cart");
+
+                    var pcBlockClickTimer = null;
+                    document.addEventListener("click", function(e) {
+                        if (e.target && e.target.closest(".wc-block-components-checkout-place-order-button")) {
+                            if (pcBlockClickTimer) { clearTimeout(pcBlockClickTimer); }
+                            pcBlockClickTimer = setTimeout(function() { pcBlockResetWidget(); }, 1500);
+                        }
+                    });
+                })();';
+
 		$woo_custom_css = '
             .woocommerce-checkout-payment .private-captcha {
+                margin: 1rem 0;
+            }
+            .wp-block-woocommerce-checkout-actions-block .private-captcha {
                 margin: 1rem 0;
             }
         ';
 
 		Assets::enqueue( 'private-captcha-widget', $woo_custom_js, $woo_custom_css );
+
+		// Enqueue block checkout JS separately (outside the IIFE setupPrivateCaptchaWP scope).
+		wp_add_inline_script( 'private-captcha-widget', trim( $block_checkout_js ) );
 	}
 }
