@@ -514,9 +514,10 @@ class WooCommerce extends AbstractIntegration {
                     // Try immediately in case already rendered.
                     pcBlockCheckoutInit();
 
-                    // Re-render after Place Order button click (retry after error, same as Turnstile).
+                    // Reset widget after Place Order button click (retry after error, same as Turnstile).
                     if (typeof jQuery !== "undefined") {
                         jQuery(document.body).on("click", ".wc-block-components-checkout-place-order-button", function() {
+                            // Delay to allow WooCommerce to finish processing the checkout response.
                             setTimeout(function() {
                                 var widget = document.querySelector(".wp-block-woocommerce-checkout .private-captcha");
                                 if (widget && widget._privateCaptcha) {
