@@ -428,7 +428,7 @@ class WooCommerce extends AbstractIntegration {
                     function pcWooBlockInitWidget() {
                         var widget = document.querySelector(".wc-block-checkout__form .private-captcha, .wp-block-woocommerce-checkout .private-captcha");
                         if (!widget) { return false; }
-                        if (pcWooBlockInitialized && widget.hasOwnProperty("_privateCaptcha") && widget._privateCaptcha) { return true; }
+                        if (pcWooBlockInitialized && widget._privateCaptcha) { return true; }
 
                         // Trigger privatecaptcha.js to discover and initialize the widget.
                         if (window.privateCaptcha && typeof window.privateCaptcha.setup === "function") {
