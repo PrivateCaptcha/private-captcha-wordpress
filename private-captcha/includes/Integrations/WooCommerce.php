@@ -378,52 +378,109 @@ class WooCommerce extends AbstractIntegration {
 	 * Handles:
 	 * - Classic checkout: reset widget after AJAX fragment replacement (updated_checkout)
 	 *   and after checkout errors (checkout_error).
-	 * - Block-based checkout: send captcha solution via Store API extensions data using
-	 *   wp.data dispatch to wc/store/checkout.
+	 * - Block-based checkout: use MutationObserver to detect when the React-rendered
+	 *   form is ready, then initialize the captcha widget and send the solution via
+	 *   Store API extensions data using wp.data dispatch to wc/store/checkout.
 	 */
 	public function enqueue_scripts(): void {
 		$woo_custom_js = '
                 // Classic checkout: reset captcha widget after AJAX fragment replacement.
-                jQuery(document.body).on("updated_checkout", function() {
-                    var paymentDiv = document.querySelector(".woocommerce-checkout-payment");
-                    if (paymentDiv) {
-                        var widgets = paymentDiv.querySelectorAll(".private-captcha");
-                        widgets.forEach(function(widget) {
-                            pcSetFormButtonEnabledWP(widget, false);
-                            widget.addEventListener("privatecaptcha:init", function(e) { pcSetFormButtonEnabledWP(e.detail.element, false); });
-                            widget.addEventListener("privatecaptcha:finish", function(e) { pcSetFormButtonEnabledWP(e.detail.element, true); });
-                        });
-                    }
-                });
-                // Classic checkout: reset captcha on checkout error.
-                jQuery(document.body).on("checkout_error", function() {
-                    var form = document.querySelector("form.checkout");
-                    if (form) { pcResetCaptchaWidgetWP(form); }
-                });
+                if (typeof jQuery !== "undefined") {
+                    jQuery(document.body).on("updated_checkout", function() {
+                        var paymentDiv = document.querySelector(".woocommerce-checkout-payment");
+                        if (paymentDiv) {
+                            var widgets = paymentDiv.querySelectorAll(".private-captcha");
+                            widgets.forEach(function(widget) {
+                                pcSetFormButtonEnabledWP(widget, false);
+                                widget.addEventListener("privatecaptcha:init", function(e) { pcSetFormButtonEnabledWP(e.detail.element, false); });
+                                widget.addEventListener("privatecaptcha:finish", function(e) { pcSetFormButtonEnabledWP(e.detail.element, true); });
+                            });
+                        }
+                    });
+                    // Classic checkout: reset captcha on checkout error.
+                    jQuery(document.body).on("checkout_error", function() {
+                        var form = document.querySelector("form.checkout");
+                        if (form) { pcResetCaptchaWidgetWP(form); }
+                    });
+                }
 
-                // Block-based checkout: send solution via Store API extensions.
-                if (typeof wp !== "undefined" && wp.data) {
-                    document.addEventListener("privatecaptcha:finish", function(event) {
+                // Block-based checkout: handle widget initialization timing and button state.
+                (function() {
+                    var pcWooBlockInitialized = false;
+
+                    function pcWooBlockSetButtonEnabled(enabled) {
+                        var btn = document.querySelector(".wc-block-components-checkout-place-order-button");
+                        if (btn) {
+                            btn.disabled = !enabled;
+                        }
+                    }
+
+                    function pcWooBlockSetExtensionData(solution) {
+                        if (typeof wp === "undefined" || !wp.data) { return; }
                         var dispatch = wp.data.dispatch("wc/store/checkout");
                         if (dispatch && typeof dispatch.setExtensionData === "function") {
-                            var element = event.detail.element;
-                            var form = element ? element.closest("form") : null;
-                            var solutionField = form ? form.querySelector("input[name=\"wp-private-captcha-solution\"]") : null;
-                            var solution = solutionField ? solutionField.value : "";
                             dispatch.setExtensionData("private-captcha", { solution: solution });
+                        } else if (dispatch && typeof dispatch.__internalSetExtensionData === "function") {
+                            dispatch.__internalSetExtensionData("private-captcha", { solution: solution });
                         }
-                    });
-                    document.addEventListener("privatecaptcha:init", function(event) {
-                        var dispatch = wp.data.dispatch("wc/store/checkout");
-                        if (dispatch && typeof dispatch.setExtensionData === "function") {
-                            dispatch.setExtensionData("private-captcha", { solution: "" });
+                    }
+
+                    function pcWooBlockInitWidget() {
+                        var widget = document.querySelector(".wc-block-checkout__form .private-captcha, .wp-block-woocommerce-checkout .private-captcha");
+                        if (!widget) { return false; }
+                        if (pcWooBlockInitialized && widget.hasOwnProperty("_privateCaptcha") && widget._privateCaptcha) { return true; }
+
+                        // Trigger privatecaptcha.js to discover and initialize the widget.
+                        if (window.privateCaptcha && typeof window.privateCaptcha.setup === "function") {
+                            window.privateCaptcha.setup();
                         }
-                    });
-                }';
+
+                        // Disable button until captcha is solved.
+                        pcWooBlockSetButtonEnabled(false);
+                        pcWooBlockSetExtensionData("");
+
+                        // Listen for widget events.
+                        widget.addEventListener("privatecaptcha:init", function() {
+                            pcWooBlockSetButtonEnabled(false);
+                            pcWooBlockSetExtensionData("");
+                        });
+                        widget.addEventListener("privatecaptcha:finish", function() {
+                            var solutionField = widget.querySelector("input[name=\"wp-private-captcha-solution\"]");
+                            if (!solutionField) {
+                                var parent = widget.closest("form") || widget.parentElement;
+                                solutionField = parent ? parent.querySelector("input[name=\"wp-private-captcha-solution\"]") : null;
+                            }
+                            var solution = solutionField ? solutionField.value : "";
+                            pcWooBlockSetExtensionData(solution);
+                            pcWooBlockSetButtonEnabled(true);
+                        });
+
+                        pcWooBlockInitialized = true;
+                        return true;
+                    }
+
+                    // Use MutationObserver to detect when the block checkout form renders our widget.
+                    var pcWooBlockCheckoutContainer = document.querySelector(".wp-block-woocommerce-checkout");
+                    if (pcWooBlockCheckoutContainer) {
+                        // Try immediately in case React already rendered.
+                        if (!pcWooBlockInitWidget()) {
+                            var pcWooObserver = new MutationObserver(function() {
+                                if (pcWooBlockInitWidget()) {
+                                    pcWooObserver.disconnect();
+                                }
+                            });
+                            pcWooObserver.observe(pcWooBlockCheckoutContainer, { childList: true, subtree: true });
+                        }
+                    }
+                })();';
 
 		$woo_custom_css = '
             .woocommerce-checkout-payment .private-captcha {
                 margin: 1rem 0;
+            }
+            .wc-block-components-checkout-place-order-button:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
             }
         ';
 
