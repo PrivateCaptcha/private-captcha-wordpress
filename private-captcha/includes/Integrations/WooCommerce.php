@@ -153,7 +153,7 @@ class WooCommerce extends AbstractIntegration {
 		}
 
 		if ( $this->checkout_field->is_enabled() ) {
-			add_action( 'woocommerce_review_order_before_payment', array( $this, 'add_checkout_captcha' ) );
+			add_action( 'woocommerce_review_order_before_submit', array( $this, 'add_checkout_captcha' ) );
 			add_action( 'woocommerce_checkout_process', array( $this, 'verify_checkout_captcha' ) );
 		}
 
@@ -290,6 +290,22 @@ class WooCommerce extends AbstractIntegration {
 	 * Enqueue Private Captcha scripts for WooCommerce pages.
 	 */
 	public function enqueue_scripts(): void {
-		Assets::enqueue( 'private-captcha-widget' );
+		$wc_custom_js = '
+                jQuery( function( $ ) {
+                    $( document.body ).on( "updated_checkout", function() {
+                        var widgets = document.querySelectorAll(".woocommerce-checkout-payment .private-captcha");
+                        widgets.forEach( function( widget ) {
+                            pcSetFormButtonEnabledWP( widget, false );
+                            widget.addEventListener( "privatecaptcha:init", function( event ) {
+                                pcSetFormButtonEnabledWP( event.detail.element, false );
+                            });
+                            widget.addEventListener( "privatecaptcha:finish", function( event ) {
+                                pcSetFormButtonEnabledWP( event.detail.element, true );
+                            });
+                        });
+                    });
+                });';
+
+		Assets::enqueue( 'private-captcha-widget', $wc_custom_js );
 	}
 }
