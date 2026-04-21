@@ -65,6 +65,15 @@ Use WP-CLI commands to recover access:
 
 == Changelog ==
 
+= 1.0.16 =
+* Add WooCommerce and Fluent Forms integration
+
+= 1.0.15 =
+* Add Elementor Pro integration
+
+= 1.0.15 =
+* Add Elementor Pro integration
+
 = 1.0.14 =
 * Add Gravity Forms integration
 
