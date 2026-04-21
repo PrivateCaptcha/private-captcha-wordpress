@@ -20,13 +20,13 @@
 
 ## Supported Forms
 
-* WordPress (Login, Registrations, Password reset, Comment forms for logged-in/guests)
+- WordPress (Login, Registrations, Password reset, Comment forms for logged-in/guests)
 - WPForms
 - Contact Form 7 (use `[privatcaptcha]` tag)
 - Gravity Forms
 - Elementor Pro (add "Private Captcha" field to form)
-* WooCommerce (Login, Registration, Password reset, Checkout guest/logged-in)
-* Fluent Forms
+- WooCommerce (Login, Registration, Password reset, Checkout guest/logged-in)
+- Fluent Forms
 - _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
