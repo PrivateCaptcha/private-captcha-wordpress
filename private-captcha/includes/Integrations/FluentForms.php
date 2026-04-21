@@ -227,18 +227,12 @@ if (window.jQuery) {
         pcResetCaptchaWidgetWP(this);
     });
 
-    window.jQuery(document.body).on("fluentform_reset", function(event, form) {
+    window.jQuery(document.body).on("fluentform_reset fluentform_submission_success", function(event, form) {
         if (form && form.length) {
             pcResetCaptchaWidgetWP(form[0]);
         }
     });
 }
-
-document.addEventListener("fluentform_submission_success", function(event) {
-    if (event.detail && event.detail.form) {
-        pcResetCaptchaWidgetWP(event.detail.form);
-    }
-});
 JS;
 
 		$fluent_forms_custom_css = <<<'CSS'
