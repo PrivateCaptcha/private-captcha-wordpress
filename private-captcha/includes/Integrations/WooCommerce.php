@@ -107,14 +107,14 @@ class WooCommerce extends AbstractIntegration {
 		$this->checkout_guest_field = new SettingsField(
 			'woocommerce_enable_checkout_guest',
 			'WooCommerce Checkout (Guest)',
-			'Add captcha to WooCommerce classic checkout form for guest users.',
+			'Add captcha to WooCommerce checkout form for guest users.',
 			'Add captcha to WooCommerce checkout for guests'
 		);
 
 		$this->checkout_logged_in_field = new SettingsField(
 			'woocommerce_enable_checkout_logged_in',
 			'WooCommerce Checkout (Logged-in)',
-			'Add captcha to WooCommerce classic checkout form for logged-in users.',
+			'Add captcha to WooCommerce checkout form for logged-in users.',
 			'Add captcha to WooCommerce checkout for logged-in users'
 		);
 	}
