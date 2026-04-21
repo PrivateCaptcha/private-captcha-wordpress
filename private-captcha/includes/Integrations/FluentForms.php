@@ -91,7 +91,7 @@ class FluentForms extends AbstractIntegration {
 	public function init(): void {
 		$this->write_log( 'Initializing Fluent Forms integration' );
 
-		add_action( 'fluentform/render_item_submit_button', array( $this, 'add_captcha_widget' ), 10, 2 );
+		add_filter( 'fluentform/rendering_field_html_button', array( $this, 'prepend_captcha_widget_to_submit_button' ), 10, 3 );
 		add_action( 'fluentform/render_item_step_end', array( $this, 'add_captcha_widget' ), 10, 2 );
 		add_filter( 'fluentform/validation_errors', array( $this, 'validate_captcha' ), 10, 4 );
 		add_filter( 'fluentform/white_listed_fields', array( $this, 'add_whitelisted_fields' ), 10, 2 );
@@ -99,23 +99,11 @@ class FluentForms extends AbstractIntegration {
 	}
 
 	/**
-	 * Add Private Captcha widget before the submit button area.
+	 * Build the Private Captcha widget markup for Fluent Forms.
 	 *
-	 * @param array<string, mixed> $item The Fluent Forms item being rendered.
-	 * @param object               $form The current Fluent Forms form object.
+	 * @return string Widget markup or empty string.
 	 */
-	public function add_captcha_widget( array $item, object $form ): void {
-		// Fluent Forms passes the rendered item, but this integration only needs the form instance.
-		unset( $item );
-
-		$form_id                 = absint( $form->id ?? 0 );
-		$form_instance_id        = (string) ( $form->instance_index ?? 0 );
-		$unique_form_identifier  = $form_id . ':' . $form_instance_id;
-
-		if ( isset( $this->rendered_form_instances[ $unique_form_identifier ] ) ) {
-			return;
-		}
-
+	private function get_captcha_widget_markup(): string {
 		ob_start();
 		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;' );
 		$widget = ob_get_clean();
@@ -142,12 +130,10 @@ class FluentForms extends AbstractIntegration {
 		$widget = wp_kses( $widget, $allowed_html );
 
 		if ( '' === trim( $widget ) ) {
-			return;
+			return '';
 		}
 
-		$this->rendered_form_instances[ $unique_form_identifier ] = true;
-
-		echo wp_kses(
+		$wrapper_open = wp_kses(
 			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . esc_attr( Client::FORM_FIELD ) . '">',
 			array(
 				'div' => array(
@@ -156,9 +142,74 @@ class FluentForms extends AbstractIntegration {
 				),
 			)
 		);
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized with wp_kses() above.
-		echo $widget;
-		echo '</div></div></div>';
+		return $wrapper_open . $widget . '</div></div></div>';
+	}
+
+	/**
+	 * Build a unique form instance identifier.
+	 *
+	 * @param object $form The current Fluent Forms form object.
+	 * @return string Unique identifier for the rendered form instance.
+	 */
+	private function get_form_instance_identifier( object $form ): string {
+		$form_id          = absint( $form->id ?? 0 );
+		$form_instance_id = (string) ( $form->instance_index ?? 0 );
+
+		return $form_id . ':' . $form_instance_id;
+	}
+
+	/**
+	 * Add Private Captcha widget for stepped Fluent Forms.
+	 *
+	 * @param array<string, mixed> $item The Fluent Forms item being rendered.
+	 * @param object               $form The current Fluent Forms form object.
+	 */
+	public function add_captcha_widget( array $item, object $form ): void {
+		// Fluent Forms passes the rendered item, but this integration only needs the form instance.
+		unset( $item );
+
+		$unique_form_identifier = $this->get_form_instance_identifier( $form );
+
+		if ( isset( $this->rendered_form_instances[ $unique_form_identifier ] ) ) {
+			return;
+		}
+
+		$widget_markup = $this->get_captcha_widget_markup();
+		if ( '' === $widget_markup ) {
+			return;
+		}
+
+		$this->rendered_form_instances[ $unique_form_identifier ] = true;
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup is escaped/sanitized in get_captcha_widget_markup().
+		echo $widget_markup;
+	}
+
+	/**
+	 * Prepend Private Captcha markup to standard Fluent Forms submit buttons.
+	 *
+	 * @param string               $html The rendered submit button markup.
+	 * @param array<string, mixed> $item The Fluent Forms item being rendered.
+	 * @param object               $form The current Fluent Forms form object.
+	 * @return string Updated submit button markup.
+	 */
+	public function prepend_captcha_widget_to_submit_button( string $html, array $item, object $form ): string {
+		unset( $item );
+
+		$unique_form_identifier = $this->get_form_instance_identifier( $form );
+
+		if ( isset( $this->rendered_form_instances[ $unique_form_identifier ] ) ) {
+			return $html;
+		}
+
+		$widget_markup = $this->get_captcha_widget_markup();
+		if ( '' === $widget_markup ) {
+			return $html;
+		}
+
+		$this->rendered_form_instances[ $unique_form_identifier ] = true;
+
+		return $widget_markup . $html;
 	}
 
 	/**
@@ -230,11 +281,36 @@ class FluentForms extends AbstractIntegration {
 
 $fluent_forms_custom_js = <<<'JS'
 if (window.jQuery) {
+    function pcPlaceFluentFormsCaptcha(form) {
+        if (!form) {
+            return;
+        }
+
+        var captchaField = form.querySelector(".ff-private-captcha-field");
+        var submitArea = form.querySelector(".ff_submit_btn_wrapper, .step-nav");
+
+        if (captchaField && submitArea && captchaField !== submitArea.previousElementSibling) {
+            submitArea.parentNode.insertBefore(captchaField, submitArea);
+        }
+    }
+
     function pcResetFluentFormsCaptcha(form) {
         if (typeof pcResetCaptchaWidgetWP === "function") {
             pcResetCaptchaWidgetWP(form);
         }
     }
+
+    window.jQuery("form.frm-fluent-form").each(function() {
+        pcPlaceFluentFormsCaptcha(this);
+    });
+
+    window.jQuery(document.body).on("fluentform_init", function(event, forms) {
+        if (forms && forms.length) {
+            window.jQuery(forms).each(function() {
+                pcPlaceFluentFormsCaptcha(this);
+            });
+        }
+    });
 
     window.jQuery(document).on("fluentform_validation_failed fluentform_submission_failed", "form.frm-fluent-form", function() {
         pcResetFluentFormsCaptcha(this);
