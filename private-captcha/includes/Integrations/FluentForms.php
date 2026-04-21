@@ -91,7 +91,7 @@ class FluentForms extends AbstractIntegration {
 	public function init(): void {
 		$this->write_log( 'Initializing Fluent Forms integration' );
 
-		add_filter( 'fluentform/rendering_field_html_button', array( $this, 'prepend_captcha_widget_to_submit_button' ), 10, 3 );
+		add_filter( 'fluentform/rendering_field_html_button', array( $this, 'inject_captcha_widget_for_submit_button' ), 10, 3 );
 		add_action( 'fluentform/render_item_step_end', array( $this, 'add_captcha_widget' ), 10, 2 );
 		add_filter( 'fluentform/validation_errors', array( $this, 'validate_captcha' ), 10, 4 );
 		add_filter( 'fluentform/white_listed_fields', array( $this, 'add_whitelisted_fields' ), 10, 2 );
@@ -196,7 +196,7 @@ class FluentForms extends AbstractIntegration {
 	 * @param object               $form The current Fluent Forms form object.
 	 * @return string Updated submit button markup.
 	 */
-	public function prepend_captcha_widget_to_submit_button( string $html, array $item, object $form ): string {
+	public function inject_captcha_widget_for_submit_button( string $html, array $item, object $form ): string {
 		unset( $item );
 
 		$unique_form_identifier = $this->get_form_instance_identifier( $form );
@@ -283,33 +283,35 @@ class FluentForms extends AbstractIntegration {
 		}
 
 $fluent_forms_custom_js = <<<'JS'
+function pcPlaceFluentFormsCaptcha(form) {
+    if (!form) {
+        return;
+    }
+
+    var captchaField = form.querySelector(".ff-private-captcha-field");
+    // Fluent Forms 6.2.1 renders standard submit controls in `.ff_submit_btn_wrapper`
+    // and stepped controls in `.step-nav`.
+    var submitArea = form.querySelector(".ff_submit_btn_wrapper, .step-nav");
+    var submitParent = submitArea ? submitArea.parentNode : null;
+
+    if (!captchaField || !submitArea || !submitParent) {
+        return;
+    }
+
+    if (captchaField.parentNode === submitParent && captchaField.nextElementSibling === submitArea) {
+        return;
+    }
+
+    submitParent.insertBefore(captchaField, submitArea);
+}
+
+function pcResetFluentFormsCaptcha(form) {
+    if (typeof pcResetCaptchaWidgetWP === "function") {
+        pcResetCaptchaWidgetWP(form);
+    }
+}
+
 if (window.jQuery) {
-    function pcPlaceFluentFormsCaptcha(form) {
-        if (!form) {
-            return;
-        }
-
-        var captchaField = form.querySelector(".ff-private-captcha-field");
-        var submitArea = form.querySelector(".ff_submit_btn_wrapper, .step-nav");
-        var submitParent = submitArea ? submitArea.parentNode : null;
-
-        if (!captchaField || !submitArea || !submitParent) {
-            return;
-        }
-
-        if (captchaField.parentNode === submitParent && captchaField.nextElementSibling === submitArea) {
-            return;
-        }
-
-        submitParent.insertBefore(captchaField, submitArea);
-    }
-
-    function pcResetFluentFormsCaptcha(form) {
-        if (typeof pcResetCaptchaWidgetWP === "function") {
-            pcResetCaptchaWidgetWP(form);
-        }
-    }
-
     window.jQuery("form.frm-fluent-form").each(function() {
         pcPlaceFluentFormsCaptcha(this);
     });
