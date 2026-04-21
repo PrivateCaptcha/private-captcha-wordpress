@@ -816,6 +816,7 @@ class Admin {
 			}
 
 			if ( $unavailable_count > 0 ) {
+				/* translators: Number of hidden integrations. 1. Integrations count */
 				$show_text = sprintf( esc_html__( 'Show all (%d)', 'private-captcha' ), $total_integrations );
 				$hide_text = esc_html__( 'Hide unavailable', 'private-captcha' );
 				echo '<p><button type="button" class="button button-secondary" id="private-captcha-toggle-integrations" data-expanded="false" data-show-text="' . esc_attr( $show_text ) . '" data-hide-text="' . esc_attr( $hide_text ) . '">' . esc_html( $show_text ) . '</button></p>';
