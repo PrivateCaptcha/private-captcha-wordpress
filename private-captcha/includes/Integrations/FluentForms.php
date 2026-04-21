@@ -134,7 +134,10 @@ class FluentForms extends AbstractIntegration {
 		}
 
 		$wrapper_open = wp_kses(
-			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . esc_attr( Client::FORM_FIELD ) . '">',
+			sprintf(
+				'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="%s">',
+				esc_attr( Client::FORM_FIELD )
+			),
 			array(
 				'div' => array(
 					'class'     => array(),
@@ -288,10 +291,17 @@ if (window.jQuery) {
 
         var captchaField = form.querySelector(".ff-private-captcha-field");
         var submitArea = form.querySelector(".ff_submit_btn_wrapper, .step-nav");
+        var submitParent = submitArea ? submitArea.parentNode : null;
 
-        if (captchaField && submitArea && captchaField !== submitArea.previousElementSibling) {
-            submitArea.parentNode.insertBefore(captchaField, submitArea);
+        if (!captchaField || !submitArea || !submitParent) {
+            return;
         }
+
+        if (captchaField.parentNode === submitParent && captchaField.nextElementSibling === submitArea) {
+            return;
+        }
+
+        submitParent.insertBefore(captchaField, submitArea);
     }
 
     function pcResetFluentFormsCaptcha(form) {
