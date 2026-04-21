@@ -197,24 +197,24 @@ class FluentForms extends AbstractIntegration {
 		}
 
 		$fluent_forms_custom_js = '
-                if (window.jQuery) {
-                    window.jQuery(document).on("fluentform_validation_failed fluentform_submission_failed", "form.frm-fluent-form", function() {
-                        pcResetCaptchaWidgetWP(this);
-                    });
+            if (window.jQuery) {
+                window.jQuery(document).on("fluentform_validation_failed fluentform_submission_failed", "form.frm-fluent-form", function() {
+                    pcResetCaptchaWidgetWP(this);
+                });
 
-                    window.jQuery(document.body).on("fluentform_reset", function(event, form) {
-                        if (form && form.length) {
-                            pcResetCaptchaWidgetWP(form[0]);
-                        }
-                    });
-                }
-
-                document.addEventListener("fluentform_submission_success", function(event) {
-                    if (event.detail && event.detail.form) {
-                        pcResetCaptchaWidgetWP(event.detail.form);
+                window.jQuery(document.body).on("fluentform_reset", function(event, form) {
+                    if (form && form.length) {
+                        pcResetCaptchaWidgetWP(form[0]);
                     }
                 });
-            ';
+            }
+
+            document.addEventListener("fluentform_submission_success", function(event) {
+                if (event.detail && event.detail.form) {
+                    pcResetCaptchaWidgetWP(event.detail.form);
+                }
+            });
+        ';
 
 		$fluent_forms_custom_css = '
             .ff-private-captcha-field .private-captcha {
