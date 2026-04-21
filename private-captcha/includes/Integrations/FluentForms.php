@@ -108,18 +108,18 @@ class FluentForms extends AbstractIntegration {
 		// Fluent Forms passes the rendered item, but this integration only needs the form instance.
 		unset( $item );
 
-		$form_id          = absint( $form->id ?? 0 );
-		$form_instance_id = (string) ( $form->instance_index ?? 0 );
-		$render_key       = $form_id . ':' . $form_instance_id;
+		$form_id                 = absint( $form->id ?? 0 );
+		$form_instance_id        = (string) ( $form->instance_index ?? 0 );
+		$unique_form_identifier  = $form_id . ':' . $form_instance_id;
 
-		if ( isset( $this->rendered_form_instances[ $render_key ] ) ) {
+		if ( isset( $this->rendered_form_instances[ $unique_form_identifier ] ) ) {
 			return;
 		}
 
 		ob_start();
 		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;' );
 		$widget = ob_get_clean();
-		$widget = false !== $widget ? $widget : '';
+		$widget = (string) $widget;
 
 		$allowed_html = array(
 			'div' => array(
@@ -145,7 +145,7 @@ class FluentForms extends AbstractIntegration {
 			return;
 		}
 
-		$this->rendered_form_instances[ $render_key ] = true;
+		$this->rendered_form_instances[ $unique_form_identifier ] = true;
 
 		echo wp_kses(
 			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . esc_attr( Client::FORM_FIELD ) . '">',
