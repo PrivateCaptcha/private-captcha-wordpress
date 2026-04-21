@@ -24,8 +24,9 @@ class Assets {
 	 * @param string $handle Script handle to use.
 	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptchaWP function.
 	 * @param string $custom_css Optional custom CSS code to add to inline styles.
+	 * @param string $button_selector Optional custom submit button CSS selector.
 	 */
-	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '', string $custom_css = '' ): void {
+	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '', string $custom_css = '', string $button_selector = '' ): void {
 		$script_domain = Settings::get_custom_domain();
 		if ( empty( $script_domain ) ) {
 			$script_domain = 'privatecaptcha.com';
@@ -46,7 +47,7 @@ class Assets {
 		add_filter( 'script_loader_tag', array( __CLASS__, 'add_defer_attribute' ), 10, 3 );
 
 		self::enqueue_styles( $custom_css );
-		self::enqueue_inline_script( $handle, $custom_js );
+		self::enqueue_inline_script( $handle, $custom_js, $button_selector );
 	}
 
 	/**
@@ -83,22 +84,24 @@ class Assets {
 	 *
 	 * @param string $handle Script handle to attach inline script to.
 	 * @param string $custom_js Optional custom JavaScript code to add to setupPrivateCaptchaWP function.
+	 * @param string $button_selector Optional custom CSS selector for submit button.
 	 */
-	private static function enqueue_inline_script( string $handle, string $custom_js = '' ): void {
+	private static function enqueue_inline_script( string $handle, string $custom_js = '', string $button_selector = '' ): void {
 		$custom_js_block = '';
 		if ( ! empty( $custom_js ) ) {
 			$custom_js_block = "\n                " . trim( $custom_js ) . "\n";
 		}
+		$btn_selector_js = empty( $button_selector ) ? '' : '"' . trim( $button_selector ) . '"';
 
 		$custom_js_full = '
         (function() {
-            function pcSetFormButtonEnabledWP(captchaElement, enabled) {
-                const form = captchaElement.closest("form");
-                if (!form) return;
-                const submitButton = form.querySelector("input[type=\"submit\"], button[type=\"submit\"]");
-                if (submitButton) {
-                    submitButton.disabled = !enabled;
-                }
+            function pcSetFormButtonEnabledWP(element, enabled, customSelector) {
+                let container = element.closest("form");
+                if (!container && customSelector) { container = document; }
+                if (!container) return;
+                const selector = customSelector || "input[type=\"submit\"], button[type=\"submit\"]";
+                const submitButtons = container.querySelectorAll(selector);
+                submitButtons.forEach(btn => btn.disabled = !enabled);
             }
 
             function pcResetCaptchaWidgetWP(parent) {
@@ -120,11 +123,14 @@ class Assets {
             }
 
             function setupPrivateCaptchaWP() {
-                document.querySelectorAll(".private-captcha").forEach((e) => pcSetFormButtonEnabledWP(e, false));
+                const submitBtnSelector = ' . $btn_selector_js . ';
+                document.querySelectorAll(submitBtnSelector).forEach((btn) => btn.disabled = true);
+                document.querySelectorAll(".private-captcha").forEach((e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
 
                 document.querySelectorAll(".private-captcha").forEach(function(currentWidget) {
-                    currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(event.detail.element, false));
-                    currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(event.detail.element, true));
+                    currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
+                    currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
+                    currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(event.detail.element, true, submitBtnSelector));
                 });' . $custom_js_block . '
             }
 
