@@ -147,11 +147,18 @@ class FluentForms extends AbstractIntegration {
 
 		$this->rendered_form_instances[ $render_key ] = true;
 
-		$field_name = esc_attr( Client::FORM_FIELD );
-		$markup     = '<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . $field_name . '">' . $widget . '</div></div></div>';
-
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $field_name is escaped and $widget is sanitized with wp_kses().
-		echo $markup;
+		echo wp_kses(
+			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . esc_attr( Client::FORM_FIELD ) . '">',
+			array(
+				'div' => array(
+					'class'     => array(),
+					'data-name' => array(),
+				),
+			)
+		);
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized with wp_kses() above.
+		echo $widget;
+		echo '</div></div></div>';
 	}
 
 	/**
@@ -221,15 +228,21 @@ class FluentForms extends AbstractIntegration {
 			return;
 		}
 
-		$fluent_forms_custom_js = <<<'JS'
+$fluent_forms_custom_js = <<<'JS'
 if (window.jQuery) {
+    function pcResetFluentFormsCaptcha(form) {
+        if (typeof pcResetCaptchaWidgetWP === "function") {
+            pcResetCaptchaWidgetWP(form);
+        }
+    }
+
     window.jQuery(document).on("fluentform_validation_failed fluentform_submission_failed", "form.frm-fluent-form", function() {
-        pcResetCaptchaWidgetWP(this);
+        pcResetFluentFormsCaptcha(this);
     });
 
     window.jQuery(document.body).on("fluentform_reset fluentform_submission_success", function(event, form) {
         if (form && form.length) {
-            pcResetCaptchaWidgetWP(form[0]);
+            pcResetFluentFormsCaptcha(form[0]);
         }
     });
 }
