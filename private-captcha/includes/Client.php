@@ -105,7 +105,11 @@ class Client {
 		try {
 			$result = $this->client->verify( $solution, sitekey: $sitekey );
 
-			return $result->isOK();
+			$success = $result->isOK();
+			if ( ! $success ) {
+				write_log( 'Private Captcha verification failed. result=' . $result );
+			}
+			return $success;
 		} catch ( PrivateCaptchaException $e ) {
 			write_log( 'Private Captcha verification error: ' . $e->getMessage() );
 			return false;
