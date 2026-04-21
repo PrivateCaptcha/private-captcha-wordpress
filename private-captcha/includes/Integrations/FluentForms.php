@@ -129,9 +129,10 @@ class FluentForms extends AbstractIntegration {
 			return;
 		}
 
-		echo wp_kses(
-			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . esc_attr( Client::FORM_FIELD ) . '">' . $widget . '</div></div></div>',
-			$allowed_html
+		printf(
+			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="%1$s">%2$s</div></div></div>',
+			esc_attr( Client::FORM_FIELD ),
+			$widget // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized with wp_kses() above.
 		);
 	}
 
@@ -200,31 +201,31 @@ class FluentForms extends AbstractIntegration {
 			return;
 		}
 
-		$fluent_forms_custom_js = '
-            if (window.jQuery) {
-                window.jQuery(document).on("fluentform_validation_failed fluentform_submission_failed", "form.frm-fluent-form", function() {
-                    pcResetCaptchaWidgetWP(this);
-                });
+		$fluent_forms_custom_js = <<<'JS'
+if (window.jQuery) {
+    window.jQuery(document).on("fluentform_validation_failed fluentform_submission_failed", "form.frm-fluent-form", function() {
+        pcResetCaptchaWidgetWP(this);
+    });
 
-                window.jQuery(document.body).on("fluentform_reset", function(event, form) {
-                    if (form && form.length) {
-                        pcResetCaptchaWidgetWP(form[0]);
-                    }
-                });
-            }
+    window.jQuery(document.body).on("fluentform_reset", function(event, form) {
+        if (form && form.length) {
+            pcResetCaptchaWidgetWP(form[0]);
+        }
+    });
+}
 
-            document.addEventListener("fluentform_submission_success", function(event) {
-                if (event.detail && event.detail.form) {
-                    pcResetCaptchaWidgetWP(event.detail.form);
-                }
-            });
-        ';
+document.addEventListener("fluentform_submission_success", function(event) {
+    if (event.detail && event.detail.form) {
+        pcResetCaptchaWidgetWP(event.detail.form);
+    }
+});
+JS;
 
-		$fluent_forms_custom_css = '
-            .ff-private-captcha-field .private-captcha {
-                margin-bottom: 0;
-            }
-        ';
+		$fluent_forms_custom_css = <<<'CSS'
+.ff-private-captcha-field .private-captcha {
+    margin-bottom: 0;
+}
+CSS;
 
 		Assets::enqueue( 'private-captcha-widget', $fluent_forms_custom_js, $fluent_forms_custom_css );
 	}
