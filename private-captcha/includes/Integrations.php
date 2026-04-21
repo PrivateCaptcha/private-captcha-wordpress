@@ -13,6 +13,7 @@ use PrivateCaptchaWP\Integrations\IntegrationInterface;
 use PrivateCaptchaWP\Integrations\WordPressCore;
 use PrivateCaptchaWP\Integrations\WPForms;
 use PrivateCaptchaWP\Integrations\ContactForm7;
+use PrivateCaptchaWP\Integrations\FluentForms;
 use PrivateCaptchaWP\Integrations\GravityForms;
 use PrivateCaptchaWP\Integrations\Elementor;
 use PrivateCaptchaWP\Integrations\WooCommerce;
@@ -38,6 +39,7 @@ class Integrations {
 			new WordPressCore( $client ),
 			new WPForms( $client ),
 			new ContactForm7( $client ),
+			new FluentForms( $client ),
 			new GravityForms( $client ),
 			new Elementor( $client ),
 			new WooCommerce( $client ),
