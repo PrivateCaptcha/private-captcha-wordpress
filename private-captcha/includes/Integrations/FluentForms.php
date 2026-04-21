@@ -105,6 +105,7 @@ class FluentForms extends AbstractIntegration {
 	 * @param object               $form The current Fluent Forms form object.
 	 */
 	public function add_captcha_widget( array $item, object $form ): void {
+		// Fluent Forms passes the rendered item, but this integration only needs the form instance.
 		unset( $item );
 
 		$form_id          = absint( $form->id ?? 0 );
@@ -163,6 +164,7 @@ class FluentForms extends AbstractIntegration {
 	 * @return array<string, array<int, string>> Updated validation errors.
 	 */
 	public function validate_captcha( array $errors, array $form_data, object $form, array $fields ): array {
+		// These parameters are required by the Fluent Forms filter signature.
 		unset( $form_data, $form, $fields );
 
 		if ( ! $this->is_enabled() ) {
@@ -199,6 +201,7 @@ class FluentForms extends AbstractIntegration {
 	 * @return array<int, string> Updated whitelisted fields.
 	 */
 	public function add_whitelisted_fields( array $white_listed_fields, int $form_id ): array {
+		// The whitelist applies uniformly, so the current Fluent Forms form ID is not needed here.
 		unset( $form_id );
 
 		if ( in_array( Client::FORM_FIELD, $white_listed_fields, true ) ) {
