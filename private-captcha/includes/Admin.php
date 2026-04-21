@@ -174,7 +174,7 @@ class Admin {
 		);
 
 		// Add dynamic integration fields for all integrations.
-		$all_integrations   = $this->integrations->get_all_integrations();
+		$all_integrations = $this->integrations->get_all_integrations();
 
 		foreach ( $all_integrations as $integration ) {
 			$fields = $integration->get_settings_fields();
@@ -183,7 +183,7 @@ class Admin {
 					'integration' => $integration,
 					'field'       => $field,
 				);
-				
+
 				if ( ! $integration->is_available() ) {
 					$args['class'] = 'private-captcha-integration-unavailable-row';
 				}
@@ -811,7 +811,7 @@ class Admin {
 
 			foreach ( $all_integrations as $integration ) {
 				if ( ! $integration->is_available() ) {
-					$unavailable_count++;
+					++$unavailable_count;
 				}
 			}
 
