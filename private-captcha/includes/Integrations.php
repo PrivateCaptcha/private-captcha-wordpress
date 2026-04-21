@@ -12,6 +12,7 @@ namespace PrivateCaptchaWP;
 use PrivateCaptchaWP\Integrations\IntegrationInterface;
 use PrivateCaptchaWP\Integrations\WordPressCore;
 use PrivateCaptchaWP\Integrations\WPForms;
+use PrivateCaptchaWP\Integrations\FluentForms;
 use PrivateCaptchaWP\Integrations\ContactForm7;
 use PrivateCaptchaWP\Integrations\GravityForms;
 use PrivateCaptchaWP\Integrations\Elementor;
@@ -37,6 +38,7 @@ class Integrations {
 		$this->integrations = array(
 			new WordPressCore( $client ),
 			new WPForms( $client ),
+			new FluentForms( $client ),
 			new ContactForm7( $client ),
 			new GravityForms( $client ),
 			new Elementor( $client ),
