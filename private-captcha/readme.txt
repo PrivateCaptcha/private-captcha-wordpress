@@ -4,7 +4,7 @@ Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.0.15
+Stable tag: 1.0.16
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -22,15 +22,14 @@ Private Captcha WordPress Plugin integrates Private Captcha with your WordPress 
 * No tracking, privacy-focused captcha solution
 
 **Supported Forms:**
-* WordPress Login Form
-* WordPress Registration Form  
-* WordPress Password Reset Form
-* WordPress Comment Forms (logged-in and guest users)
+* WordPress (Login, Registrations, Password reset, Comment forms for logged-in/guests)
 * WPForms
 * Contact Form 7
 * Gravity Forms
 * Elementor Pro
-* Contact Form 7
+* WooCommerce (Login, Registration, Password reset, Checkout guest/logged-in)
+* Fluent Forms
+* (more forms support is currently in progress)
 
 More forms (including popular plugins) are currently in progress of being added.
 
