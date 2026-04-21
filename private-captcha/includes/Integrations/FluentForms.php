@@ -105,29 +105,33 @@ class FluentForms extends AbstractIntegration {
 		$widget = ob_get_clean();
 		$widget = false !== $widget ? $widget : '';
 
+		$allowed_html = array(
+			'div' => array(
+				'class'                => array(),
+				'data-name'            => array(),
+				'data-store-variable'  => array(),
+				'data-sitekey'         => array(),
+				'data-solution-field'  => array(),
+				'data-theme'           => array(),
+				'data-display-mode'    => array(),
+				'data-start-mode'      => array(),
+				'data-lang'            => array(),
+				'data-debug'           => array(),
+				'data-puzzle-endpoint' => array(),
+				'data-eu'              => array(),
+				'data-styles'          => array(),
+			),
+		);
+
+		$widget = wp_kses( $widget, $allowed_html );
+
 		if ( '' === trim( $widget ) ) {
 			return;
 		}
 
 		echo wp_kses(
-			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" name="' . esc_attr( Client::FORM_FIELD ) . '">' . $widget . '</div></div></div>',
-			array(
-				'div' => array(
-					'class'                => array(),
-					'name'                 => array(),
-					'data-store-variable'  => array(),
-					'data-sitekey'         => array(),
-					'data-solution-field'  => array(),
-					'data-theme'           => array(),
-					'data-display-mode'    => array(),
-					'data-start-mode'      => array(),
-					'data-lang'            => array(),
-					'data-debug'           => array(),
-					'data-puzzle-endpoint' => array(),
-					'data-eu'              => array(),
-					'data-styles'          => array(),
-				),
-			)
+			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . esc_attr( Client::FORM_FIELD ) . '">' . $widget . '</div></div></div>',
+			$allowed_html
 		);
 	}
 
