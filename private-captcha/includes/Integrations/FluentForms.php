@@ -31,6 +31,13 @@ class FluentForms extends AbstractIntegration {
 	private SettingsField $fluent_forms_field;
 
 	/**
+	 * Rendered Fluent Forms instance identifiers.
+	 *
+	 * @var array<string, bool>
+	 */
+	private array $rendered_form_instances = array();
+
+	/**
 	 * Constructor to initialize the integration.
 	 *
 	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
@@ -98,7 +105,15 @@ class FluentForms extends AbstractIntegration {
 	 * @param object               $form The current Fluent Forms form object.
 	 */
 	public function add_captcha_widget( array $item, object $form ): void {
-		unset( $item, $form );
+		unset( $item );
+
+		$form_id          = absint( $form->id ?? 0 );
+		$form_instance_id = (string) ( $form->instance_index ?? 0 );
+		$render_key       = $form_id . ':' . $form_instance_id;
+
+		if ( isset( $this->rendered_form_instances[ $render_key ] ) ) {
+			return;
+		}
 
 		ob_start();
 		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;' );
@@ -129,11 +144,13 @@ class FluentForms extends AbstractIntegration {
 			return;
 		}
 
-		printf(
-			'<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="%1$s">%2$s</div></div></div>',
-			esc_attr( Client::FORM_FIELD ),
-			$widget // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized with wp_kses() above.
-		);
+		$this->rendered_form_instances[ $render_key ] = true;
+
+		$field_name = esc_attr( Client::FORM_FIELD );
+		$markup     = '<div class="ff-el-group ff-private-captcha-field"><div class="ff-el-input--content"><div class="ff-el-private-captcha" data-name="' . $field_name . '">' . $widget . '</div></div></div>';
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $field_name is escaped and $widget is sanitized with wp_kses().
+		echo $markup;
 	}
 
 	/**
