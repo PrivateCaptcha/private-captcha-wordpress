@@ -107,6 +107,7 @@ class FluentForms extends AbstractIntegration {
 	 * @param array<string, mixed> $insert_data Form insert data.
 	 * @param array<string, mixed> $data        Form submission raw data.
 	 * @param object               $form        Form object.
+	 * @return mixed Form insert data.
 	 */
 	public function verify_captcha_fluentforms( array $insert_data, array $data, $form ) {
 		if ( ! $this->is_enabled() ) {
