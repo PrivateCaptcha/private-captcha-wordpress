@@ -18,6 +18,14 @@ use PrivateCaptchaWP\SettingsField;
 use PrivateCaptchaWP\Widget;
 use WP_Error;
 
+function _is_non_checkout_ajax() {
+	$wc_ajax = isset( $_GET['wc-ajax'] ) ? sanitize_text_field( $_GET['wc-ajax'] ) : '';
+	if ( $wc_ajax && $wc_ajax !== 'checkout' ) {
+		return true;
+	}
+	return false;
+}
+
 /**
  * WooCommerce integration class
  */
@@ -192,7 +200,7 @@ class WooCommerce extends AbstractIntegration {
 			// Classic checkout: verify captcha during checkout processing.
 			add_action( 'woocommerce_checkout_process', array( $this, 'verify_checkout_captcha' ) );
 
-            // Block-based checkout: render widget before the checkout actions block.
+			// Block-based checkout: render widget before the checkout actions block.
 			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 10, 1 );
 			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'verify_block_checkout_captcha' ), 10, 2 );
 			add_action( 'woocommerce_loaded', array( $this, 'register_endpoint_data' ), 20 );
@@ -366,11 +374,16 @@ class WooCommerce extends AbstractIntegration {
 	 * @throws \Exception When validation fails.
 	 */
 	public function verify_block_checkout_captcha( $order, $request ): void {
+		// Skip non-checkout wc-ajax requests (e.g. payment gateway pre-validation) to preserve the token.
+		if ( _is_non_checkout_ajax() ) {
+			return;
+		}
+
 		if ( ! $this->is_checkout_captcha_enabled() ) {
 			return;
 		}
 
-        $this->write_log("Verify handler");
+		$this->write_log( 'Verify handler' );
 
 		$extensions = $request->get_param( 'extensions' );
 		$solution   = isset( $extensions['private-captcha']['solution'] ) ? $extensions['private-captcha']['solution'] : '';
