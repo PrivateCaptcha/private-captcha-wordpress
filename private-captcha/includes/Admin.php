@@ -64,6 +64,7 @@ class Admin {
 		$css = '
             #private_captcha_advanced { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
             .required { color: #d63638; }
+            .private-captcha-integration-unavailable-row { display: none; }
             .private-captcha-reset-button {
                 background-color: #d63638 !important;
                 border-color: #d63638 !important;
@@ -90,7 +91,23 @@ class Admin {
                             event.preventDefault();
                         }
                     });
-                 }
+                }
+
+                var toggleBtn = document.getElementById("private-captcha-toggle-integrations");
+                if (toggleBtn) {
+                    toggleBtn.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        var rows = document.querySelectorAll(".private-captcha-integration-unavailable-row");
+                        var isExpanded = toggleBtn.getAttribute("data-expanded") === "true";
+                        
+                        for (var i = 0; i < rows.length; i++) {
+                            rows[i].style.display = isExpanded ? "none" : "table-row";
+                        }
+                        
+                        toggleBtn.setAttribute("data-expanded", isExpanded ? "false" : "true");
+                        toggleBtn.textContent = isExpanded ? toggleBtn.getAttribute("data-show-text") : toggleBtn.getAttribute("data-hide-text");
+                    });
+                }
             }
 
             if (document.readyState === "loading") {
@@ -157,19 +174,27 @@ class Admin {
 		);
 
 		// Add dynamic integration fields for all integrations.
-		foreach ( $this->integrations->get_all_integrations() as $integration ) {
+		$all_integrations   = $this->integrations->get_all_integrations();
+
+		foreach ( $all_integrations as $integration ) {
 			$fields = $integration->get_settings_fields();
 			foreach ( $fields as $field ) {
+				$args = array(
+					'integration' => $integration,
+					'field'       => $field,
+				);
+				
+				if ( ! $integration->is_available() ) {
+					$args['class'] = 'private-captcha-integration-unavailable-row';
+				}
+
 				add_settings_field(
 					$field->get_setting_name(),
 					$field->get_label(),
 					array( $this, 'integration_field_callback' ),
 					'private-captcha',
 					'private_captcha_forms',
-					array(
-						'integration' => $integration,
-						'field'       => $field,
-					)
+					$args
 				);
 			}
 		}
@@ -777,6 +802,24 @@ class Admin {
 			echo '<table class="form-table" role="presentation">';
 			do_settings_fields( 'private-captcha', $section_id );
 			echo '</table>';
+		}
+
+		if ( 'private_captcha_forms' === $section_id ) {
+			$all_integrations   = $this->integrations->get_all_integrations();
+			$total_integrations = count( $all_integrations );
+			$unavailable_count  = 0;
+
+			foreach ( $all_integrations as $integration ) {
+				if ( ! $integration->is_available() ) {
+					$unavailable_count++;
+				}
+			}
+
+			if ( $unavailable_count > 0 ) {
+				$show_text = sprintf( esc_html__( 'Show all (%d)', 'private-captcha' ), $total_integrations );
+				$hide_text = esc_html__( 'Hide unavailable', 'private-captcha' );
+				echo '<p><button type="button" class="button button-secondary" id="private-captcha-toggle-integrations" data-expanded="false" data-show-text="' . esc_attr( $show_text ) . '" data-hide-text="' . esc_attr( $hide_text ) . '">' . esc_html( $show_text ) . '</button></p>';
+			}
 		}
 	}
 
