@@ -168,7 +168,7 @@ class WooCommerce extends AbstractIntegration {
 	 * Initialize WooCommerce integration hooks.
 	 */
 	public function init(): void {
-		$this->write_log( 'Initializing WooCommerce integration.' );
+		$this->write_log( 'Initializing WooCommerce integration' );
 
 		if ( $this->login_field->is_enabled() ) {
 			add_action( 'woocommerce_login_form', array( $this, 'add_login_captcha' ) );
@@ -191,6 +191,11 @@ class WooCommerce extends AbstractIntegration {
 
 			// Classic checkout: verify captcha during checkout processing.
 			add_action( 'woocommerce_checkout_process', array( $this, 'verify_checkout_captcha' ) );
+
+            // Block-based checkout: render widget before the checkout actions block.
+			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 10, 1 );
+			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'verify_block_checkout_captcha' ), 10, 2 );
+			add_action( 'woocommerce_loaded', array( $this, 'register_endpoint_data' ), 20 );
 		}
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -333,6 +338,94 @@ class WooCommerce extends AbstractIntegration {
 	}
 
 	/**
+	 * Render captcha widget before the block-based checkout actions block.
+	 * Uses the render_block_woocommerce/checkout-actions-block filter to inject
+	 * the widget HTML before the Place Order button in block-based checkout.
+	 *
+	 * @param string $block_content The block content HTML.
+	 * @return string Modified block content with captcha widget prepended.
+	 */
+	public function render_block_checkout_captcha( string $block_content ): string {
+		if ( ! $this->is_checkout_captcha_enabled() ) {
+			return $block_content;
+		}
+
+		ob_start();
+		Widget::render( '--border-radius: 0.25rem;' );
+		$captcha_html = ob_get_clean();
+		$captcha_html = false !== $captcha_html ? $captcha_html : '';
+
+		return $captcha_html . $block_content;
+	}
+
+	/**
+	 * Verify captcha for WooCommerce block checkout.
+	 *
+	 * @param \WC_Order        $order   The order object.
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @throws \Exception When validation fails.
+	 */
+	public function verify_block_checkout_captcha( $order, $request ): void {
+		if ( ! $this->is_checkout_captcha_enabled() ) {
+			return;
+		}
+
+        $this->write_log("Verify handler");
+
+		$extensions = $request->get_param( 'extensions' );
+		$solution   = isset( $extensions['private-captcha']['solution'] ) ? $extensions['private-captcha']['solution'] : '';
+
+		if ( ! $this->client->is_available() ) {
+			throw new \Exception( esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ) );
+		}
+
+		if ( ! $this->verify_solution( $solution ) ) {
+			throw new \Exception( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ) );
+		}
+	}
+
+	/**
+	 * Verify captcha solution directly.
+	 *
+	 * @param string $solution The captcha solution.
+	 * @return bool True if verification succeeds.
+	 */
+	protected function verify_solution( string $solution ): bool {
+		$sitekey = \PrivateCaptchaWP\Settings::get_sitekey();
+		$result  = $this->client->verify_solution( $solution, $sitekey );
+
+		$this->write_log( 'Private Captcha block checkout verification finished. result=' . $result );
+
+		return $result;
+	}
+
+	/**
+	 * Register endpoint data for WooCommerce Store API.
+	 */
+	public function register_endpoint_data(): void {
+		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+			return;
+		}
+
+		woocommerce_store_api_register_endpoint_data(
+			array(
+				'endpoint'        => 'checkout',
+				'namespace'       => 'private-captcha',
+				'schema_callback' => function () {
+					return array(
+						'solution' => array(
+							'description'       => __( 'Private Captcha solution.', 'private-captcha' ),
+							'type'              => 'string',
+							'context'           => array( 'view', 'edit' ),
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					);
+				},
+			)
+		);
+	}
+
+	/**
 	 * Enqueue Private Captcha scripts with WooCommerce-specific handlers.
 	 * Classic checkout: reset widget after AJAX fragment replacement (updated_checkout)
 	 * and after checkout errors (checkout_error).
@@ -341,13 +434,60 @@ class WooCommerce extends AbstractIntegration {
 		$woo_custom_js = '
                 if (typeof jQuery !== "undefined") {
                     jQuery(document.body).on("updated_checkout", function() {
-                        var paymentDiv = document.querySelector(".woocommerce-checkout-payment");
+                        const paymentDiv = document.querySelector(".woocommerce-checkout-payment");
                         if (paymentDiv) { pcResetCaptchaWidgetWP(paymentDiv); }
                     });
                     jQuery(document.body).on("checkout_error", function() {
-                        var form = document.querySelector("form.checkout");
+                        const form = document.querySelector("form.checkout");
                         if (form) { pcResetCaptchaWidgetWP(form); }
                     });
+                }
+                if (typeof wp !== "undefined" && wp.data) {
+                    function setPrivateCaptchaExtensionData(solution) {
+                        const dispatch = wp.data.dispatch("wc/store/checkout");
+                        if (!dispatch) return;
+                        if (typeof dispatch.setExtensionData === "function") {
+                            dispatch.setExtensionData("private-captcha", { solution: solution });
+                        } else if (typeof dispatch.__internalSetExtensionData === "function") {
+                            dispatch.__internalSetExtensionData("private-captcha", { solution: solution });
+                        }
+                    }
+                    const unsubscribe = wp.data.subscribe(function() {
+                        if (typeof window.privateCaptcha !== "undefined" && typeof window.privateCaptcha.setup === "function") {
+                            // default state (on load) will be handled by parent setupPrivateCaptchaWP() function
+                            // here we only handle "changes" (for the lack of better API in WordPress/WooCommerce)
+                            const newWidgets = window.privateCaptcha.setup();
+                            if (newWidgets && (newWidgets.length > 0)) {
+                                newWidgets.forEach(function(widget) {
+                                    pcSetFormButtonEnabledWP(widget.element(), false, submitBtnSelector);
+
+                                    widget.element().addEventListener("privatecaptcha:init", function(event) {
+                                        pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector);
+                                        setPrivateCaptchaExtensionData("");
+                                    });
+                                    widget.element().addEventListener("privatecaptcha:finish", function(event) { 
+                                        pcSetFormButtonEnabledWP(event.detail.element, true, submitBtnSelector);
+                                        setPrivateCaptchaExtensionData(event.detail.widget.solution());
+                                    });
+                                    widget.element().addEventListener("privatecaptcha:reset", function(event) {
+                                        pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector);
+                                        setPrivateCaptchaExtensionData("");
+                                    });
+                                });
+                            }
+                        }
+                    }, "wc/store/cart");
+                    if (typeof jQuery !== "undefined") {
+                        jQuery(document.body).on("click", ".wc-block-components-checkout-place-order-button", function() {
+                            setTimeout(function() {
+                                const checkoutBlock = document.querySelector(".wc-block-checkout");
+                                if (checkoutBlock) {
+                                    pcResetCaptchaWidgetWP(checkoutBlock);
+                                }
+                                setPrivateCaptchaExtensionData("");
+                            }, 2000);
+                        });
+                    }
                 }';
 
 		$woo_custom_css = '
@@ -356,6 +496,6 @@ class WooCommerce extends AbstractIntegration {
             }
         ';
 
-		Assets::enqueue( 'private-captcha-widget', $woo_custom_js, $woo_custom_css );
+		Assets::enqueue( 'private-captcha-widget', $woo_custom_js, $woo_custom_css, '.wc-block-components-checkout-place-order-button, input[type=\"submit\"], button[type=\"submit\"]' );
 	}
 }
