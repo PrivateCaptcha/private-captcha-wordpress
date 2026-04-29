@@ -83,7 +83,7 @@ class Forminator extends AbstractIntegration {
 	public function init(): void {
 		$this->write_log( 'Initializing Forminator integration' );
 
-		add_filter( 'forminator_render_button_markup', array( $this, 'add_captcha_widget' ), 10, 2 );
+		add_filter( 'forminator_render_button_markup', array( $this, 'add_captcha_widget' ), 10, 1 );
 		add_filter( 'forminator_pagination_submit_markup', array( $this, 'add_captcha_widget' ), 10, 1 );
 
 		add_filter( 'forminator_cform_form_is_submittable', array( $this, 'verify_captcha_forminator' ), 10, 3 );
@@ -115,7 +115,7 @@ class Forminator extends AbstractIntegration {
 	 *
 	 * @param array|mixed $can_show      Can show the form.
 	 * @param int         $id            Form id.
-	 * @param array       $form_settings Form settings.
+	 * @param array<string, mixed> $form_settings Form settings.
 	 * @return array|mixed Modified submittable array or original.
 	 */
 	public function verify_captcha_forminator( $can_show, $id, $form_settings ) {
