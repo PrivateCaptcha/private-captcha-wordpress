@@ -4,7 +4,7 @@ Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.9
 Requires PHP: 8.2
-Stable tag: 1.0.16
+Stable tag: 1.0.17
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -29,6 +29,7 @@ Private Captcha WordPress Plugin integrates Private Captcha with your WordPress 
 * Elementor Pro
 * WooCommerce (Login, Registration, Password reset, Checkout guest/logged-in)
 * Fluent Forms
+* Forminator
 * (more forms support is currently in progress)
 
 More forms (including popular plugins) are currently in progress of being added.
@@ -64,6 +65,9 @@ Use WP-CLI commands to recover access:
 * `wp private-captcha disable-login`
 
 == Changelog ==
+
+= 1.0.17 =
+* Add Forminator integration
 
 = 1.0.16 =
 * Add WooCommerce and Fluent Forms integration
