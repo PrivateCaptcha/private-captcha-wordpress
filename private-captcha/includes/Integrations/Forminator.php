@@ -113,8 +113,8 @@ class Forminator extends AbstractIntegration {
 	/**
 	 * Verify captcha solution during form processing.
 	 *
-	 * @param array|mixed $can_show      Can show the form.
-	 * @param int         $id            Form id.
+	 * @param array|mixed          $can_show      Can show the form.
+	 * @param int                  $id            Form id.
 	 * @param array<string, mixed> $form_settings Form settings.
 	 * @return array|mixed Modified submittable array or original.
 	 */
