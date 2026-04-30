@@ -7,7 +7,7 @@
  * Author URI: https://privatecaptcha.com
  * License: MIT
  * Requires at least: 5.6
- * Requires PHP: 8.2
+ * Requires PHP: 8.1
  * Text Domain: private-captcha
  *
  * @package PrivateCaptchaWP
