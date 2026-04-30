@@ -91,7 +91,7 @@ class Assets {
 		if ( ! empty( $custom_js ) ) {
 			$custom_js_block = "\n                " . trim( $custom_js ) . "\n";
 		}
-		$btn_selector_js = empty( $button_selector ) ? '' : '"' . trim( $button_selector ) . '"';
+		$btn_selector_js = empty( $button_selector ) ? '"input[type=\"submit\"], button[type=\"submit\"]"' : '"' . trim( $button_selector ) . '"';
 
 		$custom_js_full = '
         (function() {

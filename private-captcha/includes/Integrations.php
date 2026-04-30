@@ -19,6 +19,7 @@ use PrivateCaptchaWP\Integrations\Elementor;
 use PrivateCaptchaWP\Integrations\WooCommerce;
 use PrivateCaptchaWP\Integrations\Forminator;
 use PrivateCaptchaWP\Integrations\Formidable;
+use PrivateCaptchaWP\Integrations\UltimateMember;
 
 /**
  * Integration manager class
@@ -47,6 +48,7 @@ class Integrations {
 			new WooCommerce( $client ),
 			new Forminator( $client ),
 			new Formidable( $client ),
+			new UltimateMember( $client ),
 		);
 
 		$this->init();
