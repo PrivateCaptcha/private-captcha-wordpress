@@ -92,7 +92,33 @@ jobs:
           .distignore
 
     - name: Install latest version of dist-archive-command
-      run: wp package install wp-cli/dist-archive-command:v3.1.0
+      run: |
+        # 1. Get the path to the WP-CLI packages directory and current WP-CLI version
+        PKG_DIR=$(wp package path)
+        WP_CLI_VER=$(wp cli version --short)
+        
+        # 2. Pre-create the packages directory
+        mkdir -p "$PKG_DIR"
+        
+        # 3. Create the default composer.json, stripping out the broken legacy repository
+        cat <<EOF > "$PKG_DIR/composer.json"
+        {
+            "name": "wp-cli/wp-cli",
+            "description": "Installed community packages.",
+            "version": "1.0.0",
+            "config": {
+                "sort-packages": true
+            },
+            "require": {
+                "wp-cli/wp-cli": "^${WP_CLI_VER}"
+            },
+            "minimum-stability": "dev",
+            "prefer-stable": true
+        }
+        EOF
+        
+        # 4. Install the package (Composer will default to Packagist and succeed)
+        wp package install wp-cli/dist-archive-command:v3.1.0
 
     - name: Build plugin
       run: |
