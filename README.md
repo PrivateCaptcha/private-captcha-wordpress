@@ -28,6 +28,7 @@
 - WooCommerce (Login, Registration, Password reset, Checkout guest/logged-in)
 - Fluent Forms
 - Forminator
+- Formidable
 - _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
@@ -45,7 +46,7 @@ wp private-captcha disable-login
 ## Requirements
 
 - WordPress 5.6+
-- PHP 8.2+
+- PHP 8.1+
 - [Private Captcha account](https://portal.privatecaptcha.com/signup)
 
 ## License

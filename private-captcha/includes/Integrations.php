@@ -18,6 +18,7 @@ use PrivateCaptchaWP\Integrations\GravityForms;
 use PrivateCaptchaWP\Integrations\Elementor;
 use PrivateCaptchaWP\Integrations\WooCommerce;
 use PrivateCaptchaWP\Integrations\Forminator;
+use PrivateCaptchaWP\Integrations\Formidable;
 
 /**
  * Integration manager class
@@ -45,6 +46,7 @@ class Integrations {
 			new Elementor( $client ),
 			new WooCommerce( $client ),
 			new Forminator( $client ),
+			new Formidable( $client ),
 		);
 
 		$this->init();
