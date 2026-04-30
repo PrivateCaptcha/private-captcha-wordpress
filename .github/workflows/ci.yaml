@@ -97,7 +97,7 @@ jobs:
 
     - name: Build plugin
       run: |
-        ./vendor/wp-cli/wp-cli/bin/wp dist-archive ./private-captcha private-captcha.zip
+        ./vendor/bin/wp dist-archive ./private-captcha private-captcha.zip
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
