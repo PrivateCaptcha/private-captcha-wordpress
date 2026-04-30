@@ -8,6 +8,8 @@ parameters:
         - vendor/arts/elementor-stubs/elementor-stubs.php
     ignoreErrors:
         - '#Function wp_debug_log not found#'
+        - message: '#Function UM not found.#'
+          path: includes/Integrations/UltimateMember.php
     excludePaths:
         - vendor/
 
