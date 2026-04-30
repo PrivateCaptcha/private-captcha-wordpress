@@ -29,6 +29,7 @@
 - Fluent Forms
 - Forminator
 - Formidable
+- Ultimate Member (Login, Registration, Password reset)
 - _More forms support (including popular plugins) are currently **in progress**_
 
 ## WP-CLI Commands
