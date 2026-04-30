@@ -3,8 +3,8 @@ Contributors: ribtoks
 Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 6.9
-Requires PHP: 8.2
-Stable tag: 1.0.17
+Requires PHP: 8.1
+Stable tag: 1.0.18
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -65,6 +65,9 @@ Use WP-CLI commands to recover access:
 * `wp private-captcha disable-login`
 
 == Changelog ==
+
+= 1.0.18 =
+* Relax minimum required PHP version to 8.1
 
 = 1.0.17 =
 * Add Forminator integration
