@@ -438,6 +438,8 @@ class Admin {
 			'pl'   => esc_html__( 'Polski', 'private-captcha' ),
 			'fi'   => esc_html__( 'Suomi', 'private-captcha' ),
 			'et'   => esc_html__( 'Eesti', 'private-captcha' ),
+			'uk'   => esc_html__( 'Українська', 'private-captcha' ),
+			'tr'   => esc_html__( 'Türkçe', 'private-captcha' ),
 		);
 
 		echo '<select id="language" name="private_captcha_settings[language]">';
