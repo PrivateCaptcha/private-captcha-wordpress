@@ -212,7 +212,7 @@ class Client {
 
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $http_code ) {
-			$this->last_error = get_status_header_desc( $http_code );
+			$this->last_error = get_status_header_desc( (int) $http_code );
 			if ( empty( $this->last_error ) ) {
 				$this->last_error = "HTTP {$http_code}";
 			}
