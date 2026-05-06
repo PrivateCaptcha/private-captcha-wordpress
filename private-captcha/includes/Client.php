@@ -43,6 +43,22 @@ class Client {
 	private ?PrivateCaptchaClient $client = null;
 
 	/**
+	 * Last error from testing API.
+	 *
+	 * @var string|null
+	 */
+	private ?string $last_error = null;
+
+	/**
+	 * Get the last error message from testing.
+	 *
+	 * @return string|null
+	 */
+	public function get_last_error(): ?string {
+		return $this->last_error;
+	}
+
+	/**
 	 * Constructor to initialize the Private Captcha client.
 	 */
 	public function __construct() {
@@ -124,7 +140,10 @@ class Client {
 	 * @return bool True if settings are valid, false otherwise.
 	 */
 	public function test_current_settings(): bool {
+		$this->last_error = null;
+
 		if ( null === $this->client ) {
+			$this->last_error = 'Client not initialized';
 			return false;
 		}
 
@@ -134,7 +153,7 @@ class Client {
 			// Fetch test puzzle.
 			$puzzle = $this->fetch_test_puzzle( $sitekey );
 			if ( null === $puzzle ) {
-				return false;
+				return false; // Error already set in fetch_test_puzzle.
 			}
 
 			// Create empty solutions (stub).
@@ -145,9 +164,15 @@ class Client {
 
 			$output = $this->client->verify( $payload, sitekey: $sitekey );
 
-			return $output->success && \PrivateCaptcha\Enums\VerifyCode::TEST_PROPERTY_ERROR === $output->code;
+			if ( $output->success && \PrivateCaptcha\Enums\VerifyCode::TEST_PROPERTY_ERROR === $output->code ) {
+				return true;
+			}
+
+			$this->last_error = 'Verification failed or incorrect code';
+			return false;
 
 		} catch ( PrivateCaptchaException $e ) {
+			$this->last_error = $e->getMessage();
 			write_log( 'Private Captcha settings test failed: ' . $e->getMessage() );
 			return false;
 		}
@@ -161,6 +186,7 @@ class Client {
 	 */
 	private function fetch_test_puzzle( string $sitekey ): ?string {
 		if ( null === $this->client ) {
+			$this->last_error = 'Client not initialized';
 			return null;
 		}
 
@@ -179,12 +205,17 @@ class Client {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->last_error = $response->get_error_message();
 			write_log( 'Failed to fetch test puzzle: ' . $response->get_error_message() );
 			return null;
 		}
 
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $http_code ) {
+			$this->last_error = get_status_header_desc( $http_code );
+			if ( empty( $this->last_error ) ) {
+				$this->last_error = "HTTP {$http_code}";
+			}
 			write_log( "Failed to fetch test puzzle: HTTP {$http_code}" );
 			return null;
 		}

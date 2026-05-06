@@ -682,8 +682,9 @@ class Admin {
 
 		$settings_valid = false;
 
-		// Test settings if form integrations are enabled. NOTE: we check for sitekey, but we don't use it for test.
-		if ( $any_form_integration && ! empty( $sanitized['api_key'] ) && ! empty( $sanitized['sitekey'] ) ) {
+		// Test settings if API key and sitekey are provided.
+		$last_error = null;
+		if ( ! empty( $sanitized['api_key'] ) && ! empty( $sanitized['sitekey'] ) ) {
 			try {
 				$client        = new Client();
 				$api_key       = (string) $sanitized['api_key'];
@@ -691,17 +692,46 @@ class Admin {
 				$eu_isolation  = (bool) $sanitized['eu_isolation'];
 				$client->update( $api_key, $custom_domain, $eu_isolation );
 				$settings_valid = $client->test_current_settings();
+				$last_error     = $client->get_last_error();
 			} catch ( PrivateCaptchaException $e ) {
+				$last_error = $e->getMessage();
 				wp_debug_log( 'Private Captcha settings test error: ' . $e->getMessage() );
 			}
 
 			if ( ! $settings_valid ) {
+				if ( $last_error && ! Settings::is_debug_enabled() ) {
+					$error_msg = sprintf(
+						/* translators: %s is the error tooltip for the failed test. */
+						__( 'Private Captcha settings test <span style="border-bottom: 1px dotted currentColor; cursor: help;" title="%s">failed</span>.', 'private-captcha' ),
+						esc_attr( $last_error )
+					);
+				} else {
+					$error_msg = __( 'Private Captcha settings test failed.', 'private-captcha' );
+				}
+
+				$error_msg .= ' ' . __( 'Please verify your API Key, Site Key, and domain settings.', 'private-captcha' );
+
+				if ( $any_form_integration ) {
+					$error_msg .= ' ' . __( 'Form integrations have been disabled to prevent lockout.', 'private-captcha' );
+				}
+
 				add_settings_error(
 					'private_captcha_settings',
 					'settings_test_failed',
-					__( 'Private Captcha settings test failed.  Please verify your API Key, Site Key, and domain settings. Form integrations have been disabled to prevent lockout.', 'private-captcha' ),
+					$error_msg,
 					'error'
 				);
+
+				if ( $last_error && Settings::is_debug_enabled() ) {
+					// Separate error message when debug mode is enabled.
+					add_settings_error(
+						'private_captcha_settings',
+						'settings_test_failed_debug',
+						/* translators: %s is the error tooltip for the failed test. */
+						sprintf( __( 'Private Captcha error details: %s', 'private-captcha' ), esc_html( $last_error ) ),
+						'warning'
+					);
+				}
 			}
 		}
 
