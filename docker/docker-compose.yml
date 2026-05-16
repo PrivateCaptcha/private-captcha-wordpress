@@ -28,7 +28,8 @@ services:
       MYSQL_PASSWORD: wordpress
       MYSQL_RANDOM_ROOT_PASSWORD: '1'
     healthcheck:
-      test: ["CMD", "mariadb", "-h", "localhost", "-u", "wordpress", "-pwordpress", "-e", "SELECT 1"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      #test: ["CMD", "mariadb", "-h", "localhost", "-u", "wordpress", "-pwordpress", "wordpress", "-e", "SELECT 1"]
       interval: 5s
       timeout: 5s
       retries: 10
