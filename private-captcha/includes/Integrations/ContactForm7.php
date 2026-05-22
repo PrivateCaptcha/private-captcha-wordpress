@@ -114,10 +114,6 @@ class ContactForm7 extends AbstractIntegration {
 	 * Enqueue frontend scripts for Private Captcha.
 	 */
 	public function enqueue_scripts(): void {
-		if ( ! $this->is_enabled() ) {
-			return;
-		}
-
 		$cf7_custom_js = '
         const events = ["wpcf7mailsent", "wpcf7invalid", "wpcf7spam", "wpcf7mailfailed", "wpcf7submit", "wpcf7reset"];
         const wpcf7Elements = document.querySelectorAll(".wpcf7");

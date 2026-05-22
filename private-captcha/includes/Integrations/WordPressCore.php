@@ -150,30 +150,34 @@ class WordPressCore extends AbstractIntegration {
 	public function init(): void {
 		$this->write_log( 'Initializing WordPressCore integration.' );
 
-		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_scripts' ) );
+		$needs_login_scripts = false;
 
 		if ( $this->login_field->is_enabled() ) {
 			add_action( 'login_form', array( $this, 'add_login_captcha' ) );
 			add_filter( 'authenticate', array( $this, 'verify_login_captcha' ), 30, 3 );
+			$needs_login_scripts = true;
 		}
 
 		if ( $this->registration_field->is_enabled() ) {
 			add_action( 'register_form', array( $this, 'add_register_captcha' ) );
 			add_filter( 'registration_errors', array( $this, 'verify_register_captcha' ), 10, 3 );
+			$needs_login_scripts = true;
 		}
 
 		if ( $this->reset_password_field->is_enabled() ) {
 			add_action( 'lostpassword_form', array( $this, 'add_reset_password_captcha' ) );
 			add_action( 'lostpassword_post', array( $this, 'verify_reset_password_captcha' ), 10, 1 );
+			$needs_login_scripts = true;
 		}
 
 		if ( $this->comments_logged_in_field->is_enabled() || $this->comments_guest_field->is_enabled() ) {
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_comment_scripts' ) );
 			add_filter( 'preprocess_comment', array( $this, 'verify_comment_captcha' ) );
+			add_filter( 'comment_form_submit_field', array( $this, 'modify_comment_submit_field' ), 10, 2 );
 		}
 
-		if ( $this->comments_logged_in_field->is_enabled() || $this->comments_guest_field->is_enabled() ) {
-			add_filter( 'comment_form_submit_field', array( $this, 'modify_comment_submit_field' ), 10, 2 );
+		if ( $needs_login_scripts ) {
+			add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_scripts' ) );
 		}
 	}
 
