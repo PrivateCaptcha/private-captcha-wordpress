@@ -32,7 +32,7 @@ jobs:
         persist-credentials: false
 
     - name: Set up PHP ${{ matrix.php-version }}
-      uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
+      uses: shivammathur/setup-php@a919ff576a94b0fd7ec15f090dd9cf16b76c2c0b # master
       with:
         php-version: ${{ matrix.php-version }}
         extensions: mbstring, xml, ctype, json, tokenizer
