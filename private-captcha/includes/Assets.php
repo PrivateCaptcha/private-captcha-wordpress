@@ -104,11 +104,20 @@ class Assets {
                 submitButtons.forEach(btn => btn.disabled = !enabled);
             }
 
+            function pcGetCaptchaWidgetsWP(parent) {
+                return (parent || document).querySelectorAll(".private-captcha");
+            }
+
+            function pcHasCaptchaWidgetWP(parent) {
+                const captchaWidgets = pcGetCaptchaWidgetsWP(parent);
+                return captchaWidgets && (captchaWidgets.length > 0);
+            }
+
             function pcResetCaptchaWidgetWP(parent) {
                 let anyReset = false;
 
                 if (parent) {
-                    const elements = parent.querySelectorAll(".private-captcha");
+                    const elements = pcGetCaptchaWidgetsWP(parent);
                     elements.forEach(function(element) {
                         if (element && element.hasOwnProperty("_privateCaptcha") && element._privateCaptcha) {
                             element._privateCaptcha.reset();
@@ -124,14 +133,18 @@ class Assets {
 
             function setupPrivateCaptchaWP() {
                 const submitBtnSelector = ' . $btn_selector_js . ';
-                document.querySelectorAll(submitBtnSelector).forEach((btn) => btn.disabled = true);
-                document.querySelectorAll(".private-captcha").forEach((e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
+                const captchaWidgets = pcGetCaptchaWidgetsWP(document);
 
-                document.querySelectorAll(".private-captcha").forEach(function(currentWidget) {
-                    currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
-                    currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
-                    currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(event.detail.element, true, submitBtnSelector));
-                });' . $custom_js_block . '
+                if (captchaWidgets && (captchaWidgets.length > 0)) {
+                    document.querySelectorAll(submitBtnSelector).forEach((btn) => btn.disabled = true);
+                    captchaWidgets.forEach((e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
+
+                    captchaWidgets.forEach(function(currentWidget) {
+                        currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
+                        currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
+                        currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(event.detail.element, true, submitBtnSelector));
+                    });
+                }' . $custom_js_block . '
             }
 
             if (document.readyState === "loading") {

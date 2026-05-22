@@ -132,6 +132,7 @@ class ContactForm7 extends AbstractIntegration {
             });
 
             wpcf7Element.addEventListener("wpcf7init", function(event) {
+                if (!event.target || !pcHasCaptchaWidgetWP(event.target)) return;
                 const submit = event.target.querySelector(".wpcf7-submit");
                 if (submit) submit.disabled = true;
             });
