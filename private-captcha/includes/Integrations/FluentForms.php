@@ -30,6 +30,13 @@ class FluentForms extends AbstractIntegration {
 	private SettingsField $fluentforms_field;
 
 	/**
+	 * Rendered forms to skip multi-step issues.
+	 *
+	 * @var array
+	 */
+	private array $rendered_form_instances = array();
+
+	/**
 	 * Constructor to initialize the integration.
 	 *
 	 * @param \PrivateCaptchaWP\Client $client The Private Captcha client instance.
@@ -84,8 +91,8 @@ class FluentForms extends AbstractIntegration {
 		$this->write_log( 'Initializing Fluent Forms integration' );
 
 		// Add captcha widget before submit button.
-		add_action( 'fluentform/render_item_submit_button', array( $this, 'add_captcha_widget' ), 9, 0 );
-		add_action( 'fluentform/render_item_step_end', array( $this, 'add_captcha_widget' ), 9, 0 );
+		add_action( 'fluentform/render_item_submit_button', array( $this, 'add_captcha_widget' ), 10, 2 );
+		add_action( 'fluentform/render_item_step_end', array( $this, 'add_captcha_widget' ), 10, 2 );
 
 		// Verify captcha solution during form processing.
 		add_filter( 'fluentform/before_insert_submission', array( $this, 'verify_captcha_fluentforms' ), 5, 3 );
@@ -96,9 +103,21 @@ class FluentForms extends AbstractIntegration {
 
 	/**
 	 * Add Private Captcha widget before the submit button.
+	 *
+	 * @param array  $item Form item.
+	 * @param object $form Form instance.
 	 */
-	public function add_captcha_widget(): void {
+	public function add_captcha_widget( array $item, object $form ): void {
+		$form_id          = absint( $form->id ?? 0 );
+		$form_instance_id = (string) ( $form->instance_index ?? 0 );
+		$render_key       = $form_id . ':' . $form_instance_id;
+
+		if ( isset( $this->rendered_form_instances[ $render_key ] ) ) {
+			return;
+		}
+
 		Widget::render( '--border-radius: 0.25rem; font-size: 1rem !important;', 'fluentforms-field' );
+		$this->rendered_form_instances[ $render_key ] = true;
 	}
 
 	/**
