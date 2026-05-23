@@ -328,7 +328,7 @@ class ContactForm7 extends AbstractIntegration {
 		$widget_with_wrapper = '<div class="wpcf7-form-control-wrap" data-name="' . self::CF7_FIELD_NAME . '">' .
 				$widget . '</div>' . $not_valid_tip;
 
-		$submit_button = '/(<(input|button) .*?type="submit")/';
+		$submit_button = '/(<(input|button) .*?type=["\']submit["\'])(?![^>]*type=["\'][^"\']*["\'])/i';
 
 		$result = preg_replace(
 			$submit_button,
