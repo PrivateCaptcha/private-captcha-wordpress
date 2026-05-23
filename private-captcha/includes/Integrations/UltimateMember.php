@@ -176,6 +176,11 @@ class UltimateMember extends AbstractIntegration {
 	 * Execute captcha validation.
 	 */
 	private function do_validate(): void {
+		if ( ! $this->client->is_available() ) {
+			UM()->form()->add_error( 'privatecaptcha', __( 'Captcha service is currently unavailable.', 'private-captcha' ) );
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verification handles its own security
 		$solution = sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ?? '' ) );
 
