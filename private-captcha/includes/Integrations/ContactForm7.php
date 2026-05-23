@@ -153,7 +153,7 @@ class ContactForm7 extends AbstractIntegration {
             }
         ';
 
-		Assets::enqueue( 'wpcf7-privatecaptcha', $cf7_custom_js, $cf7_custom_css );
+		Assets::enqueue( 'private-captcha-widget', $cf7_custom_js, $cf7_custom_css );
 	}
 
 	/**
