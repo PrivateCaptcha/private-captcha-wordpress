@@ -32,7 +32,7 @@ class FluentForms extends AbstractIntegration {
 	/**
 	 * Rendered forms to skip multi-step issues.
 	 *
-	 * @var array
+	 * @var array<mixed>
 	 */
 	private array $rendered_form_instances = array();
 
@@ -104,8 +104,8 @@ class FluentForms extends AbstractIntegration {
 	/**
 	 * Add Private Captcha widget before the submit button.
 	 *
-	 * @param array  $item Form item.
-	 * @param object $form Form instance.
+	 * @param array<mixed> $item Form item.
+	 * @param object       $form Form instance.
 	 */
 	public function add_captcha_widget( array $item, object $form ): void {
 		$form_id          = absint( $form->id ?? 0 );
