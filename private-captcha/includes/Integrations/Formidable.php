@@ -147,11 +147,9 @@ class Formidable extends AbstractIntegration {
                         pcResetCaptchaWidgetWP(form);
                     }
                 });
-                jQuery(document).on("frmPageChanged", function(event) {
-                    if (event && event.target) {
-                        pcResetCaptchaWidgetWP(event.target);
-                    } else {
-                        pcResetCaptchaWidgetWP(document);
+                jQuery(document).on("frmPageChanged", function(event, form, response) {
+                    if (form) {
+                        pcResetCaptchaWidgetWP(form);
                     }
                 });';
 
