@@ -260,7 +260,7 @@ class WordPressCore extends AbstractIntegration {
 			return $user;
 		}
 
-		// Always verify captcha to consume the solution and prevent replay attacks
+		// Always verify captcha to consume the solution and prevent replay attacks.
 		if ( ! $this->client->is_available() ) {
 			if ( is_wp_error( $user ) ) {
 				$user->add(
