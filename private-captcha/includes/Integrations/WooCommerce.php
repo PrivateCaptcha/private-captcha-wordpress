@@ -380,11 +380,6 @@ class WooCommerce extends AbstractIntegration {
 	 * @throws \Exception When validation fails.
 	 */
 	public function verify_block_checkout_captcha( $order, $request ): void {
-		// Skip non-checkout wc-ajax requests (e.g. payment gateway pre-validation) to preserve the token.
-		if ( _is_non_checkout_ajax() ) {
-			return;
-		}
-
 		if ( 'POST' !== strtoupper( $request->get_method() ) ) {
 			return;
 		}
