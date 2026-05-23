@@ -260,12 +260,15 @@ class WordPressCore extends AbstractIntegration {
 			return $user;
 		}
 
-		if ( is_wp_error( $user ) ) {
-			$this->write_log( 'Skipping login captcha verification due to user error.' );
-			return $user;
-		}
-
+		// Always verify captcha to consume the solution and prevent replay attacks
 		if ( ! $this->client->is_available() ) {
+			if ( is_wp_error( $user ) ) {
+				$user->add(
+					'private_captcha_unavailable',
+					esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
+				);
+				return $user;
+			}
 			return new WP_Error(
 				'private_captcha_unavailable',
 				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
@@ -273,6 +276,13 @@ class WordPressCore extends AbstractIntegration {
 		}
 
 		if ( ! $this->verify_captcha() ) {
+			if ( is_wp_error( $user ) ) {
+				$user->add(
+					'private_captcha_failed',
+					esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				);
+				return $user;
+			}
 			return new WP_Error(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
