@@ -608,7 +608,7 @@ class Admin {
 		$valid_themes       = array( 'light', 'dark' );
 		$sanitized['theme'] = in_array( $input['theme'] ?? '', $valid_themes, true ) ? $input['theme'] : 'light';
 
-		$valid_languages       = array( 'auto', 'en', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'no', 'pl', 'fi', 'et' );
+		$valid_languages       = array( 'auto', 'en', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'no', 'pl', 'fi', 'et', 'uk', 'tr' );
 		$sanitized['language'] = in_array( $input['language'] ?? '', $valid_languages, true ) ? $input['language'] : 'auto';
 
 		$valid_start_modes       = array( 'auto', 'click' );
