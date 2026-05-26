@@ -95,17 +95,63 @@ class Assets {
 
 		$custom_js_full = '
         (function() {
+            function pcReportErrorWP(error) {
+                if (typeof console !== "undefined" && typeof console.error === "function") {
+                    console.error("Private Captcha WP error:", error);
+                }
+            }
+
+            function pcSafeExecuteWP(callback) {
+                try {
+                    return callback();
+                } catch (error) {
+                    pcReportErrorWP(error);
+                    return null;
+                }
+            }
+
+            function pcHasOwnPropertyWP(object, property) {
+                return !!object && Object.prototype.hasOwnProperty.call(object, property);
+            }
+
+            function pcForEachWP(collection, callback) {
+                pcSafeExecuteWP(function() {
+                    Array.prototype.forEach.call(collection || [], callback);
+                });
+            }
+
+            function pcQuerySelectorAllWP(parent, selector) {
+                return pcSafeExecuteWP(function() {
+                    if (!parent || typeof parent.querySelectorAll !== "function") {
+                        return [];
+                    }
+
+                    return parent.querySelectorAll(selector) || [];
+                }) || [];
+            }
+
+            function pcGetEventElementWP(event) {
+                return event && event.detail ? event.detail.element : null;
+            }
+
             function pcSetFormButtonEnabledWP(element, enabled, customSelector) {
-                let container = element.closest("form");
-                if (!container && customSelector) { container = document; }
-                if (!container) return;
-                const selector = customSelector || "input[type=\"submit\"], button[type=\"submit\"]";
-                const submitButtons = container.querySelectorAll(selector);
-                submitButtons.forEach(btn => btn.disabled = !enabled);
+                pcSafeExecuteWP(function() {
+                    let container = element && typeof element.closest === "function" ? element.closest("form") : null;
+                    if (!container && customSelector) { container = document; }
+                    if (!container) return;
+
+                    const selector = customSelector || "input[type=\"submit\"], button[type=\"submit\"]";
+                    const submitButtons = pcQuerySelectorAllWP(container, selector);
+                    pcForEachWP(submitButtons, function(btn) {
+                        if (btn) {
+                            btn.disabled = !enabled;
+                        }
+                    });
+                });
             }
 
             function pcGetCaptchaWidgetsWP(parent) {
-                return (parent || document).querySelectorAll(".private-captcha");
+                return pcQuerySelectorAllWP(parent || document, ".private-captcha");
             }
 
             function pcHasCaptchaWidgetWP(parent) {
@@ -118,33 +164,45 @@ class Assets {
 
                 if (parent) {
                     const elements = pcGetCaptchaWidgetsWP(parent);
-                    elements.forEach(function(element) {
-                        if (element && element.hasOwnProperty("_privateCaptcha") && element._privateCaptcha) {
+                    pcForEachWP(elements, function(element) {
+                        if (element && pcHasOwnPropertyWP(element, "_privateCaptcha") && element._privateCaptcha && typeof element._privateCaptcha.reset === "function") {
                             element._privateCaptcha.reset();
                             anyReset = true;
                         }
                     });
                 }
 
-                if (!anyReset && window.hasOwnProperty("privateCaptcha") && window.privateCaptcha) {
-                    window.privateCaptcha.autoWidget.reset();
+                if (!anyReset && pcHasOwnPropertyWP(window, "privateCaptcha") && window.privateCaptcha) {
+                    if (pcHasOwnPropertyWP(window.privateCaptcha, "autoWidget") && window.privateCaptcha.autoWidget && typeof window.privateCaptcha.autoWidget.reset === "function") {
+                        window.privateCaptcha.autoWidget.reset();
+                    }
                 }
             }
 
             function setupPrivateCaptchaWP() {
-                const submitBtnSelector = ' . $btn_selector_js . ';
-                const captchaWidgets = pcGetCaptchaWidgetsWP(document);
+                pcSafeExecuteWP(function() {
+                    const submitBtnSelector = ' . $btn_selector_js . ';
+                    const captchaWidgets = pcGetCaptchaWidgetsWP(document);
 
-                if (captchaWidgets && (captchaWidgets.length > 0)) {
-                    document.querySelectorAll(submitBtnSelector).forEach((btn) => btn.disabled = true);
-                    captchaWidgets.forEach((e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
+                    if (captchaWidgets && (captchaWidgets.length > 0)) {
+                        pcForEachWP(pcQuerySelectorAllWP(document, submitBtnSelector), function(btn) {
+                            if (btn) {
+                                btn.disabled = true;
+                            }
+                        });
+                        pcForEachWP(captchaWidgets, (e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
 
-                    captchaWidgets.forEach(function(currentWidget) {
-                        currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
-                        currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector));
-                        currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(event.detail.element, true, submitBtnSelector));
-                    });
-                }' . $custom_js_block . '
+                        pcForEachWP(captchaWidgets, function(currentWidget) {
+                            if (!currentWidget || typeof currentWidget.addEventListener !== "function") {
+                                return;
+                            }
+
+                            currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), false, submitBtnSelector));
+                            currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), false, submitBtnSelector));
+                            currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), true, submitBtnSelector));
+                        });
+                    }' . $custom_js_block . '
+                });
             }
 
             if (document.readyState === "loading") {
