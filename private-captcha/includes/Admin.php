@@ -585,18 +585,18 @@ class Admin {
 
 		$custom_domain = sanitize_text_field( $input['custom_domain'] ?? '' );
 
-		if ( str_starts_with( $custom_domain, 'https://' ) ) {
+		if ( 0 === strpos( $custom_domain, 'https://' ) ) {
 			$custom_domain = substr( $custom_domain, 8 );
-		} elseif ( str_starts_with( $custom_domain, 'http://' ) ) {
+		} elseif ( 0 === strpos( $custom_domain, 'http://' ) ) {
 			$custom_domain = substr( $custom_domain, 7 );
 		}
 
 		// Remove well-known Private Captcha prefixes (assumed possible user error?).
-		if ( str_starts_with( $custom_domain, 'api.' ) ) {
+		if ( 0 === strpos( $custom_domain, 'api.' ) ) {
 			$custom_domain = substr( $custom_domain, 4 );
-		} elseif ( str_starts_with( $custom_domain, 'cdn.' ) ) {
+		} elseif ( 0 === strpos( $custom_domain, 'cdn.' ) ) {
 			$custom_domain = substr( $custom_domain, 4 );
-		} elseif ( str_starts_with( $custom_domain, 'portal.' ) ) {
+		} elseif ( 0 === strpos( $custom_domain, 'portal.' ) ) {
 			$custom_domain = substr( $custom_domain, 7 );
 		}
 

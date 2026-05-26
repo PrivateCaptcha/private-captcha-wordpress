@@ -58,7 +58,7 @@ class Widget {
 		}
 
 		if ( ! empty( $custom_domain ) ) {
-			if ( str_starts_with( $custom_domain, 'api.' ) ) {
+			if ( 0 === strpos( $custom_domain, 'api.' ) ) {
 				$custom_domain = substr( $custom_domain, 4 );
 			}
 			$attributes[] = 'data-puzzle-endpoint="' . esc_attr( "https://api.{$custom_domain}/puzzle" ) . '"';

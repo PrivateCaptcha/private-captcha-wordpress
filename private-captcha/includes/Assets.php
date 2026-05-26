@@ -32,7 +32,7 @@ class Assets {
 			$script_domain = 'privatecaptcha.com';
 		}
 
-		if ( str_starts_with( $script_domain, 'cdn.' ) ) {
+		if ( 0 === strpos( $script_domain, 'cdn.' ) ) {
 			$script_domain = substr( $script_domain, 4 );
 		}
 
@@ -226,7 +226,7 @@ class Assets {
 	public static function add_defer_attribute( string $tag, string $handle, string $src ): string {
 		unset( $src );
 
-		if ( str_starts_with( $handle, 'private-captcha-' ) ) {
+		if ( 0 === strpos( $handle, 'private-captcha-' ) ) {
 			return str_replace( '<script ', '<script defer ', $tag );
 		}
 		return $tag;
