@@ -450,6 +450,8 @@ class WooCommerce extends AbstractIntegration {
 		}
 
 		$already_verified = true;
+
+		return $result;
 	}
 
 	/**
