@@ -441,7 +441,7 @@ class ContactForm7 extends AbstractIntegration {
 					$submission->add_spam_log(
 						array(
 							'agent'  => 'privatecaptcha',
-							'reason' => parent::verification_error_message(),
+							'reason' => parent::verification_error_text(),
 						)
 					);
 			}

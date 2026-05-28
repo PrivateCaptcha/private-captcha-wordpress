@@ -111,11 +111,11 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	}
 
 	/**
-	 * Generate verification error message
+	 * Generate verification error html
 	 *
-	 * @return string error message
+	 * @return string error html
 	 */
-	protected function verification_error_message(): string {
+	protected function verification_error_html(): string {
 		$last_error = $this->client->get_last_error();
 		$error_msg  = '';
 		if ( $last_error && Settings::is_debug_enabled() ) {
@@ -126,6 +126,27 @@ abstract class AbstractIntegration implements IntegrationInterface {
 			);
 		} else {
 			$error_msg = esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' );
+		}
+
+		return $error_msg;
+	}
+
+	/**
+	 * Generate verification error message
+	 *
+	 * @return string error message
+	 */
+	protected function verification_error_text(): string {
+		$last_error = $this->client->get_last_error();
+		$error_msg  = '';
+		if ( $last_error && Settings::is_debug_enabled() ) {
+			$error_msg = sprintf(
+				/* translators: %s is the error tooltip for the failed test. */
+				__( 'Captcha verification failed (%s).', 'private-captcha' ),
+				esc_attr( $last_error )
+			);
+		} else {
+			$error_msg = __( 'Captcha verification failed. Please try again.', 'private-captcha' );
 		}
 
 		return $error_msg;

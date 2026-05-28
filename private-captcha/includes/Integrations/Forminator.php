@@ -150,7 +150,7 @@ class Forminator extends AbstractIntegration {
 		if ( ! $result ) {
 			return array(
 				'can_submit' => false,
-				'error'      => parent::verification_error_message(),
+				'error'      => parent::verification_error_text(),
 			);
 		}
 

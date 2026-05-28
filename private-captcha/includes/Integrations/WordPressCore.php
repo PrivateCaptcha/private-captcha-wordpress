@@ -279,13 +279,13 @@ class WordPressCore extends AbstractIntegration {
 			if ( is_wp_error( $user ) ) {
 				$user->add(
 					'private_captcha_failed',
-					parent::verification_error_message()
+					parent::verification_error_html()
 				);
 				return $user;
 			}
 			return new WP_Error(
 				'private_captcha_failed',
-				parent::verification_error_message()
+				parent::verification_error_html()
 			);
 		}
 
@@ -320,7 +320,7 @@ class WordPressCore extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
-				parent::verification_error_message()
+				parent::verification_error_html()
 			);
 		}
 
@@ -344,7 +344,7 @@ class WordPressCore extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
-				parent::verification_error_message()
+				parent::verification_error_html()
 			);
 		}
 	}
@@ -384,7 +384,7 @@ class WordPressCore extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			wp_die(
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- we escape inside
-				parent::verification_error_message(),
+				parent::verification_error_html(),
 				esc_html__( 'Comment Submission Error', 'private-captcha' ),
 				array(
 					'response'  => 400,

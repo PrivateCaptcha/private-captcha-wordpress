@@ -190,7 +190,7 @@ class UltimateMember extends AbstractIntegration {
 		}
 
 		if ( ! $this->verify_captcha() ) {
-			UM()->form()->add_error( 'privatecaptcha', parent::verification_error_message() );
+			UM()->form()->add_error( 'privatecaptcha', parent::verification_error_text() );
 		}
 	}
 

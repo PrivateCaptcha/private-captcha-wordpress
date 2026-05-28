@@ -114,7 +114,10 @@ class Client {
 	 * @return bool True if verification succeeds, false otherwise.
 	 */
 	public function verify_solution( string $solution, ?string $sitekey = null ): bool {
+		$this->last_error = null;
+
 		if ( null === $this->client ) {
+			$this->last_error = 'Client not initialized';
 			return false;
 		}
 
@@ -127,6 +130,7 @@ class Client {
 			}
 			return $success;
 		} catch ( PrivateCaptchaException $e ) {
+			$this->last_error = $e->getMessage();
 			write_log( 'Private Captcha verification error: ' . $e->getMessage() );
 			return false;
 		}
