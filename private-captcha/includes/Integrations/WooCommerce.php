@@ -291,7 +291,7 @@ class WooCommerce extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$validation_error->add(
 				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				parent::verification_error_message()
 			);
 		}
 
@@ -325,7 +325,7 @@ class WooCommerce extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				parent::verification_error_message()
 			);
 		}
 
@@ -360,7 +360,7 @@ class WooCommerce extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				parent::verification_error_message()
 			);
 		}
 
@@ -389,7 +389,7 @@ class WooCommerce extends AbstractIntegration {
 
 		if ( ! $this->verify_captcha() ) {
 			$already_verified = true;
-			wc_add_notice( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ), 'error' );
+			wc_add_notice( parent::verification_error_message(), 'error' );
 		}
 
 		$already_verified = true;
@@ -452,7 +452,7 @@ class WooCommerce extends AbstractIntegration {
 
 		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
 			$already_verified = true;
-			throw new \Exception( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ) );
+			throw new \Exception( parent::verification_error_message() );
 		}
 
 		$already_verified = true;

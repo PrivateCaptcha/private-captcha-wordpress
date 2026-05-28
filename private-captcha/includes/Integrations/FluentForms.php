@@ -163,7 +163,7 @@ class FluentForms extends AbstractIntegration {
 			wp_send_json(
 				array(
 					'errors' => array(
-						'g-recaptcha-response' => array( __( 'Captcha verification failed. Please try again.', 'private-captcha' ) ),
+						'g-recaptcha-response' => array( parent::verification_error_message() ),
 					),
 				),
 				422

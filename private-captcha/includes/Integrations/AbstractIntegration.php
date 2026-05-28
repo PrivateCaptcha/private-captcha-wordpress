@@ -111,6 +111,27 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	}
 
 	/**
+	 * Generate verification error message
+	 *
+	 * @return string error message
+	 */
+	protected function verification_error_message(): string {
+		$last_error = $this->client->get_last_error();
+		$error_msg = "";
+		if ( $last_error && Settings::is_debug_enabled() ) {
+			$error_msg = sprintf(
+				/* translators: %s is the error tooltip for the failed test. */
+				esc_html__( 'Captcha verification <span style="border-bottom: 1px dotted currentColor; cursor: help;" title="%s">failed</span>.', 'private-captcha' ),
+				esc_attr( $last_error )
+			);
+		} else {
+			$error_msg = esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' );
+		}
+
+		return $error_msg;
+	}
+
+	/**
 	 * Debugging helper.
 	 *
 	 * @param mixed $data Anything you want to log.

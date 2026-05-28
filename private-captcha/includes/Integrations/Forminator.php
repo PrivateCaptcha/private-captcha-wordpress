@@ -150,7 +150,7 @@ class Forminator extends AbstractIntegration {
 		if ( ! $result ) {
 			return array(
 				'can_submit' => false,
-				'error'      => __( 'Captcha verification failed. Please try again.', 'private-captcha' ),
+				'error'      => parent::verification_error_message(),
 			);
 		}
 

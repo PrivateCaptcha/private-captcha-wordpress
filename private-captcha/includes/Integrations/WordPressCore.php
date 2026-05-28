@@ -279,13 +279,13 @@ class WordPressCore extends AbstractIntegration {
 			if ( is_wp_error( $user ) ) {
 				$user->add(
 					'private_captcha_failed',
-					esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+					parent::verification_error_message()
 				);
 				return $user;
 			}
 			return new WP_Error(
 				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				parent::verification_error_message()
 			);
 		}
 
@@ -320,7 +320,7 @@ class WordPressCore extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				parent::verification_error_message()
 			);
 		}
 
@@ -344,7 +344,7 @@ class WordPressCore extends AbstractIntegration {
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+				parent::verification_error_message()
 			);
 		}
 	}
@@ -383,7 +383,7 @@ class WordPressCore extends AbstractIntegration {
 
 		if ( ! $this->verify_captcha() ) {
 			wp_die(
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ),
+				parent::verification_error_message(),
 				esc_html__( 'Comment Submission Error', 'private-captcha' ),
 				array(
 					'response'  => 400,

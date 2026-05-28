@@ -186,7 +186,7 @@ class GravityForms extends AbstractIntegration {
 	 */
 	public function get_validation_message_failed( string $message, array $form ): string {
 		return '<div class="gform_validation_errors"><h2 class="gform_submission_error hide_summary"><span class="gform-icon gform-icon--close"></span>'
-			. esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
+			. parent::verification_error_message()
 			. '</h2></div>';
 	}
 

@@ -99,11 +99,11 @@ class Admin {
                         e.preventDefault();
                         var rows = document.querySelectorAll(".private-captcha-integration-unavailable-row");
                         var isExpanded = toggleBtn.getAttribute("data-expanded") === "true";
-                        
+
                         for (var i = 0; i < rows.length; i++) {
                             rows[i].style.display = isExpanded ? "none" : "table-row";
                         }
-                        
+
                         toggleBtn.setAttribute("data-expanded", isExpanded ? "false" : "true");
                         toggleBtn.textContent = isExpanded ? toggleBtn.getAttribute("data-show-text") : toggleBtn.getAttribute("data-hide-text");
                     });
@@ -701,7 +701,7 @@ class Admin {
 			}
 
 			if ( ! $settings_valid ) {
-				if ( $last_error && ! Settings::is_debug_enabled() ) {
+				if ( $last_error && Settings::is_debug_enabled() ) {
 					$error_msg = sprintf(
 						/* translators: %s is the error tooltip for the failed test. */
 						__( 'Private Captcha settings test <span style="border-bottom: 1px dotted currentColor; cursor: help;" title="%s">failed</span>.', 'private-captcha' ),
