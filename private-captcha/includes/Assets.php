@@ -185,11 +185,6 @@ class Assets {
                     const captchaWidgets = pcGetCaptchaWidgetsWP(document);
 
                     if (captchaWidgets && (captchaWidgets.length > 0)) {
-                        pcForEachWP(pcQuerySelectorAllWP(document, submitBtnSelector), function(btn) {
-                            if (btn) {
-                                btn.disabled = true;
-                            }
-                        });
                         pcForEachWP(captchaWidgets, (e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
 
                         pcForEachWP(captchaWidgets, function(currentWidget) {
