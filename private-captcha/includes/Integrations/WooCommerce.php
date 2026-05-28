@@ -421,11 +421,6 @@ class WooCommerce extends AbstractIntegration {
 			}
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return $result;
-		}
-
 		if ( ! $this->client->is_available() ) {
 			return new WP_Error(
 				'private_captcha_unavailable',
@@ -441,15 +436,12 @@ class WooCommerce extends AbstractIntegration {
 		$solution = $extensions['private-captcha']['solution'];
 
 		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
-			$already_verified = true;
 			return new WP_Error(
 				'private_captcha_failed',
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
 				parent::verification_error_html()
 			);
 		}
-
-		$already_verified = true;
 
 		return $result;
 	}
