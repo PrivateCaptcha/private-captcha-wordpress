@@ -17,18 +17,33 @@ use PrivateCaptchaWP\Assets;
 use PrivateCaptchaWP\SettingsField;
 use PrivateCaptchaWP\Widget;
 use WP_Error;
+use WP_REST_Request;
 
 /**
- * Check if the current request is a non-checkout WooCommerce AJAX request.
+ * Check if express checkout is in place.
  *
- * @return bool True if it is a non-checkout AJAX request, false otherwise.
+ * @param WP_REST_Request $request  Request used to generate the response.
+ *
+ * @return bool True if it is an express checkout.
  */
-function _is_non_checkout_ajax() {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking for endpoint name, no state changes made.
-	$wc_ajax = isset( $_GET['wc-ajax'] ) ? sanitize_text_field( wp_unslash( $_GET['wc-ajax'] ) ) : '';
-	if ( $wc_ajax && 'checkout' !== $wc_ajax ) {
-		return true;
+function is_express_checkout( WP_REST_Request $request ) {
+	$payment_data = $request->get_param( 'payment_data' );
+	if ( is_array( $payment_data ) ) {
+		$express_checkout = false;
+		foreach ( $payment_data as $data_item ) {
+			if ( is_array( $data_item ) && isset( $data_item['key'] ) ) {
+				$key   = $data_item['key'];
+				$value = isset( $data_item['value'] ) ? $data_item['value'] : '';
+				if ( in_array( $key, array( 'express_payment_type', 'payment_request_type' ), true ) && ! empty( $value ) ) {
+					$express_checkout = true;
+					break;
+				}
+			}
+		}
+		$payment_method = $request->get_param( 'payment_method' );
+		return $express_checkout && ( ( 'woocommerce_payments' === $payment_method ) || ( 'stripe' === $payment_method ) );
 	}
+
 	return false;
 }
 
@@ -421,6 +436,11 @@ class WooCommerce extends AbstractIntegration {
 		if ( $already_verified ) {
 			return;
 		}
+
+		if ( is_express_checkout( $request ) ) {
+			return;
+		}
+
 		$this->write_log( 'Verify handler' );
 
 		$extensions = $request->get_param( 'extensions' );
