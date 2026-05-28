@@ -268,12 +268,19 @@ class WooCommerce extends AbstractIntegration {
 			return $validation_error;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return $validation_error;
+		}
+
 		if ( ! $this->verify_captcha() ) {
 			$validation_error->add(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
 			);
 		}
+
+		$already_verified = true;
 
 		return $validation_error;
 	}
@@ -295,12 +302,19 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return;
+		}
+
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
 			);
 		}
+
+		$already_verified = true;
 	}
 
 	/**
@@ -323,12 +337,19 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return;
+		}
+
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
 				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
 			);
 		}
+
+		$already_verified = true;
 	}
 
 	/**
@@ -341,14 +362,22 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return;
+		}
+
 		if ( ! $this->client->is_available() ) {
 			wc_add_notice( esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ), 'error' );
 			return;
 		}
 
 		if ( ! $this->verify_captcha() ) {
+			$already_verified = true;
 			wc_add_notice( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ), 'error' );
 		}
+
+		$already_verified = true;
 	}
 
 	/**
@@ -388,6 +417,10 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return;
+		}
 		$this->write_log( 'Verify handler' );
 
 		$extensions = $request->get_param( 'extensions' );
@@ -398,8 +431,11 @@ class WooCommerce extends AbstractIntegration {
 		}
 
 		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
+			$already_verified = true;
 			throw new \Exception( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ) );
 		}
+
+		$already_verified = true;
 	}
 
 	/**

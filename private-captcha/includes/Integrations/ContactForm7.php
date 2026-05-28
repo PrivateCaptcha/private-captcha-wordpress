@@ -414,6 +414,11 @@ class ContactForm7 extends AbstractIntegration {
 			return $spam;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return $spam;
+		}
+
 		$solution = $this->get_captcha_solution();
 
 		if ( $this->client->verify_solution( $solution ) ) {
@@ -441,6 +446,8 @@ class ContactForm7 extends AbstractIntegration {
 					);
 			}
 		}
+
+		$already_verified = true;
 
 		return $spam;
 	}

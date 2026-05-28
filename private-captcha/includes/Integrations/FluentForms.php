@@ -145,11 +145,17 @@ class FluentForms extends AbstractIntegration {
 			);
 		}
 
-		$solution = isset( $data[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) && is_string( $data[ \PrivateCaptchaWP\Client::FORM_FIELD ] )
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return $insert_data;
+		}
+
+		$solution         = isset( $data[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) && is_string( $data[ \PrivateCaptchaWP\Client::FORM_FIELD ] )
 			? sanitize_text_field( wp_unslash( $data[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) )
 			: '';
-		$sitekey  = \PrivateCaptchaWP\Settings::get_sitekey();
-		$result   = $this->client->verify_solution( $solution, $sitekey );
+		$sitekey          = \PrivateCaptchaWP\Settings::get_sitekey();
+		$result           = $this->client->verify_solution( $solution, $sitekey );
+		$already_verified = true;
 
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );
 

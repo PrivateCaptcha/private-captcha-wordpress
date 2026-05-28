@@ -137,7 +137,13 @@ class GravityForms extends AbstractIntegration {
 			return $validation_result;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return $validation_result;
+		}
+
 		if ( ! parent::verify_captcha() ) {
+			$already_verified = true;
 			$this->write_log( 'Private Captcha verification failed for Gravity Forms' );
 			$validation_result['is_valid'] = false;
 			$form_id                       = absint( $validation_result['form']['id'] ?? 0 );
@@ -151,6 +157,8 @@ class GravityForms extends AbstractIntegration {
 			}
 			return $validation_result;
 		}
+
+		$already_verified = true;
 
 		$this->write_log( 'Private Captcha verification succeeded for Gravity Forms' );
 		return $validation_result;

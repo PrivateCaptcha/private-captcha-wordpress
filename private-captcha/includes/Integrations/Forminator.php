@@ -130,14 +130,20 @@ class Forminator extends AbstractIntegration {
 			);
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return $can_show;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
 		$solution = isset( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) && is_string( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] )
             // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
 			? sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) )
 			: '';
 
-		$sitekey = \PrivateCaptchaWP\Settings::get_sitekey();
-		$result  = $this->client->verify_solution( $solution, $sitekey );
+		$sitekey          = \PrivateCaptchaWP\Settings::get_sitekey();
+		$result           = $this->client->verify_solution( $solution, $sitekey );
+		$already_verified = true;
 
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );
 

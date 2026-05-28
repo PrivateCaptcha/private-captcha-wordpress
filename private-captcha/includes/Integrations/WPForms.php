@@ -121,10 +121,18 @@ class WPForms extends AbstractIntegration {
 			return;
 		}
 
+		static $already_verified = false;
+		if ( $already_verified ) {
+			return;
+		}
+
 		if ( ! parent::verify_captcha() ) {
+			$already_verified = true;
 			$this->add_form_error( $form_data, __( 'Captcha verification failed. Please try again.', 'private-captcha' ) );
 			return;
 		}
+
+		$already_verified = true;
 	}
 
 	/**
