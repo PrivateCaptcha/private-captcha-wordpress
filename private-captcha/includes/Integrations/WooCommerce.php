@@ -18,34 +18,7 @@ use PrivateCaptchaWP\SettingsField;
 use PrivateCaptchaWP\Widget;
 use WP_Error;
 use WP_REST_Request;
-
-/**
- * Check if express checkout is in place.
- *
- * @param WP_REST_Request $request  Request used to generate the response.
- *
- * @return bool True if it is an express checkout.
- */
-function is_express_checkout( WP_REST_Request $request ) {
-	$payment_data = $request->get_param( 'payment_data' );
-	if ( is_array( $payment_data ) ) {
-		$express_checkout = false;
-		foreach ( $payment_data as $data_item ) {
-			if ( is_array( $data_item ) && isset( $data_item['key'] ) ) {
-				$key   = $data_item['key'];
-				$value = isset( $data_item['value'] ) ? $data_item['value'] : '';
-				if ( in_array( $key, array( 'express_payment_type', 'payment_request_type' ), true ) && ! empty( $value ) ) {
-					$express_checkout = true;
-					break;
-				}
-			}
-		}
-		$payment_method = $request->get_param( 'payment_method' );
-		return $express_checkout && ( ( 'woocommerce_payments' === $payment_method ) || ( 'stripe' === $payment_method ) );
-	}
-
-	return false;
-}
+use WP_REST_Server;
 
 /**
  * WooCommerce integration class
@@ -223,7 +196,7 @@ class WooCommerce extends AbstractIntegration {
 
 			// Block-based checkout: render widget before the checkout actions block.
 			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 10, 1 );
-			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'verify_block_checkout_captcha' ), 10, 2 );
+			add_filter( 'rest_authentication_errors', array( $this, 'verify_block_checkout_captcha' ) );
 			add_action( 'woocommerce_loaded', array( $this, 'register_endpoint_data' ), 20 );
 		}
 
@@ -419,41 +392,61 @@ class WooCommerce extends AbstractIntegration {
 	/**
 	 * Verify captcha for WooCommerce block checkout.
 	 *
-	 * @param \WC_Order        $order   The order object.
-	 * @param \WP_REST_Request $request The REST request object.
-	 * @throws \Exception When validation fails.
+	 * @param mixed $result Validation result object.
+	 * @return mixed Modified validation result object.
 	 */
-	public function verify_block_checkout_captcha( $order, $request ): void {
-		if ( 'POST' !== strtoupper( $request->get_method() ) ) {
-			return;
+	public function verify_block_checkout_captcha( $result ) {
+		// Skip if this is not a POST request.
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+			// Always return the result or an error, never a boolean. This ensures other checks aren't thrown away like rate limiting or authentication.
+			return $result;
 		}
 
-		if ( ! $this->is_checkout_captcha_enabled() ) {
-			return;
+		// Skip if this is not the checkout endpoint.
+		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout#', $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+			return $result;
+		}
+
+		$request_body = json_decode( \WP_REST_Server::get_raw_data(), true );
+
+		if ( isset( $request_body['payment_method'] ) ) {
+			$chosen_payment_method = sanitize_text_field( $request_body['payment_method'] );
+
+			// Provide ability to short circuit the check to allow express payments or hosted checkouts to bypass the check.
+			$selected_payment_methods = apply_filters( 'private_captcha_payment_methods_to_skip', array( 'woocommerce_payments' ) );
+			if ( is_array( $selected_payment_methods ) ) {
+				if ( in_array( $chosen_payment_method, $selected_payment_methods, true ) ) {
+					return $result;
+				}
+			}
 		}
 
 		static $already_verified = false;
 		if ( $already_verified ) {
-			return;
+			return $result;
 		}
-
-		if ( is_express_checkout( $request ) ) {
-			return;
-		}
-
-		$this->write_log( 'Verify handler' );
-
-		$extensions = $request->get_param( 'extensions' );
-		$solution   = isset( $extensions['private-captcha']['solution'] ) ? $extensions['private-captcha']['solution'] : '';
 
 		if ( ! $this->client->is_available() ) {
-			throw new \Exception( esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ) );
+			return new WP_Error(
+				'private_captcha_unavailable',
+				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
+			);
 		}
+
+		$extensions = $request_body['extensions'];
+		if ( empty( $extensions ) || ! isset( $extensions['private-captcha'] ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
+			return new WP_Error( 'private_captcha_failed', parent::verification_error_html() );
+		}
+		$solution = sanitize_text_field( $extensions['private-captcha']['solution'] );
 
 		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
 			$already_verified = true;
- 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
-			throw new \Exception( parent::verification_error_text() );
+			return new WP_Error(
+				'private_captcha_failed',
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
+				parent::verification_error_html()
+			);
 		}
 
 		$already_verified = true;

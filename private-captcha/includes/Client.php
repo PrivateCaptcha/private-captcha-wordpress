@@ -93,7 +93,8 @@ class Client {
 	 * Reset the client so we cannot perform any actions
 	 */
 	public function reset(): void {
-		$this->client = null;
+		$this->client     = null;
+		$this->last_error = null;
 		write_log( 'Private Captcha client has been reset' );
 	}
 
@@ -127,6 +128,7 @@ class Client {
 			$success = $result->isOK();
 			if ( ! $success ) {
 				write_log( 'Private Captcha verification failed. result=' . $result );
+				$this->last_error = (string) $result;
 			}
 			return $success;
 		} catch ( PrivateCaptchaException $e ) {
