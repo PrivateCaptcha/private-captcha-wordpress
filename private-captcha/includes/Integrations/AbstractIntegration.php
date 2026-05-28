@@ -117,7 +117,7 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	 */
 	protected function verification_error_message(): string {
 		$last_error = $this->client->get_last_error();
-		$error_msg = "";
+		$error_msg  = '';
 		if ( $last_error && Settings::is_debug_enabled() ) {
 			$error_msg = sprintf(
 				/* translators: %s is the error tooltip for the failed test. */

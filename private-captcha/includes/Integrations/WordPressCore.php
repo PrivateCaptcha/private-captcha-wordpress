@@ -383,6 +383,7 @@ class WordPressCore extends AbstractIntegration {
 
 		if ( ! $this->verify_captcha() ) {
 			wp_die(
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- we escape inside
 				parent::verification_error_message(),
 				esc_html__( 'Comment Submission Error', 'private-captcha' ),
 				array(

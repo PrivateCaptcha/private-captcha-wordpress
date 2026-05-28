@@ -452,6 +452,7 @@ class WooCommerce extends AbstractIntegration {
 
 		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
 			$already_verified = true;
+ 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
 			throw new \Exception( parent::verification_error_message() );
 		}
 
