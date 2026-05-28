@@ -17,7 +17,6 @@ use PrivateCaptchaWP\Assets;
 use PrivateCaptchaWP\SettingsField;
 use PrivateCaptchaWP\Widget;
 use WP_Error;
-use WP_REST_Request;
 
 /**
  * Check if the current request is a non-checkout WooCommerce AJAX request.
@@ -209,7 +208,7 @@ class WooCommerce extends AbstractIntegration {
 
 			// Block-based checkout: render widget before the checkout actions block.
 			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 10, 1 );
-			add_filter( 'rest_request_before_callbacks', array( $this, 'verify_block_checkout_captcha' ), 10, 3 );
+			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'verify_block_checkout_captcha' ), 10, 2 );
 			add_action( 'woocommerce_loaded', array( $this, 'register_endpoint_data' ), 20 );
 		}
 
@@ -376,25 +375,17 @@ class WooCommerce extends AbstractIntegration {
 	/**
 	 * Verify captcha for WooCommerce block checkout.
 	 *
-	 * @param WP_REST_Response|WP_HTTP_Response|WP_Error|mixed $response Result to send to the client.
-	 *                                                                   Usually a WP_REST_Response or WP_Error.
-	 * @param array<mixed>                                     $handler  Route handler used for the request.
-	 * @param WP_REST_Request                                  $request  Request used to generate the response.
-	 *
-	 * @return WP_REST_Response|WP_HTTP_Response|WP_Error|mixed
+	 * @param \WC_Order        $order   The order object.
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @throws \Exception When validation fails.
 	 */
-	public function verify_block_checkout_captcha( $response, array $handler, WP_REST_Request $request ) {
+	public function verify_block_checkout_captcha( $order, $request ): void {
 		if ( 'POST' !== strtoupper( $request->get_method() ) ) {
-			return $response;
-		}
-
-		if ( '/wc/store/v1/checkout' !== $request->get_route() ) {
-			return $response;
+			return;
 		}
 
 		if ( ! $this->is_checkout_captcha_enabled() ) {
-			return $response;
+			return;
 		}
 
 		$this->write_log( 'Verify handler' );
@@ -403,17 +394,11 @@ class WooCommerce extends AbstractIntegration {
 		$solution   = isset( $extensions['private-captcha']['solution'] ) ? $extensions['private-captcha']['solution'] : '';
 
 		if ( ! $this->client->is_available() ) {
-			return new WP_Error(
-				'private_captcha_failed',
-				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
-			);
+			throw new \Exception( esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ) );
 		}
 
 		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
-			return new WP_Error(
-				'private_captcha_failed',
-				esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' )
-			);
+			throw new \Exception( esc_html__( 'Captcha verification failed. Please try again.', 'private-captcha' ) );
 		}
 	}
 
