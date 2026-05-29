@@ -701,7 +701,7 @@ class Admin {
 			}
 
 			if ( ! $settings_valid ) {
-				if ( $last_error && Settings::is_debug_enabled() ) {
+				if ( $last_error && ! Settings::is_debug_enabled() ) {
 					$error_msg = sprintf(
 						/* translators: %s is the error tooltip for the failed test. */
 						__( 'Private Captcha settings test <span style="border-bottom: 1px dotted currentColor; cursor: help;" title="%s">failed</span>.', 'private-captcha' ),

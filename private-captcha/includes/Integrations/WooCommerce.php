@@ -195,7 +195,7 @@ class WooCommerce extends AbstractIntegration {
 			add_action( 'woocommerce_checkout_process', array( $this, 'verify_checkout_captcha' ) );
 
 			// Block-based checkout: render widget before the checkout actions block.
-			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 10, 1 );
+			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 999, 1 );
 			add_filter( 'rest_authentication_errors', array( $this, 'verify_block_checkout_captcha' ) );
 			add_action( 'woocommerce_loaded', array( $this, 'register_endpoint_data' ), 20 );
 		}
@@ -404,6 +404,10 @@ class WooCommerce extends AbstractIntegration {
 
 		// Skip if this is not the checkout endpoint.
 		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout#', $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+			return $result;
+		}
+
+		if ( ! $this->is_checkout_captcha_enabled() ) {
 			return $result;
 		}
 

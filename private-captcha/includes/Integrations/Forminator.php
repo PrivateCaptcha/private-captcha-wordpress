@@ -130,9 +130,9 @@ class Forminator extends AbstractIntegration {
 			);
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return $can_show;
+		static $verification_result = null;
+		if ( null !== $verification_result ) {
+			return $verification_result;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
@@ -148,13 +148,15 @@ class Forminator extends AbstractIntegration {
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );
 
 		if ( ! $result ) {
-			return array(
+			$verification_result = array(
 				'can_submit' => false,
 				'error'      => parent::verification_error_text(),
 			);
+			return $verification_result;
 		}
 
-		return $can_show;
+		$verification_result = $can_show;
+		return $verification_result;
 	}
 
 	/**

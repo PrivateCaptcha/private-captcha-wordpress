@@ -121,7 +121,7 @@ abstract class AbstractIntegration implements IntegrationInterface {
 		if ( $last_error && Settings::is_debug_enabled() ) {
 			$error_msg = sprintf(
 				/* translators: %s is the error tooltip for the failed test. */
-				esc_html__( 'Captcha verification <span style="border-bottom: 1px dotted currentColor; cursor: help;" title="%s">failed</span>.', 'private-captcha' ),
+				__( 'Captcha verification <span style="border-bottom: 1px dotted currentColor; cursor: help;" title="%s">failed</span>.', 'private-captcha' ),
 				esc_attr( $last_error )
 			);
 		} else {
@@ -143,7 +143,7 @@ abstract class AbstractIntegration implements IntegrationInterface {
 			$error_msg = sprintf(
 				/* translators: %s is the error tooltip for the failed test. */
 				__( 'Captcha verification failed (%s).', 'private-captcha' ),
-				esc_attr( $last_error )
+				$last_error
 			);
 		} else {
 			$error_msg = __( 'Captcha verification failed. Please try again.', 'private-captcha' );
