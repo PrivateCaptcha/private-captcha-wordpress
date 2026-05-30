@@ -4,7 +4,7 @@ Tags: captcha, security, spam, protection, private
 Requires at least: 5.6
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.31
+Stable tag: 1.0.32
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -68,8 +68,11 @@ Use WP-CLI commands to recover access:
 
 == Changelog ==
 
+= 1.0.32 =
+* Fix WooCommerce Classic integration
+
 = 1.0.31 =
-* WooCommerce integration improvements
+* WooCommerce Block integration improvements
 
 = 1.0.30 =
 * Bug fixes
