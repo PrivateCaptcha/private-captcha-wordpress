@@ -502,6 +502,11 @@ class WooCommerce extends AbstractIntegration {
                     jQuery(document.body).on("updated_checkout", function() {
                         const paymentDiv = document.querySelector(".woocommerce-checkout-payment");
                         if (paymentDiv) { pcResetCaptchaWidgetWP(paymentDiv); }
+                        // we will have "new" widgets due to WooCommerce AJAX-replacing everything
+                        if (typeof window.privateCaptcha !== "undefined" && typeof window.privateCaptcha.setup === "function") {
+                            const newWidgets = window.privateCaptcha.setup();
+                            pcSetupPrivateCaptchaWidgets(newWidgets, defaultSubmitBtnSelector);
+                        }
                     });
                     jQuery(document.body).on("checkout_error", function() {
                         const form = document.querySelector("form.checkout");
@@ -533,18 +538,18 @@ class WooCommerce extends AbstractIntegration {
                             const newWidgets = window.privateCaptcha.setup();
                             if (newWidgets && (newWidgets.length > 0)) {
                                 newWidgets.forEach(function(widget) {
-                                    pcSetFormButtonEnabledWP(widget.element(), false, submitBtnSelector);
+                                    pcSetFormButtonEnabledWP(widget.element(), false, defaultSubmitBtnSelector);
 
                                     widget.element().addEventListener("privatecaptcha:init", function(event) {
-                                        pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector);
+                                        pcSetFormButtonEnabledWP(event.detail.element, false, defaultSubmitBtnSelector);
                                         setPrivateCaptchaExtensionData("");
                                     });
                                     widget.element().addEventListener("privatecaptcha:finish", function(event) { 
-                                        pcSetFormButtonEnabledWP(event.detail.element, true, submitBtnSelector);
+                                        pcSetFormButtonEnabledWP(event.detail.element, true, defaultSubmitBtnSelector);
                                         setPrivateCaptchaExtensionData(event.detail.widget.solution());
                                     });
                                     widget.element().addEventListener("privatecaptcha:reset", function(event) {
-                                        pcSetFormButtonEnabledWP(event.detail.element, false, submitBtnSelector);
+                                        pcSetFormButtonEnabledWP(event.detail.element, false, defaultSubmitBtnSelector);
                                         setPrivateCaptchaExtensionData("");
                                     });
                                 });

@@ -179,24 +179,27 @@ class Assets {
                 }
             }
 
+            function pcSetupPrivateCaptchaWidgets(captchaWidgets, submitBtnSelector) {
+                if (captchaWidgets && (captchaWidgets.length > 0)) {
+                    pcForEachWP(captchaWidgets, (e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
+
+                    pcForEachWP(captchaWidgets, function(currentWidget) {
+                        if (!currentWidget || typeof currentWidget.addEventListener !== "function") {
+                            return;
+                        }
+
+                        currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), false, submitBtnSelector));
+                        currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), false, submitBtnSelector));
+                        currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), true, submitBtnSelector));
+                    });
+                }
+            }
+
             function setupPrivateCaptchaWP() {
                 pcSafeExecuteWP(function() {
-                    const submitBtnSelector = ' . $btn_selector_js . ';
                     const captchaWidgets = pcGetCaptchaWidgetsWP(document);
-
-                    if (captchaWidgets && (captchaWidgets.length > 0)) {
-                        pcForEachWP(captchaWidgets, (e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
-
-                        pcForEachWP(captchaWidgets, function(currentWidget) {
-                            if (!currentWidget || typeof currentWidget.addEventListener !== "function") {
-                                return;
-                            }
-
-                            currentWidget.addEventListener("privatecaptcha:init", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), false, submitBtnSelector));
-                            currentWidget.addEventListener("privatecaptcha:reset", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), false, submitBtnSelector));
-                            currentWidget.addEventListener("privatecaptcha:finish", (event) => pcSetFormButtonEnabledWP(pcGetEventElementWP(event), true, submitBtnSelector));
-                        });
-                    }' . $custom_js_block . '
+                    const defaultSubmitBtnSelector = ' . $btn_selector_js . ';
+                    pcSetupPrivateCaptchaWidgets(captchaWidgets, defaultSubmitBtnSelector);' . $custom_js_block . '
                 });
             }
 
