@@ -134,6 +134,14 @@ class Assets {
                 return event && event.detail ? event.detail.element : null;
             }
 
+            function pcGetWidgetElementWP(widgetOrElement) {
+                if (widgetOrElement && typeof widgetOrElement.element === "function") {
+                    return widgetOrElement.element();
+                }
+
+                return widgetOrElement;
+            }
+
             function pcSetFormButtonEnabledWP(element, enabled, customSelector) {
                 pcSafeExecuteWP(function() {
                     let container = element && typeof element.closest === "function" ? element.closest("form") : null;
@@ -181,9 +189,11 @@ class Assets {
 
             function pcSetupPrivateCaptchaWidgets(captchaWidgets, submitBtnSelector) {
                 if (captchaWidgets && (captchaWidgets.length > 0)) {
-                    pcForEachWP(captchaWidgets, (e) => pcSetFormButtonEnabledWP(e, false, submitBtnSelector));
+                    pcForEachWP(captchaWidgets, (e) => pcSetFormButtonEnabledWP(pcGetWidgetElementWP(e), false, submitBtnSelector));
 
                     pcForEachWP(captchaWidgets, function(currentWidget) {
+                        currentWidget = pcGetWidgetElementWP(currentWidget);
+
                         if (!currentWidget || typeof currentWidget.addEventListener !== "function") {
                             return;
                         }
