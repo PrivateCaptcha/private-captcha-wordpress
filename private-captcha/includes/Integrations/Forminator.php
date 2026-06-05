@@ -130,33 +130,38 @@ class Forminator extends AbstractIntegration {
 			);
 		}
 
-		static $verification_result = null;
-		if ( null !== $verification_result ) {
-			return $verification_result;
+		static $captcha_passed = null;
+
+		if ( null !== $captcha_passed ) {
+			if ( ! $captcha_passed ) {
+				return array(
+					'can_submit' => false,
+					'error'      => parent::verification_error_text(),
+				);
+			}
+			return $can_show;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
 		$solution = isset( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) && is_string( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] )
-            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
-			? sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) )
-			: '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
+		? sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ) )
+		: '';
 
-		$sitekey          = \PrivateCaptchaWP\Settings::get_sitekey();
-		$result           = $this->client->verify_solution( $solution, $sitekey );
-		$already_verified = true;
+		$sitekey        = \PrivateCaptchaWP\Settings::get_sitekey();
+		$result         = $this->client->verify_solution( $solution, $sitekey );
+		$captcha_passed = $result;
 
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );
 
 		if ( ! $result ) {
-			$verification_result = array(
+			return array(
 				'can_submit' => false,
 				'error'      => parent::verification_error_text(),
 			);
-			return $verification_result;
 		}
 
-		$verification_result = $can_show;
-		return $verification_result;
+		return $can_show;
 	}
 
 	/**
