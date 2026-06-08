@@ -553,20 +553,10 @@ class WooCommerce extends AbstractIntegration {
                                         setPrivateCaptchaExtensionData("");
                                     });
                                 });
+                                unsubscribe();
                             }
                         }
                     }, "wc/store/cart");
-                    if (typeof jQuery !== "undefined") {
-                        jQuery(document.body).on("click", ".wc-block-components-checkout-place-order-button", function() {
-                            setTimeout(function() {
-                                const checkoutBlock = document.querySelector(".wc-block-checkout");
-                                if (checkoutBlock) {
-                                    pcResetCaptchaWidgetWP(checkoutBlock);
-                                }
-                                setPrivateCaptchaExtensionData("");
-                            }, 2000);
-                        });
-                    }
                 }';
 
 		$woo_custom_css = '
