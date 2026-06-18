@@ -197,7 +197,12 @@ class WooCommerce extends AbstractIntegration {
 			// Block-based checkout: render widget before the checkout actions block.
 			add_filter( 'render_block_woocommerce/checkout-actions-block', array( $this, 'render_block_checkout_captcha' ), 999, 1 );
 			add_filter( 'rest_authentication_errors', array( $this, 'verify_block_checkout_captcha' ) );
-			add_action( 'woocommerce_loaded', array( $this, 'register_endpoint_data' ), 20 );
+
+			if ( did_action( 'woocommerce_blocks_loaded' ) ) {
+				$this->register_endpoint_data();
+			} else {
+				add_action( 'woocommerce_blocks_loaded', array( $this, 'register_endpoint_data' ), 10 );
+			}
 		}
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -473,7 +478,7 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
-		woocommerce_store_api_register_endpoint_data(
+		$result = woocommerce_store_api_register_endpoint_data(
 			array(
 				'endpoint'        => 'checkout',
 				'namespace'       => 'private-captcha',
@@ -489,6 +494,10 @@ class WooCommerce extends AbstractIntegration {
 				},
 			)
 		);
+
+		if ( is_wp_error( $result ) ) {
+			$this->write_log( 'Private Captcha Store API endpoint data registration failed: ' . $result->get_error_message() );
+		}
 	}
 
 	/**
