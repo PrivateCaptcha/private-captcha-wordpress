@@ -524,6 +524,25 @@ class WooCommerce extends AbstractIntegration {
                         }
                     }
 
+                    const checkoutEvents = typeof window.wc !== "undefined" && window.wc.blocksCheckoutEvents
+                        ? window.wc.blocksCheckoutEvents.checkoutEvents || window.wc.blocksCheckoutEvents
+                        : null;
+                    const unsubscribeBlockCheckoutFail = checkoutEvents && typeof checkoutEvents.onCheckoutFail === "function"
+                        ? checkoutEvents.onCheckoutFail(function() {
+                            setPrivateCaptchaExtensionData("");
+                            pcResetCaptchaWidgetWP(document);
+                            return true;
+                        })
+                        : null;
+                    if (typeof unsubscribeBlockCheckoutFail === "function") {
+                        const unsubscribeBlockCheckoutFailOnPageHide = function(event) {
+                            if (event && event.persisted) return;
+                            unsubscribeBlockCheckoutFail();
+                            window.removeEventListener("beforeunload", unsubscribeBlockCheckoutFailOnPageHide);
+                        };
+                        window.addEventListener("beforeunload", unsubscribeBlockCheckoutFailOnPageHide);
+                    }
+
                     // For the initially loaded widgets (if any exist before wp.data.subscribe fires setup)
                     document.querySelectorAll(".private-captcha").forEach(function(widgetEl) {
                         widgetEl.addEventListener("privatecaptcha:init", function(event) { setPrivateCaptchaExtensionData(""); });
