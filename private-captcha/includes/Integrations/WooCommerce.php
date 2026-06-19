@@ -167,6 +167,27 @@ class WooCommerce extends AbstractIntegration {
 	}
 
 	/**
+	 * Check if the current request is creating a customer as part of checkout.
+	 *
+	 * @return bool True if the current request is a checkout request.
+	 */
+	private function is_checkout_request(): bool {
+		$rest_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+		if ( is_string( $rest_route ) && preg_match( '#/wc/store(?:/v\d+)?/checkout$#', $rest_route ) ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checking request context; WooCommerce verifies checkout nonces.
+		$wc_ajax = isset( $_GET['wc-ajax'] ) ? sanitize_key( wp_unslash( $_GET['wc-ajax'] ) ) : '';
+		if ( 'checkout' === $wc_ajax ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only checking request context; WooCommerce verifies checkout nonces.
+		return isset( $_POST['woocommerce-process-checkout-nonce'] );
+	}
+
+	/**
 	 * Initialize WooCommerce integration hooks.
 	 */
 	public function init(): void {
@@ -287,6 +308,13 @@ class WooCommerce extends AbstractIntegration {
 	 */
 	public function verify_register_captcha( string $username, string $email, WP_Error $errors ): void {
 		unset( $username, $email );
+
+		// WooCommerce fires woocommerce_register_post when checkout creates an account.
+		// That flow is protected by the checkout captcha, not the account registration captcha.
+		if ( $this->is_checkout_request() ) {
+			return;
+		}
+
 		if ( ! $this->client->is_available() ) {
 			$errors->add(
 				'private_captcha_unavailable',
