@@ -227,6 +227,11 @@ class Client {
 		}
 
 		$body = wp_remote_retrieve_body( $response );
-		return ! empty( $body ) ? $body : null;
+		if ( empty( $body ) ) {
+			$this->last_error = 'Empty response body from puzzle endpoint';
+			write_log( 'Failed to fetch test puzzle: empty response body' );
+			return null;
+		}
+		return $body;
 	}
 }

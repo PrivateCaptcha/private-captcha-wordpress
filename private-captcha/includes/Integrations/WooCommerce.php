@@ -436,7 +436,8 @@ class WooCommerce extends AbstractIntegration {
 		}
 
 		// Skip if this is not the checkout endpoint.
-		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout$#', $GLOBALS['wp']->query_vars['rest_route'] ) ) {
+		$rest_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout$#', $rest_route ) ) {
 			return $result;
 		}
 
@@ -465,9 +466,12 @@ class WooCommerce extends AbstractIntegration {
 			);
 		}
 
-		$extensions = $request_body['extensions'];
+		$extensions = $request_body['extensions'] ?? array();
 		if ( empty( $extensions ) || ! isset( $extensions['private-captcha'] ) ) {
 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
+			return new WP_Error( 'private_captcha_failed', parent::verification_error_html() );
+		}
+		if ( ! isset( $extensions['private-captcha']['solution'] ) ) {
 			return new WP_Error( 'private_captcha_failed', parent::verification_error_html() );
 		}
 		$solution = $extensions['private-captcha']['solution'];

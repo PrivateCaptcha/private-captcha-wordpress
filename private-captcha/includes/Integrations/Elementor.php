@@ -131,7 +131,7 @@ class Elementor extends AbstractIntegration {
                 jQuery(document).on("submit_success", ".elementor-form", function(event) {
                     pcResetCaptchaWidgetWP(event.target);
                 });
-                jQuery(document).on("error", ".elementor-form", function(event) {
+                jQuery(document).on("submit_success submit_error", ".elementor-form", function(event) {
                     pcResetCaptchaWidgetWP(event.target);
                 });';
 

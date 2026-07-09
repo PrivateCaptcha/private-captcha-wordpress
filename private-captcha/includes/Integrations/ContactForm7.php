@@ -217,7 +217,7 @@ class ContactForm7 extends AbstractIntegration {
 	 * @return string Error message or empty string.
 	 */
 	private function get_error_message(): string {
-		if ( ! function_exists( 'WPCF7_Submission' ) || ! class_exists( 'WPCF7_Submission' ) ) {
+		if ( ! class_exists( 'WPCF7_Submission' ) ) {
 			return '';
 		}
 
