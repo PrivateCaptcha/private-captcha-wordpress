@@ -738,7 +738,7 @@ class Admin {
 		}
 
 		// Disable form integrations to prevent lockout.
-		if ( ! $settings_valid ) {
+		if ( ! $settings_valid && $any_form_integration ) {
 			foreach ( $this->integrations->get_all_integrations() as $integration ) {
 				$fields = $integration->get_settings_fields();
 				foreach ( $fields as $field ) {
