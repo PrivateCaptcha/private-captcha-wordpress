@@ -420,8 +420,9 @@ class ContactForm7 extends AbstractIntegration {
 		}
 
 		$solution = $this->get_captcha_solution();
+		$sitekey  = \PrivateCaptchaWP\Settings::get_sitekey();
 
-		if ( $this->client->verify_solution( $solution ) ) {
+		if ( $this->client->verify_solution( $solution, $sitekey ) ) {
 			// Human.
 			$spam = false;
 		} else {
