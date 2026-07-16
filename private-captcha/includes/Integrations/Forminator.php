@@ -173,6 +173,11 @@ class Forminator extends AbstractIntegration {
                     if (event && event.target) {
                         pcResetCaptchaWidgetWP(event.target);
                     }
+                });
+                jQuery(document).on("forminator:front:pagination:buttons:updated", function(event) {
+                    if (event && event.target) {
+                        pcResetCaptchaWidgetWP(event.target);
+                    }
                 });';
 
 		$custom_css = '
@@ -185,6 +190,6 @@ class Forminator extends AbstractIntegration {
             }
         ';
 
-		Assets::enqueue( 'private-captcha-widget', $custom_js, $custom_css, '.forminator-button-submit' );
+		Assets::enqueue( 'private-captcha-widget', $custom_js, $custom_css, '.forminator-button-next, .forminator-button-submit' );
 	}
 }
