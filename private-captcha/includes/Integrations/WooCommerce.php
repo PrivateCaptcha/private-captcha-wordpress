@@ -435,6 +435,21 @@ class WooCommerce extends AbstractIntegration {
 			return $result;
 		}
 
+		$method_override = null;
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- Must match the raw method used by WordPress REST routing.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Mirrors the REST API's request routing; no data is changed.
+		if ( isset( $_GET['_method'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Mirrors the REST API's request routing; no data is changed.
+			$method_override = $_GET['_method'];
+		} elseif ( isset( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
+			$method_override = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
+		}
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
+
+		if ( null !== $method_override && ( ! is_string( $method_override ) || 'POST' !== strtoupper( $method_override ) ) ) {
+			return $result;
+		}
+
 		// Skip if this is not the checkout endpoint.
 		$rest_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
 		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout$#', $rest_route ) ) {

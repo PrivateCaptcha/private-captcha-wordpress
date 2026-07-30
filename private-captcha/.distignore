@@ -4,3 +4,5 @@ composer.json
 Makefile
 phpstan.neon
 phpcs.xml
+phpunit.xml.dist
+tests
