@@ -50,6 +50,13 @@ class Client {
 	private ?string $last_error = null;
 
 	/**
+	 * Request-local verification results, grouped by cache scope, sitekey and solution.
+	 *
+	 * @var array<string, array<string, array<string, array{result: bool, last_error: string|null}>>>
+	 */
+	private array $verification_cache = array();
+
+	/**
 	 * Get the last error message from testing.
 	 *
 	 * @return string|null
@@ -73,6 +80,8 @@ class Client {
 	 * @param bool   $eu_isolation  Whether to use EU isolation.
 	 */
 	public function update( string $api_key, string $custom_domain, bool $eu_isolation ): void {
+		$this->verification_cache = array();
+
 		try {
 			// Only pass domain argument if custom domain is set or EU isolation is enabled.
 			if ( ! empty( $custom_domain ) ) {
@@ -93,8 +102,9 @@ class Client {
 	 * Reset the client so we cannot perform any actions
 	 */
 	public function reset(): void {
-		$this->client     = null;
-		$this->last_error = null;
+		$this->client             = null;
+		$this->last_error         = null;
+		$this->verification_cache = array();
 		write_log( 'Private Captcha client has been reset' );
 	}
 
@@ -112,15 +122,41 @@ class Client {
 	 *
 	 * @param string      $solution Solution to verify.
 	 * @param string|null $sitekey  An optional sitekey to verify solution against.
+	 * @param string|null $cache_scope Optional request-local cache scope.
+	 * @param string|null $parent_cache_scope Optional parent cache scope shared with related verifiers.
 	 * @return bool True if verification succeeds, false otherwise.
 	 */
-	public function verify_solution( string $solution, ?string $sitekey = null ): bool {
+	public function verify_solution( string $solution, ?string $sitekey = null, ?string $cache_scope = null, ?string $parent_cache_scope = null ): bool {
 		$this->last_error = null;
 
 		if ( null === $this->client ) {
 			$this->last_error = 'Client not initialized';
 			return false;
 		}
+
+		$cache_scopes = array();
+		$sitekey_key  = $sitekey ?? '';
+
+		if ( null !== $cache_scope ) {
+			$cache_scopes[] = $cache_scope;
+			if ( null !== $parent_cache_scope && $parent_cache_scope !== $cache_scope ) {
+				$cache_scopes[] = $parent_cache_scope;
+			}
+
+			foreach ( $cache_scopes as $scope ) {
+				if ( isset( $this->verification_cache[ $scope ][ $sitekey_key ][ $solution ] ) ) {
+					$cached           = $this->verification_cache[ $scope ][ $sitekey_key ][ $solution ];
+					$this->last_error = $cached['last_error'];
+
+					// Promote a parent hit into the local scope for subsequent lookups.
+					$this->verification_cache[ $cache_scope ][ $sitekey_key ][ $solution ] = $cached;
+
+					return $cached['result'];
+				}
+			}
+		}
+
+		$success = false;
 
 		try {
 			$result = $this->client->verify( $solution, sitekey: $sitekey );
@@ -130,12 +166,23 @@ class Client {
 				write_log( 'Private Captcha verification failed. result=' . $result );
 				$this->last_error = (string) $result;
 			}
-			return $success;
 		} catch ( PrivateCaptchaException $e ) {
 			$this->last_error = $e->getMessage();
 			write_log( 'Private Captcha verification error: ' . $e->getMessage() );
-			return false;
 		}
+
+		if ( ! empty( $cache_scopes ) ) {
+			$cache_entry = array(
+				'result'     => $success,
+				'last_error' => $this->last_error,
+			);
+
+			foreach ( $cache_scopes as $scope ) {
+				$this->verification_cache[ $scope ][ $sitekey_key ][ $solution ] = $cache_entry;
+			}
+		}
+
+		return $success;
 	}
 
 	/**

@@ -31,6 +31,13 @@ use PrivateCaptchaWP\Widget;
 class ElementorField extends \ElementorPro\Modules\Forms\Fields\Field_Base {
 
 	/**
+	 * Shared Private Captcha client instance.
+	 *
+	 * @var Client
+	 */
+	private Client $client;
+
+	/**
 	 * Get field type identifier.
 	 *
 	 * @return string Field type.
@@ -100,14 +107,7 @@ class ElementorField extends \ElementorPro\Modules\Forms\Fields\Field_Base {
 			return;
 		}
 
-		$client = new Client();
-		$client->update(
-			Settings::get_api_key(),
-			Settings::get_custom_domain(),
-			Settings::is_eu_isolation_enabled()
-		);
-
-		if ( ! $client->is_available() ) {
+		if ( ! $this->client->is_available() ) {
 			$ajax_handler->add_error(
 				$field['id'],
 				esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' )
@@ -116,7 +116,7 @@ class ElementorField extends \ElementorPro\Modules\Forms\Fields\Field_Base {
 		}
 
 		$sitekey = Settings::get_sitekey();
-		$result  = $client->verify_solution( $solution, $sitekey );
+		$result  = $this->client->verify_solution( $solution, $sitekey, self::class, AbstractIntegration::class );
 
 		if ( ! $result ) {
 			$ajax_handler->add_error(
@@ -198,10 +198,13 @@ class ElementorField extends \ElementorPro\Modules\Forms\Fields\Field_Base {
 	/**
 	 * Constructor.
 	 *
+	 * @param Client $client Shared Private Captcha client instance.
+	 *
 	 * Sets up the editor preview script hook.
 	 */
-	public function __construct() {
+	public function __construct( Client $client ) {
 		parent::__construct();
+		$this->client = $client;
 		add_action( 'elementor/preview/init', array( $this, 'editor_preview_footer' ) );
 	}
 
