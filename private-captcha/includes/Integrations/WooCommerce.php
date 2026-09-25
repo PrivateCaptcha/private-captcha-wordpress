@@ -282,19 +282,12 @@ class WooCommerce extends AbstractIntegration {
 			return $validation_error;
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return $validation_error;
-		}
-
 		if ( ! $this->verify_captcha() ) {
 			$validation_error->add(
 				'private_captcha_failed',
 				parent::verification_error_html()
 			);
 		}
-
-		$already_verified = true;
 
 		return $validation_error;
 	}
@@ -323,19 +316,12 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return;
-		}
-
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
 				parent::verification_error_html()
 			);
 		}
-
-		$already_verified = true;
 	}
 
 	/**
@@ -358,19 +344,12 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return;
-		}
-
 		if ( ! $this->verify_captcha() ) {
 			$errors->add(
 				'private_captcha_failed',
 				parent::verification_error_html()
 			);
 		}
-
-		$already_verified = true;
 	}
 
 	/**
@@ -383,22 +362,14 @@ class WooCommerce extends AbstractIntegration {
 			return;
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return;
-		}
-
 		if ( ! $this->client->is_available() ) {
 			wc_add_notice( esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ), 'error' );
 			return;
 		}
 
 		if ( ! $this->verify_captcha() ) {
-			$already_verified = true;
 			wc_add_notice( parent::verification_error_html(), 'error' );
 		}
-
-		$already_verified = true;
 	}
 
 	/**
@@ -491,28 +462,13 @@ class WooCommerce extends AbstractIntegration {
 		}
 		$solution = $extensions['private-captcha']['solution'];
 
-		if ( empty( $solution ) || ! $this->verify_solution( $solution ) ) {
+		if ( empty( $solution ) || ! $this->verify_captcha_solution( $solution ) ) {
 			return new WP_Error(
 				'private_captcha_failed',
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
 				parent::verification_error_html()
 			);
 		}
-
-		return $result;
-	}
-
-	/**
-	 * Verify captcha solution directly.
-	 *
-	 * @param string $solution The captcha solution.
-	 * @return bool True if verification succeeds.
-	 */
-	protected function verify_solution( string $solution ): bool {
-		$sitekey = \PrivateCaptchaWP\Settings::get_sitekey();
-		$result  = $this->client->verify_solution( $solution, $sitekey );
-
-		$this->write_log( 'Private Captcha block checkout verification finished. result=' . $result );
 
 		return $result;
 	}

@@ -414,15 +414,9 @@ class ContactForm7 extends AbstractIntegration {
 			return $spam;
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return $spam;
-		}
-
 		$solution = $this->get_captcha_solution();
-		$sitekey  = \PrivateCaptchaWP\Settings::get_sitekey();
 
-		if ( $this->client->verify_solution( $solution, $sitekey ) ) {
+		if ( $this->verify_captcha_solution( $solution ) ) {
 			// Human.
 			$spam = false;
 		} else {
@@ -447,8 +441,6 @@ class ContactForm7 extends AbstractIntegration {
 					);
 			}
 		}
-
-		$already_verified = true;
 
 		return $spam;
 	}

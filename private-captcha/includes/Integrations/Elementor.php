@@ -120,7 +120,7 @@ class Elementor extends AbstractIntegration {
 			return;
 		}
 
-		$form_fields_registrar->register( new ElementorField() );
+		$form_fields_registrar->register( new ElementorField( $this->client ) );
 	}
 
 	/**

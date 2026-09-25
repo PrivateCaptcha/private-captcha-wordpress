@@ -91,6 +91,25 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	}
 
 	/**
+	 * Verify a captcha solution using this integration's request-local cache scope.
+	 *
+	 * All integrations use their concrete class as the local scope and this base
+	 * class as the shared parent scope. This lets overlapping integrations reuse
+	 * the result for the exact same solution and sitekey within one PHP request.
+	 *
+	 * @param string $solution Captcha solution to verify.
+	 * @return bool True if captcha verification succeeds.
+	 */
+	protected function verify_captcha_solution( string $solution ): bool {
+		$sitekey = Settings::get_sitekey();
+		$result  = $this->client->verify_solution( $solution, $sitekey, static::class, self::class );
+
+		$this->write_log( 'Private Captcha verification finished. result=' . $result );
+
+		return $result;
+	}
+
+	/**
 	 * Verify captcha solution from form submission.
 	 *
 	 * @return bool True if captcha verification succeeds.
@@ -102,12 +121,8 @@ abstract class AbstractIntegration implements IntegrationInterface {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This method is used for captcha verification, not WordPress form processing
 		$solution = sanitize_text_field( wp_unslash( $_POST[ \PrivateCaptchaWP\Client::FORM_FIELD ] ?? '' ) );
-		$sitekey  = Settings::get_sitekey();
-		$result   = $this->client->verify_solution( $solution, $sitekey );
 
-		$this->write_log( 'Private Captcha verification finished. result=' . $result );
-
-		return $result;
+		return $this->verify_captcha_solution( $solution );
 	}
 
 	/**

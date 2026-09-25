@@ -130,16 +130,9 @@ class Formidable extends AbstractIntegration {
 			return $errors;
 		}
 
-		static $already_verified = false;
-		if ( $already_verified ) {
-			return $errors;
-		}
-
 		if ( ! parent::verify_captcha() ) {
 			$errors['private_captcha'] = parent::verification_error_text();
 		}
-
-		$already_verified = true;
 
 		return $errors;
 	}
