@@ -423,7 +423,7 @@ class WooCommerce extends AbstractIntegration {
 
 		// Skip if this is not the checkout endpoint.
 		$rest_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
-		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout$#', $rest_route ) ) {
+		if ( ! preg_match( '#/wc/store(?:/v\d+)?/checkout/?$#', $rest_route ) ) {
 			return $result;
 		}
 
