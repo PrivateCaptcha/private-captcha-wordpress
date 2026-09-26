@@ -462,7 +462,7 @@ class WooCommerce extends AbstractIntegration {
 		}
 		$solution = $extensions['private-captcha']['solution'];
 
-		if ( empty( $solution ) || ! $this->verify_captcha_solution( $solution ) ) {
+		if ( ! is_string( $solution ) || empty( $solution ) || ! $this->verify_captcha_solution( $solution ) ) {
 			return new WP_Error(
 				'private_captcha_failed',
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- we escape inside
