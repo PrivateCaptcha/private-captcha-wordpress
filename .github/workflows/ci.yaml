@@ -69,7 +69,6 @@ jobs:
       with:
         coverage: none
         tools: wp-cli
-      env:
         update: true
 
     - name: Set Composer root version from tag
