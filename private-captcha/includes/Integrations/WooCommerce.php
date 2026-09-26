@@ -562,7 +562,7 @@ class WooCommerce extends AbstractIntegration {
                         widgetEl.addEventListener("privatecaptcha:reset", function(event) { setPrivateCaptchaExtensionData(""); });
                     });
 
-                    const unsubscribe = wp.data.subscribe(function() {
+                    wp.data.subscribe(function() {
                         if (typeof window.privateCaptcha !== "undefined" && typeof window.privateCaptcha.setup === "function") {
                             // default state (on load) will be handled by parent setupPrivateCaptchaWP() function
                             // here we only handle "changes" (for the lack of better API in WordPress/WooCommerce)
@@ -584,7 +584,6 @@ class WooCommerce extends AbstractIntegration {
                                         setPrivateCaptchaExtensionData("");
                                     });
                                 });
-                                unsubscribe();
                             }
                         }
                     }, "wc/store/cart");
