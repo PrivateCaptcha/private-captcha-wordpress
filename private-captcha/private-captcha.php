@@ -91,6 +91,11 @@ class PrivateCaptchaWordPress {
 		// Initialize the client.
 		$this->init_client();
 
+		// Integration availability checks rely on WordPress plugin helpers.
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
 		// Initialize integrations manager.
 		$this->integrations = new PrivateCaptchaWP\Integrations( $this->client );
 
