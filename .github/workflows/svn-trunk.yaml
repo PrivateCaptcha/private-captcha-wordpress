@@ -23,30 +23,37 @@ jobs:
         id: version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "${VERSION}" =~ ^[0-9]+(\.[0-9]+)*([.-][0-9A-Za-z]+)*$ ]]; then
+            echo "::error::Invalid release tag: ${GITHUB_REF_NAME}"
+            exit 1
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Deploying version: ${VERSION}"
 
       - name: Download build artifact
         env:
           GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           RUN_ID=$(gh run list \
-            --repo "${{ github.repository }}" \
+            --repo "${REPOSITORY}" \
             --workflow ci.yaml \
-            --commit "${{ github.sha }}" \
-            --branch "${{ github.ref_name }}" \
+            --commit "${COMMIT_SHA}" \
+            --branch "${REF_NAME}" \
             --status success \
             --json databaseId \
             --jq '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
-            echo "::error::No successful CI workflow run found for tag ${{ github.ref_name }} (commit ${{ github.sha }})"
+            echo "::error::No successful CI workflow run found for tag ${REF_NAME} (commit ${COMMIT_SHA})"
             exit 1
           fi
 
           echo "Downloading build artifact from CI run ${RUN_ID}..."
           gh run download "$RUN_ID" \
-            --repo "${{ github.repository }}" \
+            --repo "${REPOSITORY}" \
             --name wp-plugin \
             --dir .
 
@@ -114,6 +121,7 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           if [ "${DRY_RUN}" = "false" ]; then
             echo "Committing changes to WordPress.org SVN..."
@@ -122,8 +130,8 @@ jobs:
               --password "${SVN_PASSWORD}" \
               --no-auth-cache \
               --non-interactive \
-              -m "Release ${{ steps.version.outputs.version }}"
-            echo "Successfully deployed version ${{ steps.version.outputs.version }} to WordPress.org"
+              -m "Release ${VERSION}"
+            echo "Successfully deployed version ${VERSION} to WordPress.org"
           else
             echo "::notice::DRY RUN mode — skipping SVN commit. Set DRY_RUN=false in the 'WordPress release' environment to enable deployment."
             echo "The following changes would be committed:"

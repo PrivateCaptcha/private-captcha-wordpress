@@ -40,13 +40,18 @@ jobs:
             echo "::error::Could not determine version from 'Stable tag' field in trunk/readme.txt"
             exit 1
           fi
+          if [[ ! "${VERSION}" =~ ^[0-9]+(\.[0-9]+)*([.-][0-9A-Za-z]+)*$ ]]; then
+            echo "::error::Invalid version in 'Stable tag' field: ${VERSION}"
+            exit 1
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Detected version: ${VERSION}"
 
       - name: Create SVN tag
         working-directory: /tmp/svn-repo
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           if svn list "${SVN_URL}/tags/${VERSION}/" > /dev/null 2>&1; then
             echo "::warning::Tag ${VERSION} already exists in SVN, skipping tag creation"
           else
@@ -63,8 +68,8 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           if [ "${DRY_RUN}" = "false" ]; then
             echo "Committing SVN tag for version ${VERSION}..."
             svn commit \
