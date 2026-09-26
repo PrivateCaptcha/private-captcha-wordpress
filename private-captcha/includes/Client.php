@@ -123,10 +123,9 @@ class Client {
 	 * @param string      $solution Solution to verify.
 	 * @param string|null $sitekey  An optional sitekey to verify solution against.
 	 * @param string|null $cache_scope Optional request-local cache scope.
-	 * @param string|null $parent_cache_scope Optional parent cache scope shared with related verifiers.
 	 * @return bool True if verification succeeds, false otherwise.
 	 */
-	public function verify_solution( string $solution, ?string $sitekey = null, ?string $cache_scope = null, ?string $parent_cache_scope = null ): bool {
+	public function verify_solution( string $solution, ?string $sitekey = null, ?string $cache_scope = null ): bool {
 		$this->last_error = null;
 
 		if ( null === $this->client ) {
@@ -139,17 +138,11 @@ class Client {
 
 		if ( null !== $cache_scope ) {
 			$cache_scopes[] = $cache_scope;
-			if ( null !== $parent_cache_scope && $parent_cache_scope !== $cache_scope ) {
-				$cache_scopes[] = $parent_cache_scope;
-			}
 
 			foreach ( $cache_scopes as $scope ) {
 				if ( isset( $this->verification_cache[ $scope ][ $sitekey_key ][ $solution ] ) ) {
 					$cached           = $this->verification_cache[ $scope ][ $sitekey_key ][ $solution ];
 					$this->last_error = $cached['last_error'];
-
-					// Promote a parent hit into the local scope for subsequent lookups.
-					$this->verification_cache[ $cache_scope ][ $sitekey_key ][ $solution ] = $cached;
 
 					return $cached['result'];
 				}

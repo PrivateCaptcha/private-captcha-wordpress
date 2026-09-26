@@ -116,7 +116,7 @@ class ElementorField extends \ElementorPro\Modules\Forms\Fields\Field_Base {
 		}
 
 		$sitekey = Settings::get_sitekey();
-		$result  = $this->client->verify_solution( $solution, $sitekey, self::class, AbstractIntegration::class );
+		$result  = $this->client->verify_solution( $solution, $sitekey, self::class );
 
 		if ( ! $result ) {
 			$ajax_handler->add_error(

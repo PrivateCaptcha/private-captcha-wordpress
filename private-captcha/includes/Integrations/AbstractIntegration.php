@@ -93,16 +93,15 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	/**
 	 * Verify a captcha solution using this integration's request-local cache scope.
 	 *
-	 * All integrations use their concrete class as the local scope and this base
-	 * class as the shared parent scope. This lets overlapping integrations reuse
-	 * the result for the exact same solution and sitekey within one PHP request.
+	 * Each integration uses its concrete class as its cache scope so independent
+	 * operations cannot reuse a successful verification.
 	 *
 	 * @param string $solution Captcha solution to verify.
 	 * @return bool True if captcha verification succeeds.
 	 */
 	protected function verify_captcha_solution( string $solution ): bool {
 		$sitekey = Settings::get_sitekey();
-		$result  = $this->client->verify_solution( $solution, $sitekey, static::class, self::class );
+		$result  = $this->client->verify_solution( $solution, $sitekey, static::class );
 
 		$this->write_log( 'Private Captcha verification finished. result=' . $result );
 
