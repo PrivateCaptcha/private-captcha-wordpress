@@ -84,7 +84,8 @@ class GravityForms extends AbstractIntegration {
 	public function init(): void {
 		$this->write_log( 'Initializing Gravity Forms integration' );
 
-		// Add captcha widget before the submit button.
+		// Add captcha widget before multi-page next and submit buttons.
+		add_filter( 'gform_next_button', array( $this, 'add_captcha_widget' ), 10, 2 );
 		add_filter( 'gform_submit_button', array( $this, 'add_captcha_widget' ), 10, 2 );
 
 		// Verify captcha solution during form validation.
@@ -95,7 +96,7 @@ class GravityForms extends AbstractIntegration {
 	}
 
 	/**
-	 * Add Private Captcha widget before the submit button.
+	 * Add Private Captcha widget before a next or submit button.
 	 *
 	 * @param string              $button_input The submit button HTML string.
 	 * @param array<string,mixed> $form         The current form object.
