@@ -25,7 +25,7 @@ class Settings {
 		'wordpress_core_enable_reset_password'     => 'enable_reset_password',
 		'wordpress_core_enable_comments_logged_in' => 'enable_comments_logged_in',
 		'wordpress_core_enable_comments_guest'     => 'enable_comments_guest',
-		'wpforms_enable_wpforms'                    => 'enable_wpforms',
+		'wpforms_enable_wpforms'                   => 'enable_wpforms',
 	);
 
 	/**
