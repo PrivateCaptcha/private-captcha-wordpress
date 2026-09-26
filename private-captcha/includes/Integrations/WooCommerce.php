@@ -177,14 +177,9 @@ class WooCommerce extends AbstractIntegration {
 			return true;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checking request context; WooCommerce verifies checkout nonces.
-		$wc_ajax = isset( $_GET['wc-ajax'] ) ? sanitize_key( wp_unslash( $_GET['wc-ajax'] ) ) : '';
-		if ( 'checkout' === $wc_ajax ) {
-			return true;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only checking request context; WooCommerce verifies checkout nonces.
-		return isset( $_POST['woocommerce-process-checkout-nonce'] );
+		// Classic checkout validation runs before WooCommerce creates the customer.
+		// Unlike request parameters, this action cannot be spoofed by the visitor.
+		return did_action( 'woocommerce_checkout_process' ) > 0;
 	}
 
 	/**
