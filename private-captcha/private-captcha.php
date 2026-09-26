@@ -85,6 +85,9 @@ class PrivateCaptchaWordPress {
 		// Add plugin action links.
 		add_filter( 'plugin_action_links_' . plugin_basename( PRIVATE_CAPTCHA_PLUGIN_FILE ), array( $this, 'plugin_action_links' ) );
 
+		// Preserve integration selections made before setting names were prefixed.
+		PrivateCaptchaWP\Settings::migrate_legacy_integration_settings();
+
 		// Initialize the client.
 		$this->init_client();
 

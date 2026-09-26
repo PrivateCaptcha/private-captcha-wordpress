@@ -15,11 +15,47 @@ namespace PrivateCaptchaWP;
 class Settings {
 
 	/**
+	 * Integration setting names and their legacy equivalents.
+	 *
+	 * @var array<string, string>
+	 */
+	private const LEGACY_INTEGRATION_SETTINGS = array(
+		'wordpress_core_enable_login'              => 'enable_login',
+		'wordpress_core_enable_registration'       => 'enable_registration',
+		'wordpress_core_enable_reset_password'     => 'enable_reset_password',
+		'wordpress_core_enable_comments_logged_in' => 'enable_comments_logged_in',
+		'wordpress_core_enable_comments_guest'     => 'enable_comments_guest',
+		'wpforms_enable_wpforms'                    => 'enable_wpforms',
+	);
+
+	/**
 	 * The option name used to store settings in the WordPress database.
 	 *
 	 * @var string
 	 */
 	private static string $option_name = 'private_captcha_settings';
+
+	/**
+	 * Migrate integration settings saved before integration-specific prefixes
+	 * were introduced.
+	 *
+	 * Existing values under the new names take precedence, including false.
+	 */
+	public static function migrate_legacy_integration_settings(): void {
+		$settings = self::get_all_settings();
+		$changed  = false;
+
+		foreach ( self::LEGACY_INTEGRATION_SETTINGS as $new_key => $legacy_key ) {
+			if ( array_key_exists( $legacy_key, $settings ) && ! array_key_exists( $new_key, $settings ) ) {
+				$settings[ $new_key ] = $settings[ $legacy_key ];
+				$changed              = true;
+			}
+		}
+
+		if ( $changed ) {
+			self::update_all_settings( $settings );
+		}
+	}
 
 	/**
 	 * Get a specific setting option value.
@@ -31,7 +67,16 @@ class Settings {
 	public static function get_option( string $key, mixed $default_value = null ): mixed {
 		$settings = get_option( self::$option_name, array() );
 
-		return $settings[ $key ] ?? $default_value;
+		if ( array_key_exists( $key, $settings ) ) {
+			return $settings[ $key ];
+		}
+
+		$legacy_key = self::LEGACY_INTEGRATION_SETTINGS[ $key ] ?? null;
+		if ( null !== $legacy_key && array_key_exists( $legacy_key, $settings ) ) {
+			return $settings[ $legacy_key ];
+		}
+
+		return $default_value;
 	}
 
 	/**
