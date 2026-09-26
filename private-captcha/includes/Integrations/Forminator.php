@@ -174,6 +174,6 @@ class Forminator extends AbstractIntegration {
             }
         ';
 
-		Assets::enqueue( 'private-captcha-widget', $custom_js, $custom_css, '.forminator-button-next, .forminator-button-submit' );
+		Assets::enqueue( 'private-captcha-widget', $custom_js, $custom_css, '.forminator-button-submit' );
 	}
 }
