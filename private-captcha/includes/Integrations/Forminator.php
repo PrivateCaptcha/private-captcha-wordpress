@@ -86,7 +86,7 @@ class Forminator extends AbstractIntegration {
 		add_filter( 'forminator_render_button_markup', array( $this, 'add_captcha_widget' ), 10, 1 );
 		add_filter( 'forminator_pagination_submit_markup', array( $this, 'add_captcha_widget' ), 10, 1 );
 
-		add_filter( 'forminator_cform_form_is_submittable', array( $this, 'verify_captcha_forminator' ), 10, 3 );
+		add_filter( 'forminator_custom_form_submit_errors', array( $this, 'verify_captcha_forminator' ), 10, 3 );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
@@ -113,21 +113,20 @@ class Forminator extends AbstractIntegration {
 	/**
 	 * Verify captcha solution during form processing.
 	 *
-	 * @param array|mixed          $can_show      Can show the form.
+	 * @param array<string>        $submit_errors Submission errors.
 	 * @param int                  $id            Form id.
-	 * @param array<string, mixed> $form_settings Form settings.
-	 * @return array|mixed Modified submittable array or original.
+	 * @param array<string, mixed> $field_data    Submitted field data.
+	 * @return array<string> Submission errors.
 	 */
-	public function verify_captcha_forminator( $can_show, $id, $form_settings ) {
+	public function verify_captcha_forminator( $submit_errors, $id, $field_data ) {
 		if ( ! $this->is_enabled() ) {
-			return $can_show;
+			return $submit_errors;
 		}
 
 		if ( ! $this->client->is_available() ) {
-			return array(
-				'can_submit' => false,
-				'error'      => __( 'Captcha service is currently unavailable.', 'private-captcha' ),
-			);
+			$submit_errors[] = __( 'Captcha service is currently unavailable.', 'private-captcha' );
+
+			return $submit_errors;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in Forminator itself.
@@ -139,13 +138,10 @@ class Forminator extends AbstractIntegration {
 		$result = $this->verify_captcha_solution( $solution );
 
 		if ( ! $result ) {
-			return array(
-				'can_submit' => false,
-				'error'      => parent::verification_error_text(),
-			);
+			$submit_errors[] = parent::verification_error_text();
 		}
 
-		return $can_show;
+		return $submit_errors;
 	}
 
 	/**
