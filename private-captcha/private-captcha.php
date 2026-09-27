@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'PRIVATE_CAPTCHA_VERSION', '1.0.43' );
+define( 'PRIVATE_CAPTCHA_VERSION', '1.0.44' );
 define( 'PRIVATE_CAPTCHA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PRIVATE_CAPTCHA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'PRIVATE_CAPTCHA_PLUGIN_FILE', __FILE__ );
