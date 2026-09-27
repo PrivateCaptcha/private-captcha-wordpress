@@ -113,10 +113,10 @@ class Forminator extends AbstractIntegration {
 	/**
 	 * Verify captcha solution during form processing.
 	 *
-	 * @param array<string>        $submit_errors Submission errors.
-	 * @param int                  $id            Form id.
-	 * @param array<string, mixed> $field_data    Submitted field data.
-	 * @return array<string> Submission errors.
+	 * @param array<array<string, string>|string> $submit_errors Submission errors.
+	 * @param int                                $id            Form id.
+	 * @param array<string, mixed>               $field_data    Submitted field data.
+	 * @return array<array<string, string>|string> Submission errors.
 	 */
 	public function verify_captcha_forminator( $submit_errors, $id, $field_data ) {
 		if ( ! $this->is_enabled() ) {
