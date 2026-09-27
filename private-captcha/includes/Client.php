@@ -109,6 +109,13 @@ class Client {
 	}
 
 	/**
+	 * Clear cached verification results at the start of a new request.
+	 */
+	public function clear_verification_cache(): void {
+		$this->verification_cache = array();
+	}
+
+	/**
 	 * Check if the client is functional
 	 *
 	 * @return bool True if client is functional, false otherwise.

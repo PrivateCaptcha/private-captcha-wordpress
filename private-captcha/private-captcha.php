@@ -90,6 +90,7 @@ class PrivateCaptchaWordPress {
 
 		// Initialize the client.
 		$this->init_client();
+		add_action( 'init', array( $this->client, 'clear_verification_cache' ) );
 
 		// Integration availability checks rely on WordPress plugin helpers.
 		if ( ! function_exists( 'is_plugin_active' ) ) {
