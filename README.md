@@ -50,6 +50,18 @@ wp private-captcha disable-login
 - PHP 8.1+
 - [Private Captcha account](https://portal.privatecaptcha.com/signup)
 
+## Local development with Docker
+
+With Docker Compose and `make`, you can run any target in `private-captcha/Makefile` without installing PHP or Composer on your computer. From the repository root:
+
+```bash
+make docker-plugin TARGET=install-dev
+make docker-plugin TARGET=check
+make docker-plugin TARGET=wpcs-fix
+```
+
+Replace `TARGET` with any plugin Makefile target (for example, `install`, `lint`, `analyze`, `validate`, or `clean`). Omitting `TARGET` runs `check`. Dependencies installed by Composer are written to `private-captcha/vendor/` on your computer, so they persist between commands. The tools container runs independently of the WordPress stack; `make run-docker` is only needed to run WordPress locally.
+
 ## License
 
 MIT License

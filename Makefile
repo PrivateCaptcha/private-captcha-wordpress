@@ -17,3 +17,9 @@ run-docker-empty:
 
 clean-docker:
 	@docker compose -f docker/docker-compose.yml down -v --remove-orphans
+
+# Run any target from private-captcha/Makefile with PHP and Composer in Docker.
+TARGET ?= check
+.PHONY: docker-plugin
+docker-plugin:
+	@docker compose -f docker/docker-compose.tools.yml run --build --rm --no-deps tools make $(TARGET)

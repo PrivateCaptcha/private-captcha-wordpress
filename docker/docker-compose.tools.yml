@@ -1,0 +1,12 @@
+name: private-captcha-plugin-tools
+
+services:
+  tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.tools
+    working_dir: /workspace
+    volumes:
+      - ../private-captcha:/workspace
+    environment:
+      COMPOSER_ALLOW_SUPERUSER: "1"
