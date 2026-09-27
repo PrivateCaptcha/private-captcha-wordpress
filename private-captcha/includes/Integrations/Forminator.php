@@ -124,7 +124,7 @@ class Forminator extends AbstractIntegration {
 		}
 
 		if ( ! $this->client->is_available() ) {
-			$submit_errors[] = __( 'Captcha service is currently unavailable.', 'private-captcha' );
+			$submit_errors[] = array( 'private-captcha' => __( 'Captcha service is currently unavailable.', 'private-captcha' ) );
 
 			return $submit_errors;
 		}
@@ -138,7 +138,7 @@ class Forminator extends AbstractIntegration {
 		$result = $this->verify_captcha_solution( $solution );
 
 		if ( ! $result ) {
-			$submit_errors[] = parent::verification_error_text();
+			$submit_errors[] = array( 'private-captcha' => parent::verification_error_text() );
 		}
 
 		return $submit_errors;
