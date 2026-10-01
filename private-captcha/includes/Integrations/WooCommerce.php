@@ -299,7 +299,8 @@ class WooCommerce extends AbstractIntegration {
 
 		// WooCommerce fires woocommerce_register_post when checkout creates an account.
 		// That flow is protected by the checkout captcha, not the account registration captcha.
-		if ( $this->is_checkout_request() ) {
+		// Only defer to the checkout captcha when it is actually enabled for this user.
+		if ( $this->is_checkout_request() && $this->is_checkout_captcha_enabled() ) {
 			return;
 		}
 
@@ -397,10 +398,12 @@ class WooCommerce extends AbstractIntegration {
 	public function verify_block_checkout_captcha( $result ) {
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- Must match the method used by WordPress REST routing.
 		$effective_method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['_method'] ) ) {
-			$effective_method = strtoupper( (string) $_GET['_method'] );                       // core checks _GET first
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$effective_method = strtoupper( (string) $_GET['_method'] );                       // core checks _GET first.
 		} elseif ( isset( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
-			$effective_method = strtoupper( (string) $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ); // then the header
+			$effective_method = strtoupper( (string) $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ); // then the header.
 		}
 		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
 		// Skip if this is not a POST request.
