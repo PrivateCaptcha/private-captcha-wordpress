@@ -108,11 +108,6 @@ class Elementor extends AbstractIntegration {
 	 * @param mixed $form_fields_registrar The Elementor form fields registrar.
 	 */
 	public function register_field( $form_fields_registrar ): void {
-		if ( ! Settings::is_configured() ) {
-			$this->write_log( 'Skipping Elementor field registration: plugin not configured' );
-			return;
-		}
-
 		require_once __DIR__ . '/ElementorField.php';
 
 		if ( ! class_exists( '\PrivateCaptchaWP\Integrations\ElementorField' ) ) {

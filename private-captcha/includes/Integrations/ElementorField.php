@@ -90,6 +90,7 @@ class ElementorField extends \ElementorPro\Modules\Forms\Fields\Field_Base {
 	 */
 	public function validation( $field, $record, $ajax_handler ): void {
 		if ( ! Settings::is_configured() ) {
+			$ajax_handler->add_error( $field['id'], esc_html__( 'Captcha service is currently unavailable.', 'private-captcha' ) );
 			return;
 		}
 
