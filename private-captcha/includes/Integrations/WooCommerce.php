@@ -395,24 +395,23 @@ class WooCommerce extends AbstractIntegration {
 	 * @return mixed Modified validation result object.
 	 */
 	public function verify_block_checkout_captcha( $result ) {
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- Must match the method used by WordPress REST routing.
+		$effective_method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : '';
+		if ( isset( $_GET['_method'] ) ) {
+			$effective_method = strtoupper( (string) $_GET['_method'] );                       // core checks _GET first
+		} elseif ( isset( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
+			$effective_method = strtoupper( (string) $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ); // then the header
+		}
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
 		// Skip if this is not a POST request.
 		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
 			// Always return the result or an error, never a boolean. This ensures other checks aren't thrown away like rate limiting or authentication.
 			return $result;
 		}
 
-		$method_override = null;
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- Must match the raw method used by WordPress REST routing.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Mirrors the REST API's request routing; no data is changed.
-		if ( isset( $_GET['_method'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Mirrors the REST API's request routing; no data is changed.
-			$method_override = $_GET['_method'];
-		} elseif ( isset( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
-			$method_override = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
-		}
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
-
-		if ( null !== $method_override && ( ! is_string( $method_override ) || 'POST' !== strtoupper( $method_override ) ) ) {
+		// Only the checkout submission itself (effective POST) needs verifying;
+		// fetches and Store-API background field sync (effective GET/PATCH) do not.
+		if ( 'POST' !== $effective_method ) {
 			return $result;
 		}
 
