@@ -156,12 +156,18 @@ class WPForms extends AbstractIntegration {
 	public function enqueue_scripts(): void {
 		$wpforms_custom_js = '
                 document.querySelectorAll("form.wpforms-form").forEach(function(form) {
-                    form.addEventListener("wpformsAjaxSubmitSuccess", function(event) {
-                        pcResetCaptchaWidgetWP(event.target);
-                    });
-                    form.addEventListener("wpformsAjaxSubmitFailed", function(event) {
-                        pcResetCaptchaWidgetWP(event.target);
-                    });
+                    if (typeof jQuery !== "undefined") {
+                        jQuery(form).on("wpformsAjaxSubmitSuccess wpformsAjaxSubmitFailed wpformsAjaxSubmitError wpformsAjaxSubmitActionRequired", function(event) {
+                            pcResetCaptchaWidgetWP(event.target || form);
+                        });
+                    } else {
+                        form.addEventListener("wpformsAjaxSubmitSuccess", function(event) {
+                            pcResetCaptchaWidgetWP(event.target);
+                        });
+                        form.addEventListener("wpformsAjaxSubmitFailed", function(event) {
+                            pcResetCaptchaWidgetWP(event.target);
+                        });
+                    }
                 });';
 
 		Assets::enqueue( 'private-captcha-widget', $wpforms_custom_js );
