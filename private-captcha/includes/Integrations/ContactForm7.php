@@ -333,7 +333,8 @@ class ContactForm7 extends AbstractIntegration {
 		$result = preg_replace(
 			$submit_button,
 			$widget_with_wrapper . '$1',
-			$content
+			$content,
+			1 // inject at most one widget per form.
 		);
 
 		return null !== $result ? $result : $content;
