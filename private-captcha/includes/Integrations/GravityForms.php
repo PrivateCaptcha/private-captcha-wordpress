@@ -191,14 +191,27 @@ class GravityForms extends AbstractIntegration {
                 document.addEventListener("gform/post_render", function(event) {
                     var formElement = document.getElementById("gform_" + event.detail.formId);
                     if (!formElement) return;
+
+                    // Initialize any freshly-inserted .private-captcha divs (idempotent: skips
+                    // elements already carrying data-attached). mandatory for AJAX-rendered pages.
+                    var newWidgets = [];
+                    if (typeof window.privateCaptcha !== "undefined" && typeof window.privateCaptcha.setup === "function") {
+                        newWidgets = window.privateCaptcha.setup() || [];
+                    }
+
+                    // Bind init/reset/finish + disable submit for the new widgets only.
+                    if (newWidgets.length > 0) {
+                        pcSetupPrivateCaptchaWidgets(newWidgets, defaultSubmitBtnSelector);
+                    }
+
+                    // Reset already-initialized widgets (e.g. the initial page widget on a
+                    // non-AJAX re-render of the same page) — skipped for fresh divs, which
+                    // pcSetupPrivateCaptchaWidgets just handled.
                     var widgets = formElement.querySelectorAll(".private-captcha");
                     widgets.forEach(function(widget) {
                         if (widget && widget.hasOwnProperty("_privateCaptcha") && widget._privateCaptcha) {
                             widget._privateCaptcha.reset();
                         }
-                        pcSetFormButtonEnabledWP(widget, false);
-                        widget.addEventListener("privatecaptcha:init", function(e) { pcSetFormButtonEnabledWP(e.detail.element, false); });
-                        widget.addEventListener("privatecaptcha:finish", function(e) { pcSetFormButtonEnabledWP(e.detail.element, true); });
                     });
                 });';
 
