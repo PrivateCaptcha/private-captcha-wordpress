@@ -123,16 +123,23 @@ class Forminator extends AbstractIntegration {
 			return $submit_errors;
 		}
 
-		// mirror Forminator_CForm_Front_Action::$is_abandoned / $is_draft
-		// (check_captcha() bypasses both; $is_abandoned cannot be read directly as it is protected static,
-		// so recompute the same conjunction Forminator uses from its public statics).
+		// Mirror Forminator's protected $is_abandoned / $is_draft flags.
+		// Its check_captcha() skips both, so recompute them from its public statics.
 		$is_abandoned = class_exists( '\Forminator_CForm_Front_Action', false )
-		&& ! forminator_form_abandonment_disabled()
-		&& ! empty( \Forminator_CForm_Front_Action::$prepared_data['abandoned_form'] )
-		&& ! empty( \Forminator_CForm_Front_Action::$module_settings['abandonment'] );
+			&& function_exists( 'forminator_form_abandonment_disabled' )
+			&& ! \forminator_form_abandonment_disabled()
+			&& ! empty( \Forminator_CForm_Front_Action::$prepared_data['abandoned_form'] )
+			&& ! empty( \Forminator_CForm_Front_Action::$module_settings['abandonment'] );
 
 		$is_draft = class_exists( '\Forminator_CForm_Front_Action', false )
-		&& ! empty( \Forminator_CForm_Front_Action::$prepared_data['save_draft'] );
+			&& filter_var(
+				\Forminator_CForm_Front_Action::$prepared_data['save_draft'] ?? false,
+				FILTER_VALIDATE_BOOLEAN
+			)
+			&& filter_var(
+				\Forminator_CForm_Front_Action::$module_settings['use_save_and_continue'] ?? false,
+				FILTER_VALIDATE_BOOLEAN
+			);
 
 		if ( $is_abandoned || $is_draft ) {
 			return $submit_errors; // skip captcha, matching check_captcha()'s bypass for these modes.
