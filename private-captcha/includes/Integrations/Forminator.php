@@ -123,6 +123,21 @@ class Forminator extends AbstractIntegration {
 			return $submit_errors;
 		}
 
+		// mirror Forminator_CForm_Front_Action::$is_abandoned / $is_draft
+		// (check_captcha() bypasses both; $is_abandoned cannot be read directly as it is protected static,
+		// so recompute the same conjunction Forminator uses from its public statics).
+		$is_abandoned = class_exists( '\Forminator_CForm_Front_Action', false )
+		&& ! forminator_form_abandonment_disabled()
+		&& ! empty( \Forminator_CForm_Front_Action::$prepared_data['abandoned_form'] )
+		&& ! empty( \Forminator_CForm_Front_Action::$module_settings['abandonment'] );
+
+		$is_draft = class_exists( '\Forminator_CForm_Front_Action', false )
+		&& ! empty( \Forminator_CForm_Front_Action::$prepared_data['save_draft'] );
+
+		if ( $is_abandoned || $is_draft ) {
+			return $submit_errors; // skip captcha, matching check_captcha()'s bypass for these modes.
+		}
+
 		if ( ! $this->client->is_available() ) {
 			$submit_errors[] = array( 'private-captcha' => __( 'Captcha service is currently unavailable.', 'private-captcha' ) );
 
