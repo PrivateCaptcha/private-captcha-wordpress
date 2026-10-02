@@ -157,7 +157,8 @@ class WPForms extends AbstractIntegration {
 		$wpforms_custom_js = '
                 document.querySelectorAll("form.wpforms-form").forEach(function(form) {
                     if (typeof jQuery !== "undefined") {
-                        jQuery(form).on("wpformsAjaxSubmitSuccess wpformsAjaxSubmitFailed wpformsAjaxSubmitError wpformsAjaxSubmitActionRequired", function(event) {
+                        // Client-side validation failures happen before an AJAX request is sent.
+                        jQuery(form).on("invalid-form wpformsAjaxSubmitSuccess wpformsAjaxSubmitFailed wpformsAjaxSubmitError wpformsAjaxSubmitActionRequired", function(event) {
                             pcResetCaptchaWidgetWP(event.target || form);
                         });
                     } else {
