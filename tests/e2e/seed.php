@@ -9,10 +9,11 @@ Settings::update_all_settings(
 	array_merge(
 		Settings::get_default_settings(),
 		array(
-			'api_key'                => getenv( 'PC_API_KEY' ),
-			'sitekey'                => getenv( 'PC_SITEKEY' ),
-			'wpforms_enable_wpforms' => true,
-			'contactform7_enable'    => true,
+			'api_key'                           => getenv( 'PC_API_KEY' ),
+			'sitekey'                           => getenv( 'PC_SITEKEY' ),
+			'wpforms_enable_wpforms'            => true,
+			'contactform7_enable'               => true,
+			'woocommerce_enable_checkout_guest' => true,
 		)
 	)
 );

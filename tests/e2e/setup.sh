@@ -23,7 +23,12 @@ if ! wp plugin is-installed contact-form-7; then
     wp plugin install contact-form-7 --version=6.1.7
 fi
 
-wp plugin activate wpforms-lite contact-form-7 private-captcha
+if ! wp plugin is-installed woocommerce; then
+    wp plugin install woocommerce --version=10.9.4
+fi
+
+wp plugin activate wpforms-lite contact-form-7 woocommerce private-captcha
 wp theme activate twentytwentyfive
 wp --user=admin eval-file /e2e/seed.php
 wp --user=admin eval-file /e2e/seed-contactform7.php
+wp --user=admin eval-file /e2e/seed-woocommerce.php

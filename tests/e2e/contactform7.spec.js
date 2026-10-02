@@ -35,6 +35,8 @@ test('Contact Form 7 submits with Private Captcha and resets for a second submis
 
     expect(await submitContactForm(page, submit)).toMatchObject({ status: 'mail_sent' });
     await expect(form.locator('.wpcf7-response-output')).toHaveText('Thank you for your message. It has been sent.');
+    // CF7 asynchronously refills the form before its final reset event; wait before reuse.
+    await expect(form).toHaveAttribute('data-status', 'sent');
     await expect(email).toHaveValue('');
     await expect.poll(() => widget.evaluate((element) => !!element._privateCaptcha.solution())).toBe(false);
     await expect(widget.getByText('Click to verify', { exact: true })).toBeVisible();
