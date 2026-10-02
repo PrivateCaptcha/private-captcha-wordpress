@@ -1,0 +1,11 @@
+{
+  "name": "private-captcha-wordpress-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

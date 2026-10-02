@@ -52,6 +52,10 @@ wp-content/upgrade/
 wp-content/cache/
 
 .env
+/docker/.env.e2e
+/node_modules/
+/playwright-report/
+/test-results/
 .vagrant/
 
 3rdparty/

@@ -1,0 +1,63 @@
+name: private-captcha-wordpress-e2e
+
+services:
+  wordpress:
+    image: wordpress:6.9-php8.3-apache
+    ports:
+      - "127.0.0.1:18081:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+      - ../private-captcha:/var/www/html/wp-content/plugins/private-captcha:ro
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://localhost/wp-includes/css/dashicons.min.css') === false ? 1 : 0);"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:12.3
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb", "-h", "localhost", "-u", "wordpress", "-pwordpress", "wordpress", "-e", "SELECT 1"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  cli:
+    image: wordpress:cli-php8.3
+    # Match the Apache image's www-data UID/GID for the shared WordPress volume.
+    user: "33:33"
+    env_file:
+      - .env.e2e
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    volumes:
+      - wordpress_data:/var/www/html
+      - ../private-captcha:/var/www/html/wp-content/plugins/private-captcha:ro
+      - ../tests/e2e:/e2e:ro
+    entrypoint: ["sh", "/e2e/setup.sh"]
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+volumes:
+  wordpress_data:
+  db_data:
