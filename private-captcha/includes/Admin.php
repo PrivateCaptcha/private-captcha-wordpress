@@ -630,7 +630,9 @@ class Admin {
 		// Get old settings to preserve values for disabled (unavailable) integrations.
 		$old_settings = Settings::get_all_settings();
 
-		$any_form_integration = false;
+		$any_form_integration    = false;
+		$any_available_enabled   = false;
+		$any_unavailable_enabled = false;
 		foreach ( $this->integrations->get_all_integrations() as $integration ) {
 			$fields = $integration->get_settings_fields();
 			foreach ( $fields as $field ) {
@@ -646,6 +648,14 @@ class Admin {
 
 				if ( ! $any_form_integration && $sanitized[ $field_name ] ) {
 					$any_form_integration = true;
+				}
+
+				if ( $sanitized[ $field_name ] ) {
+					if ( $integration->is_available() ) {
+						$any_available_enabled = true;
+					} else {
+						$any_unavailable_enabled = true;
+					}
 				}
 			}
 		}
@@ -713,8 +723,12 @@ class Admin {
 
 				$error_msg .= ' ' . __( 'Please verify your API Key, Site Key, and domain settings.', 'private-captcha' );
 
-				if ( $any_form_integration ) {
+				if ( $any_available_enabled ) {
 					$error_msg .= ' ' . __( 'Form integrations have been disabled to prevent lockout.', 'private-captcha' );
+				}
+
+				if ( $any_unavailable_enabled ) {
+					$error_msg .= ' ' . __( 'Some enabled form integrations could not be disabled because their plugin is not currently active. Re-save your settings after correcting your credentials to prevent lockout.', 'private-captcha' );
 				}
 
 				add_settings_error(
