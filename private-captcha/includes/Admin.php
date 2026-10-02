@@ -728,7 +728,7 @@ class Admin {
 				}
 
 				if ( $any_unavailable_enabled ) {
-					$error_msg .= ' ' . __( 'Some enabled form integrations could not be disabled because their plugin is not currently active; their enablement was preserved and will take effect when the plugin is reactivated. Re-save your settings after correcting your credentials to prevent lockout.', 'private-captcha' );
+					$error_msg .= ' ' . __( 'Some enabled form integrations could not be disabled because their plugin is not currently active. Re-save your settings after correcting your credentials to prevent lockout.', 'private-captcha' );
 				}
 
 				add_settings_error(
