@@ -62,11 +62,16 @@ make docker-plugin TARGET=wpcs-fix
 
 Replace `TARGET` with any plugin Makefile target (for example, `install`, `lint`, `analyze`, `validate`, or `clean`). Omitting `TARGET` runs `check`. Dependencies installed by Composer are written to `private-captcha/vendor/` on your computer, so they persist between commands. The tools container runs independently of the WordPress stack; `make run-docker` is only needed to run WordPress locally.
 
-## WPForms end-to-end tests
+## Form integration end-to-end tests
 
-The minimal Playwright suite uses real WordPress and WPForms Lite 2.0.2.1 in Docker, with Playwright/Chromium running on the host. Its separate Compose project (`private-captcha-wordpress-e2e`), volumes, and port (`18081`) allow it to run alongside the manual-testing stack started by `make run-docker` on port `18080`.
+The minimal Playwright suite uses real WordPress, WPForms Lite 2.0.2.1, and Contact Form 7 6.1.7 in Docker, with Playwright/Chromium running on the host. Its separate Compose project (`private-captcha-wordpress-e2e`), volumes, and port (`18081`) allow it to run alongside the manual-testing stack started by `make run-docker` on port `18080`.
 
-The fixture is one page at **http://localhost:18081/** containing one form with a required Email field. Private Captcha uses its default settings with WPForms enabled. The form submits via AJAX and has email notifications disabled, so no SMTP setup is needed. Provisioning updates the same form and page when repeated.
+Each plugin has one fixture page with one form containing a required Email field:
+
+- WPForms: **http://localhost:18081/**
+- Contact Form 7: **http://localhost:18081/?pagename=contact-form-7-e2e**
+
+Private Captcha uses its default settings with both integrations enabled. Both forms submit via AJAX. WPForms has email notifications disabled; CF7 uses [`skip_mail: on`](https://contactform7.com/additional-settings/) to skip email delivery while retaining validation and CAPTCHA verification, so no SMTP setup is needed. Provisioning updates the same forms and pages when repeated. Run `make run-e2e` again to install and provision a newly added integration.
 
 ### Setup
 
@@ -96,13 +101,13 @@ Requires Docker Compose with `--wait` support, Node.js 20+, and the plugin's Com
 make test-e2e
 ```
 
-The suite covers:
+The six tests cover the following for both plugins:
 
 - Successful AJAX submission and CAPTCHA reset after confirmation.
 - An empty required Email field after CAPTCHA is already solved.
 - An invalid email address after CAPTCHA is already solved.
 
-Both validation-error cases check that the error is displayed, CAPTCHA resets and disables submission, and correcting the field and completing a fresh CAPTCHA allows a successful retry.
+The validation-error cases check that the error is displayed, CAPTCHA resets and disables submission, and correcting the field and completing a fresh CAPTCHA allows a successful retry. CF7's success test also verifies that the Email field clears and a second submission succeeds on the same page without reloading.
 
 Default auto mode prepares the challenge when the form gains focus, but the visible widget still requires a "Click to verify" click. WPForms replaces the form with its confirmation message on success; the tests retain the documented widget object to check the reset after that replacement. Screenshots and Playwright traces are retained in `test-results/` on failure.
 
@@ -116,9 +121,9 @@ make stop-e2e
 
 ### CI
 
-CI runs the WPForms suite after all PHP validation jobs succeed and before packaging. An e2e failure blocks packaging and releases. Failure screenshots, traces, and container logs are uploaded as the `wpforms-e2e-failure` artifact; the test stack is always cleaned up.
+CI runs both integration suites after all PHP validation jobs succeed and before packaging. An e2e failure blocks packaging and releases. Failure screenshots, traces, and container logs are uploaded as the `wpforms-e2e-failure` artifact; the test stack is always cleaned up.
 
-Configure these GitHub Actions secrets in the **`e2e` environment** using a real development property with **Allow localhost** enabled:
+Configure these GitHub Actions secrets in the **`E2E tests` environment** using a real development property with **Allow localhost** enabled:
 
 - `PC_E2E_API_KEY` — the development API key.
 - `PC_E2E_SITEKEY` — the development property's sitekey.

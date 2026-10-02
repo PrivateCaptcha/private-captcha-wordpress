@@ -19,6 +19,11 @@ if ! wp plugin is-installed wpforms-lite; then
     wp plugin install wpforms-lite --version=2.0.2.1
 fi
 
-wp plugin activate wpforms-lite private-captcha
+if ! wp plugin is-installed contact-form-7; then
+    wp plugin install contact-form-7 --version=6.1.7
+fi
+
+wp plugin activate wpforms-lite contact-form-7 private-captcha
 wp theme activate twentytwentyfive
 wp --user=admin eval-file /e2e/seed.php
+wp --user=admin eval-file /e2e/seed-contactform7.php

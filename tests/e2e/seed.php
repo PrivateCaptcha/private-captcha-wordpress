@@ -1,6 +1,6 @@
 <?php
 /**
- * Provision the single WPForms fixture via wp --user=admin eval-file.
+ * Provision shared CAPTCHA settings and the WPForms fixture via wp --user=admin eval-file.
  */
 
 use PrivateCaptchaWP\Settings;
@@ -12,6 +12,7 @@ Settings::update_all_settings(
 			'api_key'                => getenv( 'PC_API_KEY' ),
 			'sitekey'                => getenv( 'PC_SITEKEY' ),
 			'wpforms_enable_wpforms' => true,
+			'contactform7_enable'    => true,
 		)
 	)
 );
