@@ -36,9 +36,11 @@ class Assets {
 			$script_domain = substr( $script_domain, 4 );
 		}
 
+		$script_file = 'extended' === Settings::get_script() ? 'privatecaptcha-ext.js' : 'privatecaptcha.js';
+
 		wp_enqueue_script(
 			$handle,
-			"https://cdn.{$script_domain}/widget/js/privatecaptcha.js",
+			"https://cdn.{$script_domain}/widget/js/{$script_file}",
 			array(),
 			PRIVATE_CAPTCHA_VERSION,
 			true

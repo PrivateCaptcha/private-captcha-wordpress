@@ -150,6 +150,15 @@ class Settings {
 	}
 
 	/**
+	 * Get the widget script setting.
+	 *
+	 * @return string The script (default or extended).
+	 */
+	public static function get_script(): string {
+		return (string) self::get_option( 'script', 'default' );
+	}
+
+	/**
 	 * Check if EU isolation is enabled.
 	 *
 	 * @return bool True if EU isolation is enabled.
@@ -219,6 +228,7 @@ class Settings {
 			'language'      => 'auto',
 			'start_mode'    => 'auto',
 			'debug_mode'    => false,
+			'script'        => 'default',
 			'eu_isolation'  => false,
 			'custom_domain' => '',
 			'custom_styles' => '',

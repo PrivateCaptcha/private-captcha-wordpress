@@ -262,6 +262,15 @@ class Admin {
 		);
 
 		add_settings_field(
+			'script',
+			__( 'Script', 'private-captcha' ),
+			array( $this, 'script_callback' ),
+			'private-captcha',
+			'private_captcha_advanced',
+			array( 'label_for' => 'script' )
+		);
+
+		add_settings_field(
 			'custom_styles',
 			__( 'Custom Styles', 'private-captcha' ),
 			array( $this, 'custom_styles_callback' ),
@@ -481,6 +490,24 @@ class Admin {
 	}
 
 	/**
+	 * Render script field.
+	 */
+	public function script_callback(): void {
+		$value   = Settings::get_script();
+		$options = array(
+			'default'  => esc_html__( 'Default', 'private-captcha' ),
+			'extended' => esc_html__( 'Extended (experimental)', 'private-captcha' ),
+		);
+
+		echo '<select id="script" name="private_captcha_settings[script]" aria-describedby="script_description">';
+		foreach ( $options as $key => $label ) {
+			echo '<option value="' . esc_attr( $key ) . '"' . selected( $value, $key, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select>';
+		echo '<p id="script_description" class="description">' . esc_html__( 'Extended script adds support for memory-hard challenges (has to be enabled in the Private Captcha portal).', 'private-captcha' ) . '</p>';
+	}
+
+	/**
 	 * Render custom styles field.
 	 */
 	public function custom_styles_callback(): void {
@@ -628,6 +655,9 @@ class Admin {
 		$sanitized['custom_styles'] = $custom_styles;
 
 		$sanitized['debug_mode'] = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
+
+		$valid_scripts       = array( 'default', 'extended' );
+		$sanitized['script'] = in_array( $input['script'] ?? '', $valid_scripts, true ) ? $input['script'] : 'default';
 
 		// Get old settings to preserve values for disabled (unavailable) integrations.
 		$old_settings = Settings::get_all_settings();
