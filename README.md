@@ -118,7 +118,7 @@ make stop-e2e
 
 CI runs the WPForms suite after all PHP validation jobs succeed and before packaging. An e2e failure blocks packaging and releases. Failure screenshots, traces, and container logs are uploaded as the `wpforms-e2e-failure` artifact; the test stack is always cleaned up.
 
-Configure these GitHub Actions repository secrets using a real development property with **Allow localhost** enabled:
+Configure these GitHub Actions secrets in the **`e2e` environment** using a real development property with **Allow localhost** enabled:
 
 - `PC_E2E_API_KEY` — the development API key.
 - `PC_E2E_SITEKEY` — the development property's sitekey.
