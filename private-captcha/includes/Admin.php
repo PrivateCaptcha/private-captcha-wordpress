@@ -410,6 +410,7 @@ class Admin {
 		$options = array(
 			'light' => esc_html__( 'Light', 'private-captcha' ),
 			'dark'  => esc_html__( 'Dark', 'private-captcha' ),
+			'auto'  => esc_html__( 'Auto', 'private-captcha' ),
 		);
 
 		echo '<select id="theme" name="private_captcha_settings[theme]">';
@@ -458,6 +459,7 @@ class Admin {
 		$options = array(
 			'auto'  => esc_html__( 'Auto', 'private-captcha' ),
 			'click' => esc_html__( 'On click', 'private-captcha' ),
+			'load'  => esc_html__( 'On load', 'private-captcha' ),
 		);
 
 		echo '<select id="start_mode" name="private_captcha_settings[start_mode]">';
@@ -605,13 +607,13 @@ class Admin {
 
 		$sanitized['eu_isolation'] = isset( $input['eu_isolation'] ) && '1' === $input['eu_isolation'];
 
-		$valid_themes       = array( 'light', 'dark' );
+		$valid_themes       = array( 'light', 'dark', 'auto' );
 		$sanitized['theme'] = in_array( $input['theme'] ?? '', $valid_themes, true ) ? $input['theme'] : 'light';
 
 		$valid_languages       = array( 'auto', 'en', 'de', 'es', 'fr', 'it', 'nl', 'sv', 'no', 'pl', 'fi', 'et', 'uk', 'tr' );
 		$sanitized['language'] = in_array( $input['language'] ?? '', $valid_languages, true ) ? $input['language'] : 'auto';
 
-		$valid_start_modes       = array( 'auto', 'click' );
+		$valid_start_modes       = array( 'auto', 'click', 'load' );
 		$sanitized['start_mode'] = in_array( $input['start_mode'] ?? '', $valid_start_modes, true ) ? $input['start_mode'] : 'auto';
 
 		$custom_styles = sanitize_textarea_field( $input['custom_styles'] ?? '' );

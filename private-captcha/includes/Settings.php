@@ -134,7 +134,7 @@ class Settings {
 	/**
 	 * Get the widget theme setting.
 	 *
-	 * @return string The theme (light or dark).
+	 * @return string The theme (light, dark, or auto).
 	 */
 	public static function get_theme(): string {
 		return (string) self::get_option( 'theme', 'light' );
@@ -188,7 +188,7 @@ class Settings {
 	/**
 	 * Get the widget start mode setting.
 	 *
-	 * @return string The start mode (auto or click).
+	 * @return string The start mode (auto, click, or load).
 	 */
 	public static function get_start_mode(): string {
 		return (string) self::get_option( 'start_mode', 'auto' );

@@ -19,7 +19,7 @@ class Widget {
 	 *
 	 * @param string      $default_styles Default CSS styles for the widget.
 	 * @param string      $additional_class Additional CSS class to add to the widget.
-	 * @param string|null $theme_override Optional theme override (light or dark).
+	 * @param string|null $theme_override Optional theme override (light, dark, or auto).
 	 */
 	public static function render( string $default_styles = '', string $additional_class = '', ?string $theme_override = null ): void {
 		if ( ! Settings::is_configured() ) {
