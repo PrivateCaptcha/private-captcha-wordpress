@@ -251,7 +251,7 @@ class ContactForm7 extends AbstractIntegration {
 		// Check if theme option is specified in the form-tag.
 		$theme_override = null;
 		if ( is_object( $tag ) && method_exists( $tag, 'get_option' ) ) {
-			$theme_option = $tag->get_option( 'theme', '(light|dark)', true );
+			$theme_option = $tag->get_option( 'theme', '(light|dark|auto)', true );
 			if ( ! empty( $theme_option ) ) {
 				$theme_override = $theme_option;
 				$this->write_log( 'Using tag theme override:' . $theme_option );
