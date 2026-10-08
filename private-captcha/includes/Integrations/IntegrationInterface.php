@@ -41,6 +41,19 @@ interface IntegrationInterface {
 	public function get_settings_fields(): array;
 
 	/**
+	 * Register hooks to neutralize form artifacts (e.g. embedded form-tags)
+	 * that this integration may have left in saved form content when it is
+	 * available but not enabled, so they do not render as literal text to
+	 * site visitors.
+	 *
+	 * The default implementation does nothing. Integrations whose forms
+	 * store tags/shortcodes directly in form content (such as Contact Form
+	 * 7 and its `[privatecaptcha]` tag) should override this to register a
+	 * handler that renders such artifacts as nothing.
+	 */
+	public function register_neutralization(): void;
+
+	/**
 	 * Check if any of the integration's settings are enabled.
 	 *
 	 * @return bool True if any setting is enabled.

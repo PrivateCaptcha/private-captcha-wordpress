@@ -63,6 +63,19 @@ abstract class AbstractIntegration implements IntegrationInterface {
 	}
 
 	/**
+	 * Register hooks to neutralize form artifacts left in saved form content
+	 * when this integration is available but not enabled.
+	 *
+	 * Default implementation does nothing. Integrations that embed
+	 * tags/shortcodes directly in saved form content (such as Contact Form
+	 * 7 and its [privatecaptcha] tag) should override this to register a
+	 * handler that renders such artifacts as nothing instead of literal
+	 * text.
+	 */
+	public function register_neutralization(): void {
+	}
+
+	/**
 	 * Check if the integration is enabled in settings.
 	 * Default implementation checks if any settings field is enabled.
 	 *
