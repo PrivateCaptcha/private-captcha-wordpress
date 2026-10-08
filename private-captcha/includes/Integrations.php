@@ -56,11 +56,21 @@ class Integrations {
 
 	/**
 	 * Initialize all available and enabled integrations.
+	 *
+	 * Available integrations that are not enabled still get a chance to
+	 * register neutralization hooks (e.g. to collapse embedded form-tags
+	 * left in saved form content) via register_neutralization().
 	 */
 	public function init(): void {
 		foreach ( $this->integrations as $integration ) {
-			if ( $integration->is_available() && $integration->is_enabled() ) {
+			if ( ! $integration->is_available() ) {
+				continue;
+			}
+
+			if ( $integration->is_enabled() ) {
 				$integration->init();
+			} else {
+				$integration->register_neutralization();
 			}
 		}
 	}

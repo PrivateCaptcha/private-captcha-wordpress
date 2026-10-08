@@ -84,6 +84,22 @@ class ContactForm7 extends AbstractIntegration {
 	}
 
 	/**
+	 * Register hooks to neutralize the [privatecaptcha] form-tag when the
+	 * Contact Form 7 integration is available but not enabled.
+	 *
+	 * Contact Form 7 only replaces *registered* tag types; an unregistered
+	 * tag such as [privatecaptcha] is left in the rendered form as literal
+	 * text. Because the regular init() is gated on is_enabled(), this
+	 * method keeps the wpcf7_init hook attached even while disabled so the
+	 * existing disabled-branch in add_form_tag_privatecaptcha() can register
+	 * the tag as an empty string and collapse any stray [privatecaptcha]
+	 * (and [privatecaptcha*]) tags to nothing.
+	 */
+	public function register_neutralization(): void {
+		add_action( 'wpcf7_init', array( $this, 'add_form_tag_privatecaptcha' ), 10, 0 );
+	}
+
+	/**
 	 * Initialize Contact Form 7 integration hooks.
 	 */
 	public function init(): void {
