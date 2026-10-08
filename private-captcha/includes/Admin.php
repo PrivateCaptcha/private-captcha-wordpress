@@ -407,8 +407,8 @@ class Admin {
 	 */
 	public function custom_domain_callback(): void {
 		$value = Settings::get_custom_domain();
-		echo '<input type="text" id="custom_domain" name="private_captcha_settings[custom_domain]" value="' . esc_attr( $value ) . '" size="50" placeholder="privatecaptcha.com" />';
-		echo '<p class="description">' . esc_html__( 'Custom root domain for Private Captcha API endpoints. Leave empty to use privatecaptcha.com.', 'private-captcha' ) . '</p>';
+		echo '<input type="text" id="custom_domain" name="private_captcha_settings[custom_domain]" value="' . esc_attr( $value ) . '" size="50" placeholder="captcha.example.com" />';
+		echo '<p class="description">' . esc_html__( 'Custom domain (CNAME subdomain, e.g. captcha.example.com) used directly for puzzle and verify endpoints. Leave empty to use privatecaptcha.com.', 'private-captcha' ) . '</p>';
 	}
 
 	/**
@@ -620,14 +620,7 @@ class Admin {
 			$custom_domain = substr( $custom_domain, 7 );
 		}
 
-		// Remove well-known Private Captcha prefixes (assumed possible user error?).
-		if ( 0 === strpos( $custom_domain, 'api.' ) ) {
-			$custom_domain = substr( $custom_domain, 4 );
-		} elseif ( 0 === strpos( $custom_domain, 'cdn.' ) ) {
-			$custom_domain = substr( $custom_domain, 4 );
-		} elseif ( 0 === strpos( $custom_domain, 'portal.' ) ) {
-			$custom_domain = substr( $custom_domain, 7 );
-		}
+		// Preserve the configured CNAME'd subdomain verbatim; all consumers use it directly. Do not strip api./cdn./portal.
 
 		$custom_domain              = rtrim( ltrim( $custom_domain ), '/' );
 		$sanitized['custom_domain'] = $custom_domain;

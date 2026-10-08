@@ -27,20 +27,12 @@ class Assets {
 	 * @param string $button_selector Optional custom submit button CSS selector.
 	 */
 	public static function enqueue( string $handle = 'private-captcha-widget', string $custom_js = '', string $custom_css = '', string $button_selector = '' ): void {
-		$script_domain = Settings::get_custom_domain();
-		if ( empty( $script_domain ) ) {
-			$script_domain = 'privatecaptcha.com';
-		}
-
-		if ( 0 === strpos( $script_domain, 'cdn.' ) ) {
-			$script_domain = substr( $script_domain, 4 );
-		}
-
 		$script_file = 'extended' === Settings::get_script() ? 'privatecaptcha-ext.js' : 'privatecaptcha.js';
 
+		// Always load from the official CDN per the WordPress integration docs; the custom_domain is the puzzle/verify host, not the script CDN.
 		wp_enqueue_script(
 			$handle,
-			"https://cdn.{$script_domain}/widget/js/{$script_file}",
+			"https://cdn.privatecaptcha.com/widget/js/{$script_file}",
 			array(),
 			PRIVATE_CAPTCHA_VERSION,
 			true

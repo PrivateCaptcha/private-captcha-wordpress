@@ -58,10 +58,7 @@ class Widget {
 		}
 
 		if ( ! empty( $custom_domain ) ) {
-			if ( 0 === strpos( $custom_domain, 'api.' ) ) {
-				$custom_domain = substr( $custom_domain, 4 );
-			}
-			$attributes[] = 'data-puzzle-endpoint="' . esc_attr( "https://api.{$custom_domain}/puzzle" ) . '"';
+			$attributes[] = 'data-puzzle-endpoint="' . esc_attr( "https://{$custom_domain}/puzzle" ) . '"';
 		} elseif ( $eu_isolation ) {
 			$attributes[] = 'data-eu="true"';
 		}
