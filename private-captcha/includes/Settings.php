@@ -65,7 +65,7 @@ class Settings {
 	 * @return mixed The setting value or default.
 	 */
 	public static function get_option( string $key, mixed $default_value = null ): mixed {
-		$settings = get_option( self::$option_name, array() );
+		$settings = self::get_all_settings();
 
 		if ( array_key_exists( $key, $settings ) ) {
 			return $settings[ $key ];
@@ -99,7 +99,9 @@ class Settings {
 	 * @return array<string, mixed> All settings values.
 	 */
 	public static function get_all_settings(): array {
-		return get_option( self::$option_name, array() );
+		$settings = get_option( self::$option_name, array() );
+
+		return is_array( $settings ) ? $settings : array();
 	}
 
 	/**
