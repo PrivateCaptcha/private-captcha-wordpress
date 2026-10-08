@@ -297,10 +297,30 @@ class WooCommerce extends AbstractIntegration {
 	public function verify_register_captcha( string $username, string $email, WP_Error $errors ): void {
 		unset( $username, $email );
 
-		// WooCommerce fires woocommerce_register_post when checkout creates an account.
-		// That flow is protected by the checkout captcha, not the account registration captcha.
-		// Only defer to the checkout captcha when it is actually enabled for this user.
-		if ( $this->is_checkout_request() && $this->is_checkout_captcha_enabled() ) {
+		// WooCommerce fires woocommerce_register_post inside wc_create_new_customer(), which
+		// runs both on the My Account registration form and during checkout when a guest
+		// creates an account as part of placing an order. The registration captcha widget is
+		// only rendered on the My Account form (hooked to woocommerce_register_form), never
+		// on the checkout templates, so no registration-captcha solution exists to verify
+		// during checkout.
+		//
+		// The checkout flow has its own captcha (verify_checkout_captcha for classic and
+		// verify_block_checkout_captcha for the Store API), gated on the checkout settings
+		// and rendered on the checkout form. When that checkout captcha is enabled it
+		// already protects the checkout, so the registration verifier must defer to it to
+		// avoid verifying a solution that was never rendered.
+		//
+		// When the checkout captcha is disabled, no widget is rendered during checkout and
+		// no solution is available either. Falling through to verify_captcha() here would
+		// read an empty solution and always fail, turning a checkout that creates an account
+		// into a hard block: the order is rejected and payment is never processed. This
+		// happens on both the classic and the Store API (block) paths, and on the classic
+		// path it also affects stores that disable guest checkout entirely (forced accounts).
+		//
+		// Defer to the checkout flow for every checkout-originated registration so customers
+		// can complete their orders. The My Account registration form is unaffected because
+		// is_checkout_request() is false there.
+		if ( $this->is_checkout_request() ) {
 			return;
 		}
 
