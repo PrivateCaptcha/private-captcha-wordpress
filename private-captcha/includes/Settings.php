@@ -87,7 +87,7 @@ class Settings {
 	 * @return bool True on successful update, false on failure.
 	 */
 	public static function update_option( string $key, mixed $value ): bool {
-		$settings         = get_option( self::$option_name, array() );
+		$settings         = self::get_all_settings();
 		$settings[ $key ] = $value;
 
 		return update_option( self::$option_name, $settings );
