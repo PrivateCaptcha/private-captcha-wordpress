@@ -211,5 +211,5 @@ jobs:
         run: |
           gh release create "${RELEASE_TAG}" \
             --title "Release ${RELEASE_TAG}" \
-            --notes "Automated release for ${RELEASE_TAG}" \
+            --generate-notes \
             private-captcha.zip
