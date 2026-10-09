@@ -59,6 +59,7 @@ jobs:
     needs: lint
     # Fork PRs and Dependabot runs do not receive the Actions environment secrets.
     if: >-
+      github.ref_type != 'tag' &&
       github.actor != 'dependabot[bot]' &&
       (github.event_name == 'push' ||
        (github.event_name == 'pull_request' &&
@@ -186,7 +187,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: package
-    if: success() && github.ref_type == 'tag'
+    # A skipped E2E ancestor must not block releasing a successful package.
+    if: >-
+      !cancelled() && needs.package.result == 'success' && github.ref_type == 'tag'
     environment: GitHub release
     permissions:
       contents: write
