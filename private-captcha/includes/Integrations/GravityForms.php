@@ -88,8 +88,10 @@ class GravityForms extends AbstractIntegration {
 		add_filter( 'gform_next_button', array( $this, 'add_captcha_widget' ), 10, 2 );
 		add_filter( 'gform_submit_button', array( $this, 'add_captcha_widget' ), 10, 2 );
 
-		// Verify captcha solution during form validation.
-		add_filter( 'gform_validation', array( $this, 'verify_captcha_gravity_forms' ), 10, 1 );
+		// Verify captcha solution during form validation. Accept the $context
+		// argument (form-submit / api-submit / api-validate, since GF 2.6.3.2) so
+		// REST API submissions — where the widget is never rendered — can be skipped.
+		add_filter( 'gform_validation', array( $this, 'verify_captcha_gravity_forms' ), 10, 2 );
 
 		// Enqueue scripts for Gravity Forms pages.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -114,12 +116,26 @@ class GravityForms extends AbstractIntegration {
 	/**
 	 * Verify captcha solution during Gravity Forms validation.
 	 *
+	 * The captcha widget is only rendered on the HTML form path (via the
+	 * gform_submit_button / gform_next_button filters). REST API v2 submissions
+	 * (api-submit / api-validate contexts, since Gravity Forms 2.6.3.2) deliver a
+	 * JSON body that WordPress parses into WP_REST_Request, not $_POST, so the
+	 * widget can neither be rendered nor solved there. Verification is therefore
+	 * skipped for any context other than form-submit to avoid blocking REST API
+	 * submissions the integration has no mechanism to protect.
+	 *
 	 * @param array<string,mixed> $validation_result The validation result array containing 'is_valid' and 'form'.
+	 * @param string              $context           The submission context. Possible values: form-submit, api-submit, api-validate.
 	 * @return array<string,mixed> Modified validation result.
 	 */
-	public function verify_captcha_gravity_forms( array $validation_result ): array {
+	public function verify_captcha_gravity_forms( array $validation_result, string $context = 'form-submit' ): array {
 		if ( ! $this->is_enabled() ) {
 			$this->write_log( 'Skipping captcha verification as Gravity Forms integration is not enabled' );
+			return $validation_result;
+		}
+
+		if ( 'form-submit' !== $context ) {
+			$this->write_log( "Skipping captcha verification for Gravity Forms context: {$context}" );
 			return $validation_result;
 		}
 
