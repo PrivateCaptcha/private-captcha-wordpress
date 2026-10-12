@@ -109,7 +109,7 @@ Requires Docker Compose with `--wait` support, Node.js 20+, and the plugin's Com
 make test-e2e
 ```
 
-The suite has eight tests. WPForms and Contact Form 7 each cover:
+WPForms and Contact Form 7 each cover:
 
 - Successful AJAX submission and CAPTCHA reset after confirmation.
 - An empty required Email field after CAPTCHA is already solved.
