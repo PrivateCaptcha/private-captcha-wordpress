@@ -131,7 +131,7 @@ make stop-e2e
 
 ### CI
 
-On trusted pushes and same-repository pull requests, CI runs all integration suites after all PHP validation jobs succeed and before packaging. An e2e failure blocks packaging and releases. Failure screenshots, traces, and container logs are uploaded as the `wpforms-e2e-failure` artifact; the test stack is always cleaned up.
+On trusted pushes and same-repository pull requests, CI runs all integration suites after all PHP validation jobs succeed and before packaging. An e2e failure blocks packaging; tag pushes skip e2e and release directly on a successful package. Failure screenshots, traces, and container logs are uploaded as the `wpforms-e2e-failure` artifact; the test stack is always cleaned up.
 
 Configure these GitHub Actions secrets in the **`E2E tests` environment** using a real development property with **Allow localhost** enabled:
 
