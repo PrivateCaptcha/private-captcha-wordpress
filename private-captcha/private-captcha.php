@@ -130,6 +130,8 @@ class PrivateCaptchaWordPress {
 	 * Plugin activation hook.
 	 */
 	public function activate(): void {
+		PrivateCaptchaWP\ReviewNotice::record_activation();
+
 		// Set default options.
 		if ( ! get_option( 'private_captcha_settings' ) ) {
 			update_option( 'private_captcha_settings', PrivateCaptchaWP\Settings::get_default_settings() );

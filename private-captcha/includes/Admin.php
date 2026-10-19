@@ -44,6 +44,8 @@ class Admin {
 		$this->client       = $client;
 		$this->integrations = $integrations;
 
+		new ReviewNotice( $integrations );
+
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_notices', array( $this, 'show_configuration_notice' ) );
