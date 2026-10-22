@@ -307,13 +307,31 @@ class Client {
 	 *
 	 * The puzzle API requires the Origin to match the property's configured
 	 * domain, so the site's actual origin is used when validating the user's
-	 * site key. Falls back to 'not.empty' if the home URL cannot be determined.
+	 * site key. Falls back to 'not.empty' for localhost/loopback addresses or
+	 * when the home URL cannot be determined, since those origins never match
+	 * a configured property domain.
 	 *
 	 * @return string The site origin, e.g. "https://example.com".
 	 */
 	private function get_site_origin(): string {
 		$home = home_url();
 		if ( ! is_string( $home ) || '' === $home ) {
+			return 'not.empty';
+		}
+
+		$host = wp_parse_url( $home, PHP_URL_HOST );
+		if ( ! is_string( $host ) || '' === $host ) {
+			return 'not.empty';
+		}
+
+		$host_lower = strtolower( $host );
+		if (
+			'localhost' === $host_lower
+			|| str_ends_with( $host_lower, '.localhost' )
+			|| str_starts_with( $host_lower, '127.' )
+			|| '::1' === $host_lower
+			|| '0.0.0.0' === $host_lower
+		) {
 			return 'not.empty';
 		}
 
