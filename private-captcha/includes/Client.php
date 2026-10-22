@@ -270,6 +270,8 @@ class Client {
 	 * A puzzle is a base64-encoded payload and signature separated by a dot
 	 * (e.g. "data.signature"). Error bodies such as "Forbidden" or "Bad Request",
 	 * which the CDN edge may serve with HTTP 200, do not match this shape.
+	 * Each segment is only checked to be non-empty and base64-decodable; deeper
+	 * verification of the puzzle contents is the API's responsibility, not ours.
 	 *
 	 * @param string $body The puzzle response body to validate.
 	 * @return bool True if the body looks like a puzzle token, false otherwise.
@@ -293,8 +295,10 @@ class Client {
 				return false;
 			}
 
-			// Standard or URL-safe base64 alphabet with optional trailing padding.
-			if ( 1 !== preg_match( '#^[A-Za-z0-9+/_-]+={0,2}$#', $segment ) ) {
+			// Verify the segment is base64-decodable; anything deeper is the API's
+			// responsibility, not ours.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Used to validate a puzzle token, not code obfuscation.
+			if ( false === base64_decode( $segment, true ) ) {
 				return false;
 			}
 		}
