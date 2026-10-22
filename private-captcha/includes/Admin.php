@@ -737,7 +737,8 @@ class Admin {
 				$custom_domain = (string) $sanitized['custom_domain'];
 				$eu_isolation  = (bool) $sanitized['eu_isolation'];
 				$client->update( $api_key, $custom_domain, $eu_isolation );
-				$settings_valid = $client->test_current_settings();
+				$sitekey        = (string) $sanitized['sitekey'];
+				$settings_valid = $client->test_current_settings( $sitekey );
 				$last_error     = $client->get_last_error();
 			} catch ( PrivateCaptchaException $e ) {
 				$last_error = $e->getMessage();

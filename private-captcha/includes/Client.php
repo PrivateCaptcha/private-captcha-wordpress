@@ -193,13 +193,22 @@ class Client {
 	}
 
 	/**
-	 * Test current settings by fetching test puzzle and verifying stub solution.
+	 * Test current settings by validating the user's site key and verifying a stub solution.
+	 *
+	 * First fetches a puzzle for the user's site key (the /puzzle endpoint rejects
+	 * unknown site keys, e.g. HTTP 400 for malformed keys) to catch a mistyped or
+	 * nonexistent site key at save time. Then confirms the API key by verifying a
+	 * stub solution against the public demo property. The demo site key is used for
+	 * the verify step because the stub solution deterministically yields
+	 * TEST_PROPERTY_ERROR only for the public demo property.
+	 *
 	 * NOTE: Theoretically we actually CAN "succeed" this even if settings are
 	 * invalid due to "eventual" verification nature of /verify endpoint.
 	 *
+	 * @param string $sitekey The user's site key to validate.
 	 * @return bool True if settings are valid, false otherwise.
 	 */
-	public function test_current_settings(): bool {
+	public function test_current_settings( string $sitekey ): bool {
 		$this->last_error = null;
 
 		if ( null === $this->client ) {
@@ -207,11 +216,25 @@ class Client {
 			return false;
 		}
 
-		$sitekey = 'aaaaaaaabbbbccccddddeeeeeeeeeeee';
-
 		try {
-			// Fetch test puzzle.
-			$puzzle = $this->fetch_test_puzzle( $sitekey );
+			// Validate the user's site key first: /puzzle rejects unknown site keys.
+			// The CDN edge may serve an error body (e.g. "Forbidden") with HTTP 200,
+			// so the response body is also verified to be a real puzzle, not just a 200.
+			$user_puzzle = $this->fetch_test_puzzle( $sitekey );
+			if ( null === $user_puzzle ) {
+				return false; // Error already set in fetch_test_puzzle.
+			}
+
+			if ( ! $this->is_valid_puzzle( $user_puzzle ) ) {
+				$this->last_error = 'Invalid site key: puzzle endpoint returned an unexpected response';
+				write_log( 'Private Captcha settings test failed: invalid puzzle for user site key' );
+				return false;
+			}
+
+			// The stub verify only produces TEST_PROPERTY_ERROR for the public demo
+			// property, so the API-key validity check always uses the demo site key.
+			$test_sitekey = 'aaaaaaaabbbbccccddddeeeeeeeeeeee';
+			$puzzle       = $this->fetch_test_puzzle( $test_sitekey );
 			if ( null === $puzzle ) {
 				return false; // Error already set in fetch_test_puzzle.
 			}
@@ -222,7 +245,7 @@ class Client {
 			$solutions_str = base64_encode( $empty_solutions_bytes );
 			$payload       = $solutions_str . '.' . $puzzle;
 
-			$output = $this->client->verify( $payload, sitekey: $sitekey );
+			$output = $this->client->verify( $payload, sitekey: $test_sitekey );
 
 			if ( $output->success && \PrivateCaptcha\Enums\VerifyCode::TEST_PROPERTY_ERROR === $output->code ) {
 				return true;
@@ -236,6 +259,44 @@ class Client {
 			write_log( 'Private Captcha settings test failed: ' . $e->getMessage() );
 			return false;
 		}
+	}
+
+	/**
+	 * Check whether a puzzle response body looks like a real puzzle token.
+	 *
+	 * A puzzle is a base64-encoded payload and signature separated by a dot
+	 * (e.g. "data.signature"). Error bodies such as "Forbidden" or "Bad Request",
+	 * which the CDN edge may serve with HTTP 200, do not match this shape.
+	 *
+	 * @param string $body The puzzle response body to validate.
+	 * @return bool True if the body looks like a puzzle token, false otherwise.
+	 */
+	private function is_valid_puzzle( string $body ): bool {
+		$body = trim( $body );
+
+		if ( '' === $body ) {
+			return false;
+		}
+
+		$parts = explode( '.', $body );
+
+		// A puzzle is exactly "data.signature": two non-empty base64 segments.
+		if ( 2 !== count( $parts ) ) {
+			return false;
+		}
+
+		foreach ( $parts as $segment ) {
+			if ( '' === $segment ) {
+				return false;
+			}
+
+			// Standard or URL-safe base64 alphabet with optional trailing padding.
+			if ( 1 !== preg_match( '#^[A-Za-z0-9+/_-]+={0,2}$#', $segment ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
