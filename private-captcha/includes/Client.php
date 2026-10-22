@@ -220,7 +220,10 @@ class Client {
 			// Validate the user's site key first: /puzzle rejects unknown site keys.
 			// The CDN edge may serve an error body (e.g. "Forbidden") with HTTP 200,
 			// so the response body is also verified to be a real puzzle, not just a 200.
-			$user_puzzle = $this->fetch_test_puzzle( $sitekey );
+			// The puzzle API requires the Origin to match the property's configured
+			// domain (only the public demo key bypasses this), so the site's real
+			// origin is sent for the user-sitekey request.
+			$user_puzzle = $this->fetch_test_puzzle( $sitekey, $this->get_site_origin() );
 			if ( null === $user_puzzle ) {
 				return false; // Error already set in fetch_test_puzzle.
 			}
@@ -300,12 +303,37 @@ class Client {
 	}
 
 	/**
+	 * Get the site's origin (scheme + host) for the Origin header.
+	 *
+	 * The puzzle API requires the Origin to match the property's configured
+	 * domain, so the site's actual origin is used when validating the user's
+	 * site key. Falls back to 'not.empty' if the home URL cannot be determined.
+	 *
+	 * @return string The site origin, e.g. "https://example.com".
+	 */
+	private function get_site_origin(): string {
+		$home = home_url();
+		if ( ! is_string( $home ) || '' === $home ) {
+			return 'not.empty';
+		}
+
+		$origin = preg_replace( '#^(https?://[^/]+).*#i', '$1', $home );
+		if ( ! is_string( $origin ) ) {
+			return 'not.empty';
+		}
+
+		return $origin;
+	}
+
+	/**
 	 * Fetch test puzzle from Private Captcha API.
 	 *
 	 * @param string $sitekey The site key to fetch puzzle for.
+	 * @param string $origin  The Origin header value to send. Defaults to
+	 *                        'not.empty', which only the public demo key accepts.
 	 * @return string|null The puzzle string or null on failure.
 	 */
-	private function fetch_test_puzzle( string $sitekey ): ?string {
+	private function fetch_test_puzzle( string $sitekey, string $origin = 'not.empty' ): ?string {
 		if ( null === $this->client ) {
 			$this->last_error = 'Client not initialized';
 			return null;
@@ -320,7 +348,7 @@ class Client {
 				'timeout'     => 10,
 				'redirection' => 5,
 				'headers'     => array(
-					'Origin' => 'not.empty',
+					'Origin' => $origin,
 				),
 			)
 		);
