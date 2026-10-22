@@ -234,6 +234,39 @@ class Client {
 				return false;
 			}
 
+			// Create empty solutions (stub) used by both checks below.
+			$empty_solutions_bytes = str_repeat( "\0", self::SOLUTIONS_COUNT * self::SOLUTION_LENGTH );
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for legitimate captcha verification, not code obfuscation.
+			$solutions_str = base64_encode( $empty_solutions_bytes );
+
+			// Validate that the user's site key belongs to the same account as the
+			// API key. Verifying the user's puzzle with the user's site key surfaces a
+			// property-owner-mismatch (WRONG_OWNER_ERROR) or org-scope
+			// (ORG_SCOPE_ERROR) code when the site key is from a different account
+			// than the API key — something the unauthenticated /puzzle request above
+			// cannot detect. A stub solution never verifies on a real property, so
+			// only an explicit mismatch code is treated as a settings failure; any
+			// other outcome (invalid solution, transient error) falls through to the
+			// demo-key API-key check below.
+			try {
+				$user_payload = $solutions_str . '.' . $user_puzzle;
+				$user_output  = $this->client->verify( $user_payload, sitekey: $sitekey );
+
+				if (
+					\PrivateCaptcha\Enums\VerifyCode::WRONG_OWNER_ERROR === $user_output->code
+					|| \PrivateCaptcha\Enums\VerifyCode::ORG_SCOPE_ERROR === $user_output->code
+				) {
+					$this->last_error = 'Site key does not match the API key account';
+					write_log( 'Private Captcha settings test failed: site key owner mismatch (' . $user_output->code->toString() . ')' );
+					return false;
+				}
+			} catch ( PrivateCaptchaException $e ) {
+				// A non-mismatch failure (e.g. an invalid stub solution on a real
+				// property, or a transient network error) is not a settings problem.
+				// The demo-key check below still validates the API key.
+				write_log( 'Private Captcha user site key verification skipped: ' . $e->getMessage() );
+			}
+
 			// The stub verify only produces TEST_PROPERTY_ERROR for the public demo
 			// property, so the API-key validity check always uses the demo site key.
 			$test_sitekey = 'aaaaaaaabbbbccccddddeeeeeeeeeeee';
@@ -242,11 +275,7 @@ class Client {
 				return false; // Error already set in fetch_test_puzzle.
 			}
 
-			// Create empty solutions (stub).
-			$empty_solutions_bytes = str_repeat( "\0", self::SOLUTIONS_COUNT * self::SOLUTION_LENGTH );
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for legitimate captcha verification, not code obfuscation.
-			$solutions_str = base64_encode( $empty_solutions_bytes );
-			$payload       = $solutions_str . '.' . $puzzle;
+			$payload = $solutions_str . '.' . $puzzle;
 
 			$output = $this->client->verify( $payload, sitekey: $test_sitekey );
 
@@ -362,7 +391,7 @@ class Client {
 		}
 
 		$domain     = $this->client->getDomain();
-		$puzzle_url = "https://{$domain}/puzzle?sitekey={$sitekey}";
+		$puzzle_url = add_query_arg( 'sitekey', $sitekey, "https://{$domain}/puzzle" );
 
 		$response = wp_remote_get(
 			$puzzle_url,
