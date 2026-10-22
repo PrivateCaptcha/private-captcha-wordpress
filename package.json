@@ -6,6 +6,6 @@
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@playwright/test": "1.64.0"
   }
 }
