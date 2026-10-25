@@ -12,15 +12,16 @@ Replace `TARGET` with any plugin Makefile target (for example, `install`, `lint`
 
 ## Form integration end-to-end tests
 
-The minimal Playwright suite uses real WordPress, WPForms Lite 2.0.2.1, Contact Form 7 6.1.7, Forminator 1.57.3, and WooCommerce 10.9.4 in Docker, with Playwright/Chromium running on the host. Its separate Compose project (`private-captcha-wordpress-e2e`), volumes, and port (`18081`) allow it to run alongside the manual-testing stack started by `make run-docker` on port `18080`. WooCommerce 10.9.4 supports the stack's WordPress 6.9.
+The minimal Playwright suite uses real WordPress, WPForms Lite 2.0.2.1, Contact Form 7 6.1.7, Forminator 1.57.3, Formidable Forms 7.0, and WooCommerce 10.9.4 in Docker, with Playwright/Chromium running on the host. Its separate Compose project (`private-captcha-wordpress-e2e`), volumes, and port (`18081`) allow it to run alongside the manual-testing stack started by `make run-docker` on port `18080`. WooCommerce 10.9.4 supports the stack's WordPress 6.9.
 
-WPForms, Contact Form 7, and Forminator each have one fixture page with one form containing a required Email field:
+WPForms, Contact Form 7, Forminator, and Formidable Forms each have one fixture page with one form containing a required Email field:
 
 - WPForms: **http://localhost:18081/**
 - Contact Form 7: **http://localhost:18081/?pagename=contact-form-7-e2e**
 - Forminator: **http://localhost:18081/?pagename=forminator-e2e**
+- Formidable Forms: **http://localhost:18081/?pagename=formidable-e2e**
 
-Private Captcha uses its default settings with these form integrations and WooCommerce guest checkout enabled. All three forms submit via AJAX. WPForms and Forminator have email notifications disabled; CF7 uses [`skip_mail: on`](https://contactform7.com/additional-settings/) to skip email delivery while retaining validation and CAPTCHA verification, so no SMTP setup is needed. Provisioning updates the same forms and pages when repeated and reinstalls the pinned WPForms Lite and Forminator versions if they are missing or a different version is installed. Run `make run-e2e` again to install and provision a newly added integration.
+Private Captcha uses its default settings with these form integrations and WooCommerce guest checkout enabled. All four forms submit via AJAX. WPForms, Forminator, and Formidable Forms have email notifications disabled; CF7 uses [`skip_mail: on`](https://contactform7.com/additional-settings/) to skip email delivery while retaining validation and CAPTCHA verification, so no SMTP setup is needed. Provisioning updates the same forms and pages when repeated and reinstalls the pinned WPForms Lite, Forminator, and Formidable Forms versions if they are missing or a different version is installed. Formidable's seeder also finishes its deferred database installation before creating the fixture. Run `make run-e2e` again to install and provision a newly added integration.
 
 WooCommerce fixtures include:
 
@@ -58,7 +59,7 @@ Requires Docker Compose with `--wait` support, Node.js 20+, and the plugin's Com
 make test-e2e
 ```
 
-WPForms, Contact Form 7, and Forminator each cover:
+WPForms, Contact Form 7, Forminator, and Formidable Forms each cover:
 
 - Server-side rejection of an unsolved CAPTCHA even when Submit is manually re-enabled.
 - Successful AJAX submission and CAPTCHA reset after confirmation.
@@ -67,9 +68,11 @@ WPForms, Contact Form 7, and Forminator each cover:
 
 The validation-error cases check that the error is displayed, CAPTCHA resets and disables submission, and correcting the field and completing a fresh CAPTCHA allows a successful retry. CF7's and Forminator's success tests also verify that the Email field clears and a second submission succeeds on the same page without reloading.
 
+Formidable Forms uses its default server-side validation with AJAX submission enabled. Its invalid-email tests bypass native browser validation so the real backend validation and CAPTCHA reset are exercised. Successful submissions use unique email addresses because Formidable stores entries and rejects duplicates across test runs.
+
 WooCommerce has one happy-path test for the block checkout and one for the legacy shortcode checkout. Both fill billing details, solve a real CAPTCHA, verify the solution is sent with checkout, and assert successful order creation and the order confirmation page using bank transfer. The block test also checks the Store API order status and payment result. Checkout responses are captured from the real server before being forwarded unchanged to the browser, avoiding a Chrome response-body race during the confirmation redirect.
 
-Default auto mode prepares the challenge when the form gains focus, but the visible widget still requires a "Click to verify" click. WPForms replaces the form with its confirmation message on success; the tests retain the documented widget object to check the reset after that replacement. Screenshots and Playwright traces are retained in `test-results/` on failure.
+Default auto mode prepares the challenge when the form gains focus, but the visible widget still requires a "Click to verify" click. WPForms and Formidable Forms replace the form with a confirmation message on success; the tests retain the documented widget object to check the reset after that replacement. Screenshots and Playwright traces are retained in `test-results/` on failure.
 
 Chromium is installed inside the ignored `node_modules/` directory rather than a shared browser cache. The test command sets `PLAYWRIGHT_BROWSERS_PATH=0` to use that installation.
 

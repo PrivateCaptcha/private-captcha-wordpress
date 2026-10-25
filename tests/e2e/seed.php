@@ -14,6 +14,7 @@ Settings::update_all_settings(
 			'wpforms_enable_wpforms'            => true,
 			'contactform7_enable'               => true,
 			'forminator_enable'                 => true,
+			'formidable_enable'                 => true,
 			'woocommerce_enable_checkout_guest' => true,
 		)
 	)

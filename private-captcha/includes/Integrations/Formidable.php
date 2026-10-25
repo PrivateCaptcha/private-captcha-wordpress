@@ -142,7 +142,7 @@ class Formidable extends AbstractIntegration {
 	 */
 	public function enqueue_scripts(): void {
 		$custom_js = '
-                jQuery(document).on("frmFormErrors", function(event, form, response) {
+                jQuery(document).on("frmFormErrors frmFormComplete", function(event, form, response) {
                     if (form) {
                         pcResetCaptchaWidgetWP(form);
                     }
