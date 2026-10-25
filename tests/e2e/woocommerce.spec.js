@@ -15,7 +15,7 @@ async function expectOrderConfirmation(page) {
   await expect(page.locator('main')).toContainText('E2E virtual product');
 }
 
-test('WooCommerce block checkout accepts a guest order with Private Captcha and bank transfer', async ({ page }) => {
+async function prepareBlockCheckout(page) {
   await addProductToCart(page);
   await page.goto('/?pagename=checkout');
 
@@ -29,6 +29,43 @@ test('WooCommerce block checkout accepts a guest order with Private Captcha and 
   await form.getByLabel('ZIP Code', { exact: true }).fill('90001');
   await form.getByLabel('ZIP Code', { exact: true }).press('Tab');
   await expect(form.getByRole('radio', { name: 'Direct bank transfer', exact: true })).toBeChecked();
+  return form;
+}
+
+test('WooCommerce block checkout rejects an order with unsolved Private Captcha even if Place Order is re-enabled', async ({ page }) => {
+  const form = await prepareBlockCheckout(page);
+  const widget = form.locator('.private-captcha');
+  const submit = form.getByRole('button', { name: 'Place Order', exact: true });
+
+  await expect(widget.getByText('Click to verify', { exact: true })).toBeVisible();
+  await expect(submit).toBeDisabled();
+  expect(await widget.evaluate((element) => element._privateCaptcha.solution())).toBeFalsy();
+
+  // Bypass only the button guard; submit through WooCommerce's real checkout handler.
+  await submit.evaluate((button) => { button.disabled = false; });
+  await expect(submit).toBeEnabled();
+  const responsePromise = page.waitForResponse((response) =>
+    response.request().method() === 'POST' &&
+    /\/wc\/store\/v1\/checkout(?:[?&]|$)/.test(decodeURIComponent(response.url())),
+  );
+  await submit.click();
+  const response = await responsePromise;
+  const submitted = response.request().postDataJSON();
+
+  expect(submitted.payment_method).toBe('bacs');
+  expect(submitted.extensions?.['private-captcha']?.solution).toBeFalsy();
+  expect(response.ok()).toBe(false);
+  expect(await response.json()).toMatchObject({
+    code: 'private_captcha_failed',
+    message: 'Captcha verification failed. Please try again.',
+  });
+  await expect(page.locator('main').getByText('Captcha verification failed. Please try again.', { exact: true })).toBeVisible();
+  await expect(page).toHaveURL('/?pagename=checkout');
+  await expect(page.getByText('Thank you. Your order has been received.', { exact: true })).toHaveCount(0);
+});
+
+test('WooCommerce block checkout accepts a guest order with Private Captcha and bank transfer', async ({ page }) => {
+  const form = await prepareBlockCheckout(page);
 
   const widget = form.locator('.private-captcha');
   await expect(widget).toHaveCount(1);
@@ -64,7 +101,7 @@ test('WooCommerce block checkout accepts a guest order with Private Captcha and 
   await expectOrderConfirmation(page);
 });
 
-test('WooCommerce legacy checkout accepts a guest order with Private Captcha and bank transfer', async ({ page }) => {
+async function prepareLegacyCheckout(page) {
   await addProductToCart(page);
   await page.goto('/?pagename=woocommerce-legacy-checkout-e2e');
 
@@ -76,7 +113,7 @@ test('WooCommerce legacy checkout accepts a guest order with Private Captcha and
   await form.getByLabel('Town / City', { exact: false }).fill('Los Angeles');
   await form.getByLabel('Email address', { exact: false }).fill('visitor@example.org');
 
-  // Address updates replace the payment fragment; solve the new widget after the update.
+  // Address updates replace the payment fragment; wait before using its CAPTCHA widget.
   const updatePromise = page.waitForResponse((response) =>
     new URL(response.url()).searchParams.get('wc-ajax') === 'update_order_review' &&
     response.request().postData()?.includes('90001'),
@@ -87,6 +124,44 @@ test('WooCommerce legacy checkout accepts a guest order with Private Captcha and
   await updatePromise;
   await expect(form.locator('.blockUI')).toHaveCount(0);
   await expect(form.locator('input[name="payment_method"][value="bacs"]')).toBeChecked();
+  return form;
+}
+
+test('WooCommerce legacy checkout rejects an order with unsolved Private Captcha even if Place order is re-enabled', async ({ page }) => {
+  const form = await prepareLegacyCheckout(page);
+  const widget = form.locator('.private-captcha');
+  const submit = form.getByRole('button', { name: 'Place order', exact: true });
+
+  await expect(widget.getByText('Click to verify', { exact: true })).toBeVisible();
+  await expect(submit).toBeDisabled();
+  expect(await widget.evaluate((element) => element._privateCaptcha.solution())).toBeFalsy();
+
+  // Bypass only the button guard; submit through WooCommerce's real checkout handler.
+  await submit.evaluate((button) => { button.disabled = false; });
+  await expect(submit).toBeEnabled();
+  const responsePromise = page.waitForResponse((response) =>
+    response.request().method() === 'POST' &&
+    new URL(response.url()).searchParams.get('wc-ajax') === 'checkout',
+  );
+  await submit.click();
+  const response = await responsePromise;
+  const submitted = new URLSearchParams(response.request().postData());
+
+  expect(submitted.get('payment_method')).toBe('bacs');
+  expect(submitted.get('wp-private-captcha-solution')).toBeFalsy();
+  expect(response.ok()).toBe(true);
+  expect(await response.json()).toMatchObject({
+    result: 'failure',
+    messages: expect.stringContaining('Captcha verification failed. Please try again.'),
+  });
+  await expect(form.getByRole('alert')).toHaveText('Captcha verification failed. Please try again.');
+  await expect(form.getByRole('alert')).toBeVisible();
+  await expect(page).toHaveURL('/?pagename=woocommerce-legacy-checkout-e2e');
+  await expect(page.getByText('Thank you. Your order has been received.', { exact: true })).toHaveCount(0);
+});
+
+test('WooCommerce legacy checkout accepts a guest order with Private Captcha and bank transfer', async ({ page }) => {
+  const form = await prepareLegacyCheckout(page);
 
   const widget = form.locator('.private-captcha');
   const submit = form.getByRole('button', { name: 'Place order', exact: true });

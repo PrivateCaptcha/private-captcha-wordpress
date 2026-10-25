@@ -1,5 +1,40 @@
 import { expect, test } from '@playwright/test';
 
+test('WPForms rejects submission with unsolved Private Captcha even if Submit is re-enabled', async ({ page }) => {
+  await page.goto('/');
+
+  const form = page.locator('form.wpforms-form');
+  const widget = form.locator('.private-captcha');
+  const submit = form.getByRole('button', { name: 'Submit', exact: true });
+
+  await form.getByLabel('Email', { exact: false }).fill('visitor@example.org');
+  await expect(widget.getByText('Click to verify', { exact: true })).toBeVisible();
+  await expect(submit).toBeDisabled();
+  expect(await widget.evaluate((element) => element._privateCaptcha.solution())).toBeFalsy();
+
+  // Bypass only the button guard; never solve or click the CAPTCHA widget.
+  await submit.evaluate((button) => { button.disabled = false; });
+  await expect(submit).toBeEnabled();
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/wp-admin/admin-ajax.php') &&
+    response.request().method() === 'POST' &&
+    response.request().postData()?.includes('wpforms_submit'),
+  );
+  await submit.click();
+  const response = await responsePromise;
+
+  // An unsolved widget omits its solution from WPForms' multipart request.
+  expect(response.request().postData()).not.toContain('name="wp-private-captcha-solution"');
+  expect(response.ok()).toBe(true);
+  expect(await response.json()).toMatchObject({
+    success: false,
+    data: { errors: { general: { header: expect.stringContaining('Captcha verification failed. Please try again.') } } },
+  });
+  await expect(form.getByText('Captcha verification failed. Please try again.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Thanks for contacting us! We will be in touch with you shortly.', { exact: true })).toHaveCount(0);
+  await expect(widget.getByText('Click to verify', { exact: true })).toBeVisible();
+});
+
 test('WPForms submits with Private Captcha and resets the solution', async ({ page }) => {
   await page.goto('/');
 

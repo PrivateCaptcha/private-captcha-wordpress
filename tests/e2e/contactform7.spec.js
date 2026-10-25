@@ -11,6 +11,32 @@ async function submitContactForm(page, submit) {
   return response.json();
 }
 
+test('Contact Form 7 rejects submission with unsolved Private Captcha even if Submit is re-enabled', async ({ page }) => {
+  await page.goto('/?pagename=contact-form-7-e2e');
+
+  const form = page.locator('form.wpcf7-form');
+  const widget = form.locator('.private-captcha');
+  const submit = form.getByRole('button', { name: 'Submit', exact: true });
+
+  await form.getByLabel('Email', { exact: false }).fill('visitor@example.org');
+  await expect(widget.getByText('Click to verify', { exact: true })).toBeVisible();
+  await expect(submit).toBeDisabled();
+  expect(await widget.evaluate((element) => element._privateCaptcha.solution())).toBeFalsy();
+
+  // Bypass only the button guard; never solve or click the CAPTCHA widget.
+  await submit.evaluate((button) => { button.disabled = false; });
+  await expect(submit).toBeEnabled();
+  expect(await submitContactForm(page, submit)).toMatchObject({
+    status: 'validation_failed',
+    invalid_fields: [{ field: 'cf7-private-captcha', message: 'Please complete Private Captcha.' }],
+  });
+
+  await expect(form).toHaveAttribute('data-status', 'invalid');
+  await expect(form.getByText('Please complete Private Captcha.', { exact: true })).toBeVisible();
+  await expect(form.locator('.wpcf7-response-output')).toHaveText('One or more fields have an error. Please check and try again.');
+  await expect(submit).toBeDisabled();
+});
+
 test('Contact Form 7 submits with Private Captcha and resets for a second submission', async ({ page }) => {
   await page.goto('/?pagename=contact-form-7-e2e');
 
