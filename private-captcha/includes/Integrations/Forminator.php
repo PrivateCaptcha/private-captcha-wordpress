@@ -171,6 +171,9 @@ class Forminator extends AbstractIntegration {
 	 */
 	public function enqueue_scripts(): void {
 		$custom_js = '
+                jQuery(document).on("validation:invalid", "form.forminator-custom-form", function(event) {
+                    pcResetCaptchaWidgetWP(event.target);
+                });
                 jQuery(document).on("forminator:form:submit:failed forminator:form:submit:success", function(event) {
                     if (event && event.target) {
                         pcResetCaptchaWidgetWP(event.target);

@@ -31,8 +31,17 @@ if ! wp plugin is-installed woocommerce; then
     wp plugin install woocommerce --version=10.9.4
 fi
 
-wp plugin activate wpforms-lite contact-form-7 woocommerce private-captcha
+installed_forminator_version=''
+if wp plugin is-installed forminator; then
+    installed_forminator_version="$(wp plugin get forminator --field=version)"
+fi
+if [ "$installed_forminator_version" != '1.57.3' ]; then
+    wp plugin install forminator --version=1.57.3 --force
+fi
+
+wp plugin activate wpforms-lite contact-form-7 woocommerce forminator private-captcha
 wp theme activate twentytwentyfive
 wp --user=admin eval-file /e2e/seed.php
 wp --user=admin eval-file /e2e/seed-contactform7.php
 wp --user=admin eval-file /e2e/seed-woocommerce.php
+wp --user=admin eval-file /e2e/seed-forminator.php

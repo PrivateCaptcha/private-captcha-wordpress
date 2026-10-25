@@ -13,6 +13,7 @@ Settings::update_all_settings(
 			'sitekey'                           => getenv( 'PC_SITEKEY' ),
 			'wpforms_enable_wpforms'            => true,
 			'contactform7_enable'               => true,
+			'forminator_enable'                 => true,
 			'woocommerce_enable_checkout_guest' => true,
 		)
 	)
