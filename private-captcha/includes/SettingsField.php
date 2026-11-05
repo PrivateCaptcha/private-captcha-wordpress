@@ -68,7 +68,8 @@ class SettingsField {
 	 * @return string The translated label.
 	 */
 	public function get_label(): string {
-		return $this->label;
+		// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText -- $this->label is a literal string stored as configuration.
+		return __( $this->label, 'private-captcha' );
 	}
 
 	/**
@@ -82,7 +83,8 @@ class SettingsField {
 		}
 
 		return wp_kses(
-			$this->description,
+			// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText -- $this->description is a literal string stored as configuration.
+			__( $this->description, 'private-captcha' ),
 			array(
 				'a'      => array(
 					'href'   => true,
@@ -104,7 +106,8 @@ class SettingsField {
 			return sprintf( __( 'Add captcha to %s', 'private-captcha' ), $this->get_label() );
 		}
 
-		return $this->checkbox_text;
+		// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText -- $this->checkbox_text is a literal string stored as configuration.
+		return __( $this->checkbox_text, 'private-captcha' );
 	}
 
 	/**
