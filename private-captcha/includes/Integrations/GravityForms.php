@@ -188,8 +188,14 @@ class GravityForms extends AbstractIntegration {
 	 */
 	public function enqueue_scripts(): void {
 		$gf_custom_js = '
-                document.addEventListener("gform/post_render", function(event) {
-                    var formElement = document.getElementById("gform_" + event.detail.formId);
+                // Re-initialization handler for AJAX-rendered Gravity Forms pages.
+                // Shared by the native gform/post_render event (GF 2.9.0+) and the
+                // legacy jQuery gform_post_render event (GF 1.6+). On GF < 2.9.0
+                // only the jQuery event fires, so binding both is required for
+                // multipage Next transitions and validation-error re-renders to
+                // keep the fresh .private-captcha div attached and solvable.
+                var pcGfPostRenderHandler = function(formId) {
+                    var formElement = document.getElementById("gform_" + formId);
                     if (!formElement) return;
 
                     // Initialize any freshly-inserted .private-captcha divs (idempotent: skips
@@ -213,7 +219,23 @@ class GravityForms extends AbstractIntegration {
                             widget._privateCaptcha.reset();
                         }
                     });
-                });';
+                };
+
+                // GF 2.9.0+ fires the native gform/post_render event with detail.formId.
+                document.addEventListener("gform/post_render", function(event) {
+                    if (!event || !event.detail) return;
+                    pcGfPostRenderHandler(event.detail.formId);
+                });
+
+                // GF 1.6–2.8 fires the jQuery-only gform_post_render event; native
+                // addEventListener listeners never receive jQuery-triggered events, so
+                // bind via jQuery as well. Idempotency (data-attached) prevents
+                // double-handling when both events fire on GF 2.9.0+.
+                if (window.jQuery) {
+                    jQuery(document).on("gform_post_render", function(event, formId) {
+                        pcGfPostRenderHandler(formId);
+                    });
+                }';
 
 		$gf_custom_css = '
             .gform_private_captcha_container {
