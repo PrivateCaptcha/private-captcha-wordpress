@@ -194,12 +194,36 @@ class GravityForms extends AbstractIntegration {
                 // only the jQuery event fires, so binding both is required for
                 // multipage Next transitions and validation-error re-renders to
                 // keep the fresh .private-captcha div attached and solvable.
+                var pcGfRenderPending = {};
                 var pcGfPostRenderHandler = function(formId) {
+                    // GF 2.9.0+ fires both the native gform/post_render and the
+                    // jQuery gform_post_render events synchronously on every render.
+                    // Debounce per form so the body runs once per render; otherwise
+                    // the reset below would run twice and tear down widgets that
+                    // were just attached by the first dispatch.
+                    if (pcGfRenderPending[formId]) return;
+                    pcGfRenderPending[formId] = true;
+                    setTimeout(function() { delete pcGfRenderPending[formId]; }, 0);
+
                     var formElement = document.getElementById("gform_" + formId);
                     if (!formElement) return;
 
-                    // Initialize any freshly-inserted .private-captcha divs (idempotent: skips
-                    // elements already carrying data-attached). mandatory for AJAX-rendered pages.
+                    // Reset widgets that already existed in the form BEFORE attaching
+                    // fresh ones. Running this before setup() structurally excludes
+                    // freshly-attached widgets from being reset, since their
+                    // _privateCaptcha property is not set until setup() runs. Mirrors
+                    // the WooCommerce integration ordering.
+                    var widgets = formElement.querySelectorAll(".private-captcha");
+                    widgets.forEach(function(widget) {
+                        if (widget && widget.hasOwnProperty("_privateCaptcha") && widget._privateCaptcha) {
+                            widget._privateCaptcha.reset();
+                        }
+                    });
+
+                    // Initialize any freshly-inserted .private-captcha divs (idempotent:
+                    // skips elements already carrying data-attached). Mandatory for
+                    // AJAX-rendered pages where the widget div is replaced and needs
+                    // re-attaching.
                     var newWidgets = [];
                     if (typeof window.privateCaptcha !== "undefined" && typeof window.privateCaptcha.setup === "function") {
                         newWidgets = window.privateCaptcha.setup() || [];
@@ -209,16 +233,6 @@ class GravityForms extends AbstractIntegration {
                     if (newWidgets.length > 0) {
                         pcSetupPrivateCaptchaWidgets(newWidgets, defaultSubmitBtnSelector);
                     }
-
-                    // Reset already-initialized widgets (e.g. the initial page widget on a
-                    // non-AJAX re-render of the same page) — skipped for fresh divs, which
-                    // pcSetupPrivateCaptchaWidgets just handled.
-                    var widgets = formElement.querySelectorAll(".private-captcha");
-                    widgets.forEach(function(widget) {
-                        if (widget && widget.hasOwnProperty("_privateCaptcha") && widget._privateCaptcha) {
-                            widget._privateCaptcha.reset();
-                        }
-                    });
                 };
 
                 // GF 2.9.0+ fires the native gform/post_render event with detail.formId.
@@ -229,7 +243,7 @@ class GravityForms extends AbstractIntegration {
 
                 // GF 1.6–2.8 fires the jQuery-only gform_post_render event; native
                 // addEventListener listeners never receive jQuery-triggered events, so
-                // bind via jQuery as well. Idempotency (data-attached) prevents
+                // bind via jQuery as well. The per-form debounce above prevents
                 // double-handling when both events fire on GF 2.9.0+.
                 if (window.jQuery) {
                     jQuery(document).on("gform_post_render", function(event, formId) {
