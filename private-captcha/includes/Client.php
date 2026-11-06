@@ -193,13 +193,22 @@ class Client {
 	}
 
 	/**
-	 * Test current settings by fetching test puzzle and verifying stub solution.
+	 * Test current settings by validating the user's site key and verifying a stub solution.
+	 *
+	 * First fetches a puzzle for the user's site key (the /puzzle endpoint rejects
+	 * unknown site keys, e.g. HTTP 400 for malformed keys) to catch a mistyped or
+	 * nonexistent site key at save time. Then confirms the API key by verifying a
+	 * stub solution against the public demo property. The demo site key is used for
+	 * the verify step because the stub solution deterministically yields
+	 * TEST_PROPERTY_ERROR only for the public demo property.
+	 *
 	 * NOTE: Theoretically we actually CAN "succeed" this even if settings are
 	 * invalid due to "eventual" verification nature of /verify endpoint.
 	 *
+	 * @param string $sitekey The user's site key to validate.
 	 * @return bool True if settings are valid, false otherwise.
 	 */
-	public function test_current_settings(): bool {
+	public function test_current_settings( string $sitekey ): bool {
 		$this->last_error = null;
 
 		if ( null === $this->client ) {
@@ -207,22 +216,68 @@ class Client {
 			return false;
 		}
 
-		$sitekey = 'aaaaaaaabbbbccccddddeeeeeeeeeeee';
-
 		try {
-			// Fetch test puzzle.
-			$puzzle = $this->fetch_test_puzzle( $sitekey );
+			// Validate the user's site key first: /puzzle rejects unknown site keys.
+			// The CDN edge may serve an error body (e.g. "Forbidden") with HTTP 200,
+			// so the response body is also verified to be a real puzzle, not just a 200.
+			// The puzzle API requires the Origin to match the property's configured
+			// domain (only the public demo key bypasses this), so the site's real
+			// origin is sent for the user-sitekey request.
+			$user_puzzle = $this->fetch_test_puzzle( $sitekey, $this->get_site_origin() );
+			if ( null === $user_puzzle ) {
+				return false; // Error already set in fetch_test_puzzle.
+			}
+
+			if ( ! $this->is_valid_puzzle( $user_puzzle ) ) {
+				$this->last_error = 'Invalid site key: puzzle endpoint returned an unexpected response';
+				write_log( 'Private Captcha settings test failed: invalid puzzle for user site key' );
+				return false;
+			}
+
+			// Create empty solutions (stub) used by both checks below.
+			$empty_solutions_bytes = str_repeat( "\0", self::SOLUTIONS_COUNT * self::SOLUTION_LENGTH );
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for legitimate captcha verification, not code obfuscation.
+			$solutions_str = base64_encode( $empty_solutions_bytes );
+
+			// Validate that the user's site key belongs to the same account as the
+			// API key. Verifying the user's puzzle with the user's site key surfaces a
+			// property-owner-mismatch (WRONG_OWNER_ERROR) or org-scope
+			// (ORG_SCOPE_ERROR) code when the site key is from a different account
+			// than the API key — something the unauthenticated /puzzle request above
+			// cannot detect. A stub solution never verifies on a real property, so
+			// only an explicit mismatch code is treated as a settings failure; any
+			// other outcome (invalid solution, transient error) falls through to the
+			// demo-key API-key check below.
+			try {
+				$user_payload = $solutions_str . '.' . $user_puzzle;
+				$user_output  = $this->client->verify( $user_payload, sitekey: $sitekey );
+
+				if (
+					\PrivateCaptcha\Enums\VerifyCode::WRONG_OWNER_ERROR === $user_output->code
+					|| \PrivateCaptcha\Enums\VerifyCode::ORG_SCOPE_ERROR === $user_output->code
+				) {
+					$this->last_error = 'Site key does not match the API key account';
+					write_log( 'Private Captcha settings test failed: site key owner mismatch (' . $user_output->code->toString() . ')' );
+					return false;
+				}
+			} catch ( PrivateCaptchaException $e ) {
+				// A non-mismatch failure (e.g. an invalid stub solution on a real
+				// property, or a transient network error) is not a settings problem.
+				// The demo-key check below still validates the API key.
+				write_log( 'Private Captcha user site key verification skipped: ' . $e->getMessage() );
+			}
+
+			// The stub verify only produces TEST_PROPERTY_ERROR for the public demo
+			// property, so the API-key validity check always uses the demo site key.
+			$test_sitekey = 'aaaaaaaabbbbccccddddeeeeeeeeeeee';
+			$puzzle       = $this->fetch_test_puzzle( $test_sitekey );
 			if ( null === $puzzle ) {
 				return false; // Error already set in fetch_test_puzzle.
 			}
 
-			// Create empty solutions (stub).
-			$empty_solutions_bytes = str_repeat( "\0", self::SOLUTIONS_COUNT * self::SOLUTION_LENGTH );
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Used for legitimate captcha verification, not code obfuscation.
-			$solutions_str = base64_encode( $empty_solutions_bytes );
-			$payload       = $solutions_str . '.' . $puzzle;
+			$payload = $solutions_str . '.' . $puzzle;
 
-			$output = $this->client->verify( $payload, sitekey: $sitekey );
+			$output = $this->client->verify( $payload, sitekey: $test_sitekey );
 
 			if ( $output->success && \PrivateCaptcha\Enums\VerifyCode::TEST_PROPERTY_ERROR === $output->code ) {
 				return true;
@@ -239,19 +294,104 @@ class Client {
 	}
 
 	/**
+	 * Check whether a puzzle response body looks like a real puzzle token.
+	 *
+	 * A puzzle is a base64-encoded payload and signature separated by a dot
+	 * (e.g. "data.signature"). Error bodies such as "Forbidden" or "Bad Request",
+	 * which the CDN edge may serve with HTTP 200, do not match this shape.
+	 * Each segment is only checked to be non-empty and base64-decodable; deeper
+	 * verification of the puzzle contents is the API's responsibility, not ours.
+	 *
+	 * @param string $body The puzzle response body to validate.
+	 * @return bool True if the body looks like a puzzle token, false otherwise.
+	 */
+	private function is_valid_puzzle( string $body ): bool {
+		$body = trim( $body );
+
+		if ( '' === $body ) {
+			return false;
+		}
+
+		$parts = explode( '.', $body );
+
+		// A puzzle is exactly "data.signature": two non-empty base64 segments.
+		if ( 2 !== count( $parts ) ) {
+			return false;
+		}
+
+		foreach ( $parts as $segment ) {
+			if ( '' === $segment ) {
+				return false;
+			}
+
+			// Verify the segment is base64-decodable; anything deeper is the API's
+			// responsibility, not ours.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Used to validate a puzzle token, not code obfuscation.
+			if ( false === base64_decode( $segment, true ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get the site's origin (scheme + host) for the Origin header.
+	 *
+	 * The puzzle API requires the Origin to match the property's configured
+	 * domain, so the site's actual origin is used when validating the user's
+	 * site key. Falls back to 'not.empty' for localhost/loopback addresses or
+	 * when the home URL cannot be determined, since those origins never match
+	 * a configured property domain.
+	 *
+	 * @return string The site origin, e.g. "https://example.com".
+	 */
+	private function get_site_origin(): string {
+		$home = home_url();
+		if ( ! is_string( $home ) || '' === $home ) {
+			return 'not.empty';
+		}
+
+		$host = wp_parse_url( $home, PHP_URL_HOST );
+		if ( ! is_string( $host ) || '' === $host ) {
+			return 'not.empty';
+		}
+
+		$host_lower = strtolower( $host );
+		if (
+			'localhost' === $host_lower
+			|| str_ends_with( $host_lower, '.localhost' )
+			|| str_starts_with( $host_lower, '127.' )
+			|| '::1' === $host_lower
+			|| '0.0.0.0' === $host_lower
+		) {
+			return 'not.empty';
+		}
+
+		$origin = preg_replace( '#^(https?://[^/]+).*#i', '$1', $home );
+		if ( ! is_string( $origin ) ) {
+			return 'not.empty';
+		}
+
+		return $origin;
+	}
+
+	/**
 	 * Fetch test puzzle from Private Captcha API.
 	 *
 	 * @param string $sitekey The site key to fetch puzzle for.
+	 * @param string $origin  The Origin header value to send. Defaults to
+	 *                        'not.empty', which only the public demo key accepts.
 	 * @return string|null The puzzle string or null on failure.
 	 */
-	private function fetch_test_puzzle( string $sitekey ): ?string {
+	private function fetch_test_puzzle( string $sitekey, string $origin = 'not.empty' ): ?string {
 		if ( null === $this->client ) {
 			$this->last_error = 'Client not initialized';
 			return null;
 		}
 
 		$domain     = $this->client->getDomain();
-		$puzzle_url = "https://{$domain}/puzzle?sitekey={$sitekey}";
+		$puzzle_url = add_query_arg( 'sitekey', $sitekey, "https://{$domain}/puzzle" );
 
 		$response = wp_remote_get(
 			$puzzle_url,
@@ -259,7 +399,7 @@ class Client {
 				'timeout'     => 10,
 				'redirection' => 5,
 				'headers'     => array(
-					'Origin' => 'not.empty',
+					'Origin' => $origin,
 				),
 			)
 		);
