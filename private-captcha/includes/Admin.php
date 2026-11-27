@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use PrivateCaptcha\Exceptions\PrivateCaptchaException;
 use PrivateCaptchaWP\Integrations\IntegrationInterface;
+use PrivateCaptchaWP\Integrations\WooCommerce;
 
 /**
  * Admin interface class
@@ -280,6 +281,16 @@ class Admin {
 			'private_captcha_advanced'
 		);
 
+		if ( $this->is_woocommerce_available() ) {
+			add_settings_field(
+				'woocommerce_skip_stripe_express_checkout',
+				__( 'WooCommerce Stripe Express Checkout', 'private-captcha' ),
+				array( $this, 'woocommerce_skip_stripe_express_checkout_callback' ),
+				'private-captcha',
+				'private_captcha_advanced'
+			);
+		}
+
 		add_settings_field(
 			'reset_settings',
 			__( 'Reset Settings', 'private-captcha' ),
@@ -362,6 +373,21 @@ class Admin {
 	 */
 	public function advanced_section_callback(): void {
 		echo '<p>' . esc_html__( 'Advanced configuration options. Not recommended to change by default.', 'private-captcha' ) . '</p>';
+	}
+
+	/**
+	 * Check WooCommerce availability using the integration's activation check.
+	 *
+	 * @return bool True when WooCommerce is active.
+	 */
+	private function is_woocommerce_available(): bool {
+		foreach ( $this->integrations->get_all_integrations() as $integration ) {
+			if ( $integration instanceof WooCommerce ) {
+				return $integration->is_available();
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -525,6 +551,16 @@ class Admin {
 	}
 
 	/**
+	 * Render the Stripe express checkout compatibility setting.
+	 */
+	public function woocommerce_skip_stripe_express_checkout_callback(): void {
+		$value = Settings::is_stripe_express_checkout_skip_enabled();
+		echo '<input type="checkbox" id="woocommerce_skip_stripe_express_checkout" name="private_captcha_settings[woocommerce_skip_stripe_express_checkout]" value="1" aria-describedby="woocommerce_skip_stripe_express_checkout_description"' . checked( $value, true, false ) . ' /> ';
+		echo '<label for="woocommerce_skip_stripe_express_checkout">' . esc_html__( 'Skip captcha for Apple Pay and Google Pay express checkout via WooCommerce Stripe Gateway.', 'private-captcha' ) . '</label>';
+		echo '<p id="woocommerce_skip_stripe_express_checkout_description" class="description">' . esc_html__( 'This reduces bot protection for Stripe express checkout. The wallet type is reported by the checkout request.', 'private-captcha' ) . '</p>';
+	}
+
+	/**
 	 * Render integration field callback.
 	 *
 	 * @param array<string, mixed> $args Field arguments containing the integration instance and field.
@@ -657,6 +693,10 @@ class Admin {
 		$sanitized['custom_styles'] = $custom_styles;
 
 		$sanitized['debug_mode'] = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
+
+		$sanitized['woocommerce_skip_stripe_express_checkout'] = $this->is_woocommerce_available()
+			? '1' === ( $input['woocommerce_skip_stripe_express_checkout'] ?? null )
+			: Settings::is_stripe_express_checkout_skip_enabled();
 
 		$valid_scripts       = array( 'default', 'extended' );
 		$sanitized['script'] = in_array( $input['script'] ?? '', $valid_scripts, true ) ? $input['script'] : 'default';

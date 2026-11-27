@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use PrivateCaptchaWP\Assets;
+use PrivateCaptchaWP\Settings;
 use PrivateCaptchaWP\SettingsField;
 use PrivateCaptchaWP\Widget;
 use WP_Error;
@@ -450,6 +451,10 @@ class WooCommerce extends AbstractIntegration {
 
 		$request_body = json_decode( \WP_REST_Server::get_raw_data(), true );
 
+		if ( 'stripe' === ( $request_body['payment_method'] ?? null ) && $this->should_skip_stripe_express_checkout( $request_body['payment_data'] ?? null ) ) {
+			return $result;
+		}
+
 		if ( isset( $request_body['payment_method'] ) ) {
 			$chosen_payment_method = sanitize_text_field( $request_body['payment_method'] );
 
@@ -488,6 +493,52 @@ class WooCommerce extends AbstractIntegration {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Apply the opt-in compatibility exemption for Stripe express wallet checkout.
+	 *
+	 * @param mixed $payment_data Payment data from the Store API JSON request.
+	 * @return bool True if the request qualifies for the exemption.
+	 */
+	private function should_skip_stripe_express_checkout( $payment_data ): bool {
+		if ( ! Settings::is_stripe_express_checkout_skip_enabled() || ! is_array( $payment_data ) || ! array_is_list( $payment_data ) ) {
+			return false;
+		}
+
+		// Match application/json on the base media type, ignoring parameters such as charset.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Compare the media type directly without rewriting the header.
+		$content_type = wp_unslash( $_SERVER['CONTENT_TYPE'] ?? '' );
+		if ( ! is_string( $content_type ) || 'application/json' !== strtolower( trim( explode( ';', $content_type, 2 )[0] ) ) ) {
+			return false;
+		}
+
+		$wallet = null;
+		foreach ( $payment_data as $item ) {
+			if ( ! is_array( $item ) || ! is_string( $item['key'] ?? null ) ) {
+				return false;
+			}
+			// WooCommerce normalizes these keys when setting up the gateway's payment context.
+			if ( 'express_payment_type' === sanitize_key( $item['key'] ) ) {
+				if ( null !== $wallet || ! in_array( $item['value'] ?? null, array( 'apple_pay', 'google_pay' ), true ) ) {
+					return false;
+				}
+				$wallet = $item['value'];
+			}
+		}
+
+		$helper_class = 'WC_Stripe_Express_Checkout_Helper';
+		if ( null === $wallet || ! class_exists( $helper_class ) ) {
+			return false;
+		}
+
+		// Stripe's helper validates the express context and nonce locally. It does not verify wallet funding.
+		try {
+			$check_context = array( new $helper_class(), 'is_express_checkout_context' );
+			return is_callable( $check_context ) && true === $check_context();
+		} catch ( \Throwable ) {
+			return false;
+		}
 	}
 
 	/**

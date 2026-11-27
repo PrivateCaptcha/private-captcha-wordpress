@@ -152,6 +152,15 @@ class Settings {
 	}
 
 	/**
+	 * Check whether the merchant opted out of captcha for Stripe express wallets.
+	 *
+	 * @return bool True when the compatibility option is enabled.
+	 */
+	public static function is_stripe_express_checkout_skip_enabled(): bool {
+		return true === self::get_option( 'woocommerce_skip_stripe_express_checkout', false );
+	}
+
+	/**
 	 * Get the widget script setting.
 	 *
 	 * @return string The script (default or extended).
@@ -224,16 +233,17 @@ class Settings {
 	 */
 	public static function get_default_settings(): array {
 		$defaults = array(
-			'api_key'       => '',
-			'sitekey'       => '',
-			'theme'         => 'light',
-			'language'      => 'auto',
-			'start_mode'    => 'auto',
-			'debug_mode'    => false,
-			'script'        => 'default',
-			'eu_isolation'  => false,
-			'custom_domain' => '',
-			'custom_styles' => '',
+			'api_key'                                  => '',
+			'sitekey'                                  => '',
+			'theme'                                    => 'light',
+			'language'                                 => 'auto',
+			'start_mode'                               => 'auto',
+			'debug_mode'                               => false,
+			'script'                                   => 'default',
+			'eu_isolation'                             => false,
+			'custom_domain'                            => '',
+			'custom_styles'                            => '',
+			'woocommerce_skip_stripe_express_checkout' => false,
 		);
 
 		return $defaults;
